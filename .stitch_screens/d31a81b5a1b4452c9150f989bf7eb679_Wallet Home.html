@@ -1,0 +1,378 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ZeroPay Wallet Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f2f3f6",
+                      "on-primary-fixed": "#07006c",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-container": "#00885d",
+                      "secondary-fixed": "#e9ddff",
+                      "surface": "#f8f9fc",
+                      "primary-fixed": "#e1e0ff",
+                      "outline": "#767586",
+                      "inverse-primary": "#c0c1ff",
+                      "outline-variant": "#c7c4d7",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-surface": "#2e3133",
+                      "surface-container-high": "#e7e8eb",
+                      "surface-container": "#edeef1",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-tertiary-fixed": "#002113",
+                      "secondary": "#6b38d4",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "primary-container": "#6063ee",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#6ffbbe",
+                      "primary": "#4648d4",
+                      "on-secondary-fixed-variant": "#5516be",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e1e2e5",
+                      "on-background": "#191c1e",
+                      "tertiary": "#006c49",
+                      "surface-dim": "#d9dadd",
+                      "on-surface-variant": "#464554",
+                      "on-secondary-container": "#fffbff",
+                      "surface-bright": "#f8f9fc",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#8455ef",
+                      "on-tertiary-container": "#000703",
+                      "background": "#f8f9fc",
+                      "surface-tint": "#494bd6",
+                      "error-container": "#ffdad6",
+                      "on-error": "#ffffff",
+                      "on-primary-container": "#fffbff",
+                      "surface-container-highest": "#e1e2e5",
+                      "on-surface": "#191c1e",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "inverse-on-surface": "#f0f1f4",
+                      "on-secondary-fixed": "#23005c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px",
+                      "2xl": "1rem",
+                      "3xl": "1.5rem"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "container-padding": "20px",
+                      "gutter": "16px",
+                      "section-margin": "32px",
+                      "card-gap": "12px",
+                      "safe-bottom": "env(safe-area-inset-bottom)"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "label-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Hide scrollbar for carousel */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Glassmorphism effects */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .premium-shadow { box-shadow: 0px 4px 20px rgba(99, 102, 241, 0.08); }
+        .card-border { border: 1px solid #F1F5F9; }
+        
+        /* Gradient Backgrounds */
+        .bg-gradient-primary { background: linear-gradient(135deg, #4648d4 0%, #8455ef 100%); }
+        .bg-gradient-card-1 { background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%); }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-24 selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar (From JSON Blueprint) -->
+<header class="fixed top-0 w-full z-50 bg-surface shadow-sm">
+<div class="flex justify-between items-center px-container-padding h-16 w-full max-w-7xl mx-auto">
+<!-- Leading Avatar -->
+<button class="w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOUQWIfZAXvUo5SCVOFh41IzPRYBPtKLBPOd-U5XhnYsd65ei_mME1AfhjXH-i6lJ4hbd1qTLzGCONVOW5LarkQjdN8m6TfT4wkhury1Otthw69ajqsQAr9uGGp5urTdSrkRtLxFrRnngQ6q7ZC9xePMwYkf7B_pBveGoTdSkrADvkbKp5TdxRRyN6GUCR_4LxCJEN-viZ3X62yKI0E6bWwHiTG9GF0sSm1t6XLFiWwbDlZpn84RdwJy8L12NTG81RQWxUQYIqcO_p">
+</button>
+<!-- Headline / Brand -->
+<h1 class="font-display-lg text-display-lg font-bold text-primary">Lumina OS</h1>
+<!-- Trailing Icon -->
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-variant transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 px-container-padding max-w-md mx-auto md:max-w-3xl lg:max-w-5xl">
+<!-- Total Balance Section (Bento Style) -->
+<section class="mt-4 mb-section-margin animate-fade-in-up" style="animation-delay: 0.1s;">
+<div class="bg-surface-container-lowest rounded-3xl p-6 premium-shadow card-border relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-fixed opacity-50 rounded-full blur-3xl -mr-10 -mt-10"></div>
+<div class="absolute bottom-0 left-0 w-24 h-24 bg-secondary-fixed opacity-40 rounded-full blur-2xl -ml-8 -mb-8"></div>
+<div class="relative z-10 flex flex-col items-center text-center">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2 flex items-center gap-1">
+                        Total Balance
+                        <span class="material-symbols-outlined text-[16px] cursor-pointer" id="toggle-balance">visibility</span>
+</p>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-headline-sm text-headline-sm text-outline">$</span>
+<h2 class="font-display-lg text-display-lg text-on-surface tracking-tight" id="main-balance">124,592.80</h2>
+</div>
+<div class="inline-flex items-center gap-1 bg-tertiary-fixed-dim/20 text-tertiary px-3 py-1 rounded-full font-label-md text-label-md mt-2">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+                        +2.4% (24h)
+                    </div>
+</div>
+</div>
+</section>
+<!-- Quick Actions (Glassmorphism Floating Row) -->
+<section class="mb-section-margin">
+<div class="flex justify-between items-center gap-4 bg-surface-container-low rounded-2xl p-2 px-4">
+<!-- Send -->
+<button class="flex flex-col items-center gap-2 flex-1 py-2 hover:bg-surface-variant rounded-xl transition-colors active:scale-95" onclick="window.location.href='{{DATA:SCREEN:SCREEN_34}}'">
+<div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary premium-shadow">
+<span class="material-symbols-outlined">arrow_upward</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Send</span>
+</button>
+<!-- Receive -->
+<button class="flex flex-col items-center gap-2 flex-1 py-2 hover:bg-surface-variant rounded-xl transition-colors active:scale-95" onclick="window.location.href='{{DATA:SCREEN:SCREEN_34}}'">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary premium-shadow">
+<span class="material-symbols-outlined">arrow_downward</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Receive</span>
+</button>
+<!-- Buy -->
+<button class="flex flex-col items-center gap-2 flex-1 py-2 hover:bg-surface-variant rounded-xl transition-colors active:scale-95">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary premium-shadow">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Buy</span>
+</button>
+<!-- Swap -->
+<button class="flex flex-col items-center gap-2 flex-1 py-2 hover:bg-surface-variant rounded-xl transition-colors active:scale-95">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary premium-shadow">
+<span class="material-symbols-outlined">swap_horiz</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Swap</span>
+</button>
+</div>
+</section>
+<!-- Multi-Chain Assets Carousel -->
+<section class="mb-section-margin">
+<div class="flex justify-between items-end mb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Assets</h3>
+<button class="font-label-md text-label-md text-primary hover:underline">View All</button>
+</div>
+<div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar -mx-container-padding px-container-padding snap-x">
+<!-- Cardano (ADA) Card -->
+<div class="min-w-[280px] snap-center bg-surface-container-lowest rounded-2xl p-5 premium-shadow card-border flex flex-col justify-between h-[160px] relative overflow-hidden bg-gradient-card-1">
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#0033AD] flex items-center justify-center text-white font-bold text-xs">
+                                ₳
+                            </div>
+<div>
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface">Cardano</h4>
+<span class="font-label-md text-label-md text-on-surface-variant">ADA</span>
+</div>
+</div>
+<span class="text-tertiary-container font-label-md text-label-md bg-tertiary-fixed-dim/20 px-2 py-1 rounded">+1.2%</span>
+</div>
+<div class="z-10 mt-auto">
+<p class="font-headline-md text-headline-md text-on-surface">45,230.50</p>
+<p class="font-body-md text-body-md text-outline">≈ $18,092.20 USD</p>
+</div>
+<!-- Decorative subtle icon -->
+<span class="material-symbols-outlined absolute -bottom-4 -right-4 text-[120px] text-surface-container opacity-50 z-0 select-none">currency_bitcoin</span>
+</div>
+<!-- USDC Card -->
+<div class="min-w-[280px] snap-center bg-surface-container-lowest rounded-2xl p-5 premium-shadow card-border flex flex-col justify-between h-[160px] relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#2775CA] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">attach_money</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface">USD Coin</h4>
+<span class="font-label-md text-label-md text-on-surface-variant">USDC</span>
+</div>
+</div>
+<span class="text-outline font-label-md text-label-md bg-surface-variant px-2 py-1 rounded">0.0%</span>
+</div>
+<div class="z-10 mt-auto">
+<p class="font-headline-md text-headline-md text-on-surface">85,000.00</p>
+<p class="font-body-md text-body-md text-outline">≈ $85,000.00 USD</p>
+</div>
+</div>
+<!-- Ethereum Card -->
+<div class="min-w-[280px] snap-center bg-surface-container-lowest rounded-2xl p-5 premium-shadow card-border flex flex-col justify-between h-[160px] relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-[#627EEA] flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">diamond</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-[16px] leading-tight text-on-surface">Ethereum</h4>
+<span class="font-label-md text-label-md text-on-surface-variant">ETH</span>
+</div>
+</div>
+<span class="text-error font-label-md text-label-md bg-error-container/50 px-2 py-1 rounded">-0.8%</span>
+</div>
+<div class="z-10 mt-auto">
+<p class="font-headline-md text-headline-md text-on-surface">6.45</p>
+<p class="font-body-md text-body-md text-outline">≈ $21,500.60 USD</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Two Column Grid for Escrows & Security -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-section-margin">
+<!-- Active Escrows (Blockchain Specific) -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 premium-shadow card-border">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">lock_clock</span>
+                        Active Escrows
+                    </h3>
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-label-sm text-label-sm">2</span>
+</div>
+<div class="space-y-4">
+<!-- Escrow Item 1 -->
+<div class="bg-surface rounded-xl p-3 border border-surface-variant cursor-pointer" onclick="window.location.href='{{DATA:SCREEN:SCREEN_24}}'">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="font-label-md text-label-md text-on-surface">Freelance Contract</p>
+<p class="font-label-sm text-label-sm text-outline">To: 0x8a...4f21</p>
+</div>
+<p class="font-label-md text-label-md text-primary">1,500 ADA</p>
+</div>
+<!-- Escrow Stepper -->
+<div class="relative pt-2">
+<div class="absolute top-[14px] left-2 right-2 h-[2px] bg-surface-variant z-0"></div>
+<div class="absolute top-[14px] left-2 w-1/2 h-[2px] bg-primary z-0"></div>
+<div class="flex justify-between relative z-10">
+<div class="w-3 h-3 rounded-full bg-tertiary-container ring-2 ring-surface"></div>
+<div class="w-3 h-3 rounded-full bg-primary ring-2 ring-primary/30 animate-pulse"></div>
+<div class="w-3 h-3 rounded-full bg-surface-variant ring-2 ring-surface"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 font-label-md text-label-md text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-lg transition-colors" onclick="window.location.href='{{DATA:SCREEN:SCREEN_24}}'">View All Contracts</button>
+</div>
+<!-- Security Health Card -->
+<div class="bg-surface-container-lowest rounded-2xl p-5 premium-shadow card-border relative overflow-hidden group cursor-pointer" onclick="window.location.href='{{DATA:SCREEN:SCREEN_29}}'">
+<div class="absolute right-0 top-0 w-32 h-32 bg-tertiary-fixed opacity-10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+<div class="relative z-10 h-full flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield</span>
+                            Security Health
+                        </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Your wallet is highly secure. All recovery methods are active.</p>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md text-on-surface">Seed Phrase Backed Up</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md text-on-surface">Biometrics Enabled</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (From JSON Blueprint) -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest shadow-[0px_-4px_20px_rgba(99,102,241,0.08)] md:hidden">
+<div class="flex justify-around items-center w-full h-20 pb-safe px-4">
+<!-- Home (Active) -->
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<!-- Market -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary active:scale-90 transition-transform duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_23}}'">
+<span class="material-symbols-outlined text-[24px]">trending_up</span>
+<span class="font-label-sm text-label-sm mt-1">Market</span>
+</button>
+<!-- Scan (FAB-like prominence) -->
+<button class="relative -top-5 w-14 h-14 flex items-center justify-center rounded-full bg-primary text-on-primary shadow-lg active:scale-90 transition-transform duration-150 border-4 border-surface-container-lowest" onclick="window.location.href='{{DATA:SCREEN:SCREEN_34}}'">
+<span class="material-symbols-outlined text-[28px]">qr_code_scanner</span>
+</button>
+<!-- Chat -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary active:scale-90 transition-transform duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_15}}'">
+<span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+<span class="font-label-sm text-label-sm mt-1">Chat</span>
+</button>
+<!-- Wallet -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Wallet</span>
+</button>
+</div>
+</nav>
+<!-- Simple JS for micro-interactions -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('toggle-balance');
+            const balanceText = document.getElementById('main-balance');
+            let isVisible = true;
+            const originalBalance = balanceText.innerText;
+
+            toggleBtn.addEventListener('click', () => {
+                isVisible = !isVisible;
+                if (isVisible) {
+                    balanceText.innerText = originalBalance;
+                    toggleBtn.innerText = 'visibility';
+                } else {
+                    balanceText.innerText = '•••••••';
+                    toggleBtn.innerText = 'visibility_off';
+                }
+            });
+        });
+    </script>
+
+
+</body></html>

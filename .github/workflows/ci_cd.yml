@@ -1,0 +1,69 @@
+name: ZeroPay Client Hardening & Release CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify build generators
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Static Code Analysis & Linting
+        run: flutter analyze
+
+      - name: Run Unit and Contract Tests
+        run: flutter test
+
+  release-builds:
+    needs: validate
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Compile Android Release APK
+        run: flutter build apk --release
+
+      - name: Compile Android App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Compile iOS Release Build (Runner Workspace)
+        run: flutter build ios --release --no-codesign

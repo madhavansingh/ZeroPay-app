@@ -1,0 +1,441 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Asset Portfolio Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3f6",
+                        "on-primary-fixed": "#07006c",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#00885d",
+                        "secondary-fixed": "#e9ddff",
+                        "surface": "#f8f9fc",
+                        "primary-fixed": "#e1e0ff",
+                        "outline": "#767586",
+                        "inverse-primary": "#c0c1ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2e3133",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container": "#edeef1",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed": "#002113",
+                        "secondary": "#6b38d4",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "primary-container": "#6063ee",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#6ffbbe",
+                        "primary": "#4648d4",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e1e2e5",
+                        "on-background": "#191c1e",
+                        "tertiary": "#006c49",
+                        "surface-dim": "#d9dadd",
+                        "on-surface-variant": "#464554",
+                        "on-secondary-container": "#fffbff",
+                        "surface-bright": "#f8f9fc",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#8455ef",
+                        "on-tertiary-container": "#000703",
+                        "background": "#f8f9fc",
+                        "surface-tint": "#494bd6",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-surface": "#191c1e",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "inverse-on-surface": "#f0f1f4",
+                        "on-secondary-fixed": "#23005c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-padding": "20px",
+                        "gutter": "16px",
+                        "section-margin": "32px",
+                        "card-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .bento-card {
+            background-color: #FFFFFF;
+            border: 1px solid #F1F5F9;
+            border-radius: 0.75rem;
+            box-shadow: 0px 4px 20px rgba(99, 102, 241, 0.08);
+            padding: 20px;
+        }
+        .ai-glow {
+            border: 1px solid transparent;
+            background: linear-gradient(#FFFFFF, #FFFFFF) padding-box,
+                        linear-gradient(135deg, #6b38d4, #ff8aab) border-box;
+        }
+        .glass-overlay {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8f9fc;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e1e2e5;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c7c4d7;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased pb-24 md:pb-0 pt-16 md:pt-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface shadow-sm">
+<div class="flex justify-between items-center px-container-padding h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-surface-variant" data-alt="A close up portrait photo of a professional person serving as a user profile avatar. The photo is well-lit, showing clear facial features against a neutral background. The lighting is soft and flattering, suitable for a corporate modern application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsP-wugBRELubV2am-lbQrm5DPImYVvmNbutqzs3PjGllZhx72dRPBwODzMcGErDfHXTEie2qwtKedAfE9LCOZVoe4sUUZsWKWp0BEi2bA3ofZcl5ptHkwVsDFM6VpNzbJR4ThP5igJyNUWYMbT7lpd5Z063MlWhi10uDWeDqcjIrEK0tR5e34Jk8blO6KFquvpW1xQ7RfhxJ6whZ3Rs0MkJ8yGEwTjhTmM9ukJhZ3yln8uD3F0li98Oql3yN1RzVpHbt87vWePjqg">
+<span class="font-display-lg text-display-lg font-bold text-primary">ZeroPay</span>
+</div>
+<div class="flex items-center gap-4 hidden md:flex">
+<!-- Web Navigation -->
+<nav class="flex gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Market</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Scan</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Chat</a>
+<a class="font-label-md text-label-md text-primary font-semibold border-b-2 border-primary pb-1" href="#">Wallet</a>
+</nav>
+</div>
+<button class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</button>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-section-margin">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface">Portfolio Analytics</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time valuation and asset distribution.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 rounded-full border border-surface-variant font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> Export
+                </button>
+<button class="px-4 py-2 rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary font-label-md text-label-md hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm" onclick="window.location.href='{{DATA:SCREEN:SCREEN_34}}'">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Funds
+                </button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Total Balance & Chart (Spans 8 cols on desktop) -->
+<div class="md:col-span-8 bento-card flex flex-col">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Value</span>
+<div class="flex items-baseline gap-3 mt-1">
+<h2 class="font-display-lg text-[40px] leading-tight font-bold text-on-surface">$124,592.80</h2>
+<span class="font-label-md text-label-md text-tertiary-container bg-tertiary-container/10 px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 4.2%
+                            </span>
+</div>
+</div>
+<div class="flex bg-surface-container-low rounded-lg p-1">
+<button class="px-3 py-1 text-label-sm font-label-sm text-on-surface-variant rounded-md hover:bg-surface transition-colors">1D</button>
+<button class="px-3 py-1 text-label-sm font-label-sm text-on-surface-variant rounded-md hover:bg-surface transition-colors">1W</button>
+<button class="px-3 py-1 text-label-sm font-label-sm bg-surface shadow-sm text-primary rounded-md">1M</button>
+<button class="px-3 py-1 text-label-sm font-label-sm text-on-surface-variant rounded-md hover:bg-surface transition-colors">1Y</button>
+</div>
+</div>
+<div class="flex-grow min-h-[250px] relative w-full">
+<canvas id="portfolioChart" width="632" height="500" style="display: block; box-sizing: border-box; height: 250px; width: 316px;"></canvas>
+</div>
+</div>
+<!-- Asset Allocation (Spans 4 cols on desktop) -->
+<div class="md:col-span-4 bento-card flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Asset Allocation</h3>
+<div class="flex-grow flex flex-col justify-center items-center mb-6 relative">
+<div class="w-40 h-40 relative">
+<!-- Pseudo Donut Chart -->
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+<!-- ETH 45% -->
+<circle class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="40" stroke="#6b38d4" stroke-dasharray="251.2" stroke-dashoffset="138.16" stroke-width="15"></circle>
+<!-- ADA 35% -->
+<circle class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="40" stroke="#4648d4" stroke-dasharray="251.2" stroke-dashoffset="163.28" stroke-dashoffset-start="113.04" stroke-width="15" transform="rotate(162 50 50)"></circle>
+<!-- USDC 20% -->
+<circle class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="transparent" r="40" stroke="#00885d" stroke-dasharray="251.2" stroke-dashoffset="200.96" stroke-width="15" transform="rotate(288 50 50)"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant">Top Asset</span>
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">ETH</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="font-body-md text-body-md font-medium text-on-surface">Ethereum</span>
+</div>
+<div class="text-right">
+<div class="font-body-md text-body-md font-semibold text-on-surface">45%</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">$56,066.76</div>
+</div>
+</div>
+<a href="{{DATA:SCREEN:SCREEN_39}}" class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer block"><div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-primary"></div><span class="font-body-md text-body-md font-medium text-on-surface">Cardano</span></div><div class="text-right"><div class="font-body-md text-body-md font-semibold text-on-surface">35%</div><div class="font-label-sm text-label-sm text-on-surface-variant">$43,607.48</div></div></a>
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-tertiary-container"></div>
+<span class="font-body-md text-body-md font-medium text-on-surface">USDC</span>
+</div>
+<div class="text-right">
+<div class="font-body-md text-body-md font-semibold text-on-surface">20%</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">$24,918.56</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Escrow-linked Assets (Spans 6 cols on desktop) -->
+<div class="md:col-span-6 bento-card relative overflow-hidden group">
+<!-- Background Pattern -->
+<div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(#4648d4 1px, transparent 1px); background-size: 16px 16px;"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">lock</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Escrow-linked Assets</h3>
+</div>
+<span class="bg-primary-container/10 text-primary px-3 py-1 rounded-full font-label-md text-label-md">Active Contracts</span>
+</div>
+<div class="space-y-4">
+<!-- Escrow Item 1 -->
+<a href="{{DATA:SCREEN:SCREEN_24}}" class="bg-surface p-4 rounded-xl border border-surface-variant flex items-center justify-between hover:border-primary transition-colors cursor-pointer block"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[20px]">real_estate_agent</span></div><div><h4 class="font-body-md text-body-md font-semibold text-on-surface">Property Settlement</h4><p class="font-label-md text-label-md text-on-surface-variant">Contract #0x8f...4e2a</p></div></div><div class="text-right"><div class="font-headline-sm text-headline-sm font-bold text-on-surface">45,000 USDC</div><div class="flex items-center gap-1 justify-end text-tertiary-container mt-1"><div class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></div><span class="font-label-sm text-label-sm">Awaiting Counterparty</span></div></div></a>
+<!-- Escrow Item 2 -->
+<div class="bg-surface p-4 rounded-xl border border-surface-variant flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">handshake</span>
+</div>
+<div>
+<h4 class="font-body-md text-body-md font-semibold text-on-surface">B2B Trade Deal</h4>
+<p class="font-label-md text-label-md text-on-surface-variant">Contract #0x2b...9c1d</p>
+</div>
+</div>
+<div class="text-right">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">12.5 ETH</div>
+<div class="flex items-center gap-1 justify-end text-outline mt-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="font-label-sm text-label-sm">Releasing in 2 days</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Network Health & AI Insights (Spans 6 cols on desktop) -->
+<div class="md:col-span-6 flex flex-col gap-gutter">
+<!-- Network Health -->
+<div class="bento-card flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Network Health</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-surface border border-surface-variant">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Ethereum Gas</span>
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">local_gas_station</span>
+</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">24 Gwei</div>
+<div class="font-label-sm text-label-sm text-tertiary-container mt-1">Low congestion</div>
+</div>
+<div class="p-4 rounded-xl bg-surface border border-surface-variant">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Cardano Load</span>
+<span class="material-symbols-outlined text-primary text-[18px]">speed</span>
+</div>
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">42%</div>
+<div class="font-label-sm text-label-sm text-primary mt-1">Optimal</div>
+</div>
+</div>
+</div>
+<!-- AI Insight -->
+<div class="bento-card ai-glow bg-gradient-to-br from-secondary-fixed/30 to-primary-fixed/20">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary text-[18px]">auto_awesome</span>
+</div>
+<div>
+<h4 class="font-body-md text-body-md font-semibold text-on-surface mb-1">Portfolio Optimization</h4>
+<p class="font-label-md text-label-md text-on-surface-variant mb-3">Based on current market volatility, rebalancing 5% of ADA into USDC could reduce overall portfolio risk while maintaining growth potential.</p>
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-1 font-semibold" onclick="window.location.href='{{DATA:SCREEN:SCREEN_4}}'">
+                                View Strategy <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest shadow-[0px_-4px_20px_rgba(99,102,241,0.08)]">
+<div class="flex justify-around items-center w-full h-20 pb-safe px-4">
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary transition-colors active:scale-90 duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_36}}'">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary transition-colors active:scale-90 duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_23}}'">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-label-sm text-label-sm mt-1">Market</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary transition-colors active:scale-90 duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_34}}'">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span class="font-label-sm text-label-sm mt-1">Scan</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant py-1 hover:text-primary transition-colors active:scale-90 duration-150" onclick="window.location.href='{{DATA:SCREEN:SCREEN_15}}'">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-label-sm text-label-sm mt-1">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Wallet</span>
+</button>
+</div>
+</nav>
+<script>
+        // Chart.js Configuration
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            
+            // Create gradient
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(107, 56, 212, 0.4)'); // secondary with opacity
+            gradient.addColorStop(1, 'rgba(107, 56, 212, 0.0)');
+
+            const data = {
+                labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'],
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: [115000, 116200, 114800, 117000, 118500, 119000, 118200, 120000, 121500, 121000, 122800, 124000, 123500, 125000, 126200, 125800, 127000, 128500, 128000, 129000, 128500, 127000, 126500, 125000, 125800, 124000, 123500, 124200, 123800, 124592.80],
+                    borderColor: '#6b38d4', // secondary color
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#6b38d4',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 2,
+                    fill: true,
+                    tension: 0.4 // smooth curve
+                }]
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#2e3133', // inverse-surface
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#464554',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false, // hide x axis completely for cleaner look
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            display: false, // hide y axis completely
+                            grid: {
+                                display: false
+                            },
+                            min: 110000 // slightly below min data to give space at bottom
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        });
+    </script>
+
+
+</body></html>

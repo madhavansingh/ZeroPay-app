@@ -1,0 +1,380 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Send &amp; QR Payments - Lumina OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3f6",
+                        "on-primary-fixed": "#07006c",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#00885d",
+                        "secondary-fixed": "#e9ddff",
+                        "surface": "#f8f9fc",
+                        "primary-fixed": "#e1e0ff",
+                        "outline": "#767586",
+                        "inverse-primary": "#c0c1ff",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2e3133",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container": "#edeef1",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed": "#002113",
+                        "secondary": "#6b38d4",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "primary-container": "#6063ee",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#6ffbbe",
+                        "primary": "#4648d4",
+                        "on-secondary-fixed-variant": "#5516be",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e1e2e5",
+                        "on-background": "#191c1e",
+                        "tertiary": "#006c49",
+                        "surface-dim": "#d9dadd",
+                        "on-surface-variant": "#464554",
+                        "on-secondary-container": "#fffbff",
+                        "surface-bright": "#f8f9fc",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#8455ef",
+                        "on-tertiary-container": "#000703",
+                        "background": "#f8f9fc",
+                        "surface-tint": "#494bd6",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "surface-container-highest": "#e1e2e5",
+                        "on-surface": "#191c1e",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "inverse-on-surface": "#f0f1f4",
+                        "on-secondary-fixed": "#23005c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "container-padding": "20px",
+                        "gutter": "16px",
+                        "section-margin": "32px",
+                        "card-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "14px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, theme('colors.primary'), theme('colors.secondary'));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid theme('colors.surface-variant');
+            box-shadow: 0px 4px 20px rgba(99, 102, 241, 0.08);
+        }
+
+        .numpad-btn {
+            transition: all 0.15s ease;
+        }
+        .numpad-btn:active {
+            transform: scale(0.92);
+            background-color: theme('colors.surface-variant');
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24 relative overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-inverse-surface shadow-sm dark:shadow-none transition-all duration-300">
+<div class="flex justify-between items-center px-container-padding h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-3"><button class="text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-colors flex items-center justify-center" onclick="history.back()"><span class="material-symbols-outlined">arrow_back</span></button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant flex items-center justify-center">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsHa4MIT5E-3lKofx7qgzaUf-tNXbvgtQi2rqvOTBfn64SWl1SLKHWhga1lt-ojigFA2hbxCDsbClUwo5VIdVIQkQfbXr4OCDKuMteINEFn2WY-2z_poBnCKnn9HKfkoSgP0ImY-Qc9lU-C9diesjFH2wfAF-LIjVZ2Xwx6kWoBreHiNq2jHkxsBICsSD1IDQeyTOfi2_haCu5irAX4YnozHDh1kO_yVU3QRtO55B9JjU9mZWxY1woaI3i95YHgzbMSBtBvQZSXXIH">
+</div>
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">Lumina OS</span>
+</div>
+<!-- Desktop Nav Items (Hidden on Mobile) -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">Home</a>
+<a class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">Market</a>
+<a class="text-primary dark:text-primary-fixed font-semibold font-body-md text-body-md relative after:content-[''] after:absolute after:-bottom-5 after:left-0 after:w-full after:h-0.5 after:bg-primary" href="#">Scan</a>
+<a class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">Chat</a>
+<a class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors font-body-md text-body-md" href="#">Wallet</a>
+</nav>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">verified_user</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-container-padding max-w-md mx-auto md:max-w-4xl grid md:grid-cols-2 gap-8 h-[calc(100vh-100px)] items-start">
+<!-- Left Column: Input & Actions -->
+<section class="flex flex-col gap-6 w-full max-w-sm mx-auto">
+<!-- Header Area -->
+<div class="text-center md:text-left mb-2">
+<h1 class="font-display-lg text-display-lg gradient-text">Send Funds</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Enter address or scan QR code</p>
+</div>
+<!-- Address Input Group -->
+<div class="glass-card rounded-xl p-4 flex flex-col gap-3 relative">
+<div class="flex items-center justify-between border-b border-surface-variant pb-2">
+<span class="font-label-md text-label-md text-outline">RECIPIENT</span>
+<button class="text-primary hover:text-secondary transition-colors" title="Scan QR" onclick="alert('Accessing Camera... (Simulated)')">
+<span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-full bg-transparent border-none p-0 focus:ring-0 font-body-lg text-body-lg text-on-surface placeholder-outline-variant font-mono" id="addressInput" placeholder="0x..." type="text">
+<button class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant hover:bg-outline-variant transition-colors" onclick="document.getElementById('addressInput').value = ''">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- Trust Check Warning (Hidden by default, shown via JS) -->
+<div class="hidden absolute -bottom-10 left-0 w-full bg-error-container text-on-error-container font-label-md text-label-md p-2 rounded-lg flex items-center gap-2 shadow-sm" id="trustWarning">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                    Unverified Address. Proceed with caution.
+                </div>
+<!-- Trust Check Success (Hidden by default, shown via JS) -->
+<div class="hidden absolute -bottom-10 left-0 w-full bg-tertiary-container text-on-tertiary-container font-label-md text-label-md p-2 rounded-lg flex items-center gap-2 shadow-sm" id="trustSuccess">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                    Verified Merchant Account
+                </div>
+</div>
+<!-- Amount Input -->
+<div class="flex flex-col items-center justify-center py-6">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-outline-variant">$</span>
+<span class="font-display-lg text-[48px] leading-[56px] font-bold text-on-surface" id="amountDisplay">0.00</span>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant mt-2 flex items-center gap-1 bg-surface-variant px-3 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Available: $4,250.00
+                </div>
+</div>
+<!-- Numpad -->
+<div class="grid grid-cols-3 gap-2 mt-auto pb-4">
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('1')">1</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('2')">2</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('3')">3</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('4')">4</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('5')">5</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('6')">6</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('7')">7</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('8')">8</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('9')">9</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('.')">.</button>
+<button class="numpad-btn h-14 rounded-xl font-headline-md text-headline-md text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="appendNumber('0')">0</button>
+<button class="numpad-btn h-14 rounded-xl text-on-surface bg-surface-container-lowest border border-surface-variant flex items-center justify-center" onclick="deleteNumber()">
+<span class="material-symbols-outlined">backspace</span>
+</button>
+</div>
+<!-- Action Button -->
+<button class="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-headline-sm text-headline-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2" onclick="window.location.href='{{DATA:SCREEN:SCREEN_31}}'">
+                Continue <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</section>
+<!-- Right Column: Address Book & Scanning (Desktop layout, or hidden section on mobile) -->
+<section class="hidden md:flex flex-col gap-6 h-full border-l border-surface-variant pl-8">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Address Book</h2>
+<button class="text-primary font-label-md text-label-md hover:underline">View All</button>
+</div>
+<!-- Verified Merchants Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Merchant Card 1 -->
+<button class="glass-card rounded-xl p-4 flex flex-col items-center gap-3 hover:border-primary transition-colors cursor-pointer text-center group" onclick="fillAddress('0xAmazonWebServices')">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">cloud</span>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-surface rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">AWS Hosting</p>
+<p class="font-label-sm text-label-sm text-outline-variant mt-0.5">Verified Partner</p>
+</div>
+</button>
+<!-- Merchant Card 2 -->
+<button class="glass-card rounded-xl p-4 flex flex-col items-center gap-3 hover:border-primary transition-colors cursor-pointer text-center group" onclick="fillAddress('0xStripeCorp')">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">payments</span>
+<div class="absolute -bottom-1 -right-1 w-5 h-5 bg-surface rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Stripe</p>
+<p class="font-label-sm text-label-sm text-outline-variant mt-0.5">Verified Partner</p>
+</div>
+</button>
+<!-- Recent Contact 1 -->
+<button class="bg-surface-container-lowest border border-surface-variant rounded-xl p-4 flex flex-col items-center gap-3 hover:bg-surface-variant transition-colors cursor-pointer text-center group" onclick="fillAddress('0xUserAlex')">
+<div class="w-12 h-12 rounded-full overflow-hidden">
+<img alt="Alex Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5hqQrjvAQ3ylCEXp4dkgPYYJ5bVk9La_nBLpbWNumymf5S6s1bAs6IgM6VI0SDj-XxqUUh-FwMH6DSQnK0HmkC-TLFLJeUcOdACiVUavTtgwzypXtwZp8TYgp65tZ52CTAmdxrJR7n2hsA_zzZAzYS1E5yN9pexAz1p1S2_NkDAL--Dux1q-m-bA_XtcmZHAgEQK5PNWcz3ByFzT0eorpZvRHIP3WWoKBbyjhgIa1IB0WTEU0y2ZyZvZDN9D9me46SgQ7Clcswzau">
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Alex Chen</p>
+<p class="font-label-sm text-label-sm text-outline mt-0.5">Sent 2 days ago</p>
+</div>
+</button>
+<!-- Scan Prompt Card -->
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-surface-variant transition-colors cursor-pointer text-center group h-full min-h-[120px]">
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary text-[32px] transition-colors">add_a_photo</span>
+<p class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface">Scan New QR</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest dark:bg-inverse-surface shadow-[0px_-4px_20px_rgba(99,102,241,0.08)] flex justify-around items-center h-20 pb-safe px-4">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant py-1 hover:text-primary dark:hover:text-primary-fixed w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant py-1 hover:text-primary dark:hover:text-primary-fixed w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">trending_up</span>
+<span class="font-label-sm text-label-sm">Market</span>
+</button>
+<!-- Active Item -->
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full px-4 py-1 -mt-4 shadow-md w-20 h-16 border-4 border-background">
+<span class="material-symbols-outlined mb-0.5" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+<span class="font-label-sm text-label-sm font-semibold">Scan</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant py-1 hover:text-primary dark:hover:text-primary-fixed w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">chat_bubble</span>
+<span class="font-label-sm text-label-sm">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant py-1 hover:text-primary dark:hover:text-primary-fixed w-16">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Wallet</span>
+</button>
+</nav>
+<script>
+        // Simple Numpad Logic
+        let currentAmount = "0";
+        const amountDisplay = document.getElementById('amountDisplay');
+        
+        function appendNumber(num) {
+            if (currentAmount === "0" && num !== ".") {
+                currentAmount = num;
+            } else if (num === "." && currentAmount.includes(".")) {
+                return; // prevent multiple decimals
+            } else {
+                // limit length
+                if(currentAmount.length < 10) {
+                     currentAmount += num;
+                }
+            }
+            updateDisplay();
+        }
+
+        function deleteNumber() {
+            if (currentAmount.length > 1) {
+                currentAmount = currentAmount.slice(0, -1);
+            } else {
+                currentAmount = "0";
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Basic formatting for display purposes
+            if(currentAmount === "0") {
+                 amountDisplay.innerText = "0.00";
+                 amountDisplay.classList.remove('text-primary');
+                 amountDisplay.classList.add('text-on-surface');
+                 return;
+            }
+
+            amountDisplay.innerText = currentAmount;
+            
+            // Visual feedback when typing
+            amountDisplay.classList.add('text-primary');
+            setTimeout(() => {
+                amountDisplay.classList.remove('text-primary');
+                amountDisplay.classList.add('text-on-surface');
+            }, 150);
+        }
+
+        // Mock Trust Check Logic
+        const addressInput = document.getElementById('addressInput');
+        const trustWarning = document.getElementById('trustWarning');
+        const trustSuccess = document.getElementById('trustSuccess');
+
+        addressInput.addEventListener('input', function(e) {
+            const val = e.target.value.toLowerCase();
+            trustWarning.classList.add('hidden');
+            trustSuccess.classList.add('hidden');
+
+            if (val.length > 5) {
+                // Mock logic: if it contains 'x' but isn't one of our mock knowns
+                if (val.includes('0xamazon') || val.includes('0xstripe')) {
+                     trustSuccess.classList.remove('hidden');
+                } else if (val.startsWith('0x')) {
+                     trustWarning.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Fill address from book
+        function fillAddress(addr) {
+            addressInput.value = addr;
+            // Trigger input event to run validation
+            const event = new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            });
+            addressInput.dispatchEvent(event);
+        }
+    </script>
+
+
+</body></html>

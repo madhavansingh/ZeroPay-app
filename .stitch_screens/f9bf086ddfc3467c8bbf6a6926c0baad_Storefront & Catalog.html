@@ -1,0 +1,504 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ZeroPay - Merchant Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#8455ef",
+                      "primary": "#4648d4",
+                      "secondary-fixed": "#e9ddff",
+                      "on-tertiary": "#ffffff",
+                      "on-surface-variant": "#464554",
+                      "on-primary-fixed": "#07006c",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#6063ee",
+                      "on-primary": "#ffffff",
+                      "tertiary-container": "#00885d",
+                      "on-secondary-fixed": "#23005c",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "secondary": "#6b38d4",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "surface-variant": "#e1e2e5",
+                      "on-surface": "#191c1e",
+                      "surface-container-high": "#e7e8eb",
+                      "on-primary-container": "#fffbff",
+                      "outline-variant": "#c7c4d7",
+                      "on-secondary": "#ffffff",
+                      "on-background": "#191c1e",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "tertiary-fixed": "#6ffbbe",
+                      "surface-bright": "#f8f9fc",
+                      "on-error-container": "#93000a",
+                      "on-error": "#ffffff",
+                      "inverse-on-surface": "#f0f1f4",
+                      "tertiary": "#006c49",
+                      "inverse-primary": "#c0c1ff",
+                      "surface-container-low": "#f2f3f6",
+                      "on-tertiary-fixed": "#002113",
+                      "on-secondary-container": "#fffbff",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "surface": "#f8f9fc",
+                      "background": "#f8f9fc",
+                      "surface-container": "#edeef1",
+                      "on-tertiary-container": "#000703",
+                      "surface-container-highest": "#e1e2e5",
+                      "primary-fixed": "#e1e0ff",
+                      "surface-dim": "#d9dadd",
+                      "outline": "#767586",
+                      "inverse-surface": "#2e3133",
+                      "surface-tint": "#494bd6",
+                      "on-secondary-fixed-variant": "#5516be"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "card-gap": "12px",
+                      "container-padding": "20px",
+                      "section-margin": "32px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter", "sans-serif"],
+                      "body-md": ["Inter", "sans-serif"],
+                      "label-sm": ["Inter", "sans-serif"],
+                      "headline-md": ["Inter", "sans-serif"],
+                      "label-md": ["Inter", "sans-serif"],
+                      "headline-sm": ["Inter", "sans-serif"],
+                      "body-lg": ["Inter", "sans-serif"]
+              },
+              "fontSize": {
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Ambient depth */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid theme('colors.surface-container-high');
+            box-shadow: 0px 4px 20px rgba(99, 102, 241, 0.08);
+        }
+        
+        .floating-card {
+            background: theme('colors.surface-container-lowest');
+            border: 1px solid theme('colors.surface-container');
+            box-shadow: 0px 4px 20px rgba(99, 102, 241, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .floating-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0px 8px 30px rgba(99, 102, 241, 0.12);
+        }
+
+        /* Toggle switch styling */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: theme('colors.primary');
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: theme('colors.primary');
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden font-body-md text-body-md">
+<!-- Top App Bar (Mobile & Web Contextual) -->
+<header class="bg-surface dark:bg-surface w-full top-0 z-40 hidden md:flex sticky">
+<div class="flex justify-between items-center w-full px-container-padding py-base max-w-7xl mx-auto h-[72px]">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">
+                    ZP
+                </div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">ZeroPay</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<!-- Nav Links matching BottomNavBar for Web -->
+<a class="text-on-surface-variant hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">home</span>
+                    Home
+                </a>
+<a class="text-on-surface-variant hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">storefront</span>
+                    Market
+                </a>
+<a class="text-on-surface-variant hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+                    Scan &amp; Pay
+                </a>
+<a class="text-primary font-bold hover:bg-primary-container/10 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+                    Dashboard
+                </a>
+</nav>
+<button class="p-2 text-on-surface-variant hover:bg-primary-container/10 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">security</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Mobile Header -->
+<header class="md:hidden bg-surface flex justify-between items-center w-full px-container-padding py-base sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm">
+                ZP
+            </div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">ZeroPay</h1>
+</div>
+<button class="p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+<!-- Main Navigation Drawer (Desktop SideNav) -->
+<aside class="hidden md:flex flex-col h-[calc(100vh-72px)] w-80 bg-surface-container-lowest shadow-xl sticky top-[72px] z-30 p-4 gap-base shrink-0 border-r border-surface-container">
+<!-- Profile Header -->
+<div class="flex flex-col mb-6 p-4 rounded-xl bg-surface-bright border border-surface-container">
+<div class="flex items-center gap-4 mb-3">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container text-xl font-bold">
+<span class="material-symbols-outlined">store</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-primary">Verified Merchant</h2>
+<p class="text-label-md font-label-md text-on-surface-variant">Platinum Tier</p>
+</div>
+</div>
+<div class="bg-tertiary-container/10 text-tertiary-container text-label-sm font-label-sm px-2 py-1 rounded w-fit flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                Trust Score: 99.8%
+            </div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined">person</span>
+                Customer Workspace
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg bg-secondary-container text-on-secondary-container font-semibold text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined" data-weight="fill">store</span>
+                Merchant Dashboard
+            </a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-container-padding py-section-margin md:py-8 pb-24 md:pb-8">
+<div class="mb-section-margin">
+<h2 class="text-display-lg font-display-lg text-on-surface mb-2">Digital Presence</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Manage your storefront identity, hours, and active listings.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-card-gap md:gap-6">
+<!-- Left Column (Identity & Hours) -->
+<div class="md:col-span-8 flex flex-col gap-card-gap md:gap-6">
+<!-- Store Identity Section -->
+<section class="floating-card rounded-xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">badge</span>
+                            Store Identity
+                        </h3>
+<button class="text-primary hover:bg-primary-container/10 px-3 py-1.5 rounded-lg text-label-md font-label-md transition-colors">
+                            Edit
+                        </button>
+</div>
+<div class="relative w-full h-40 rounded-lg bg-surface-container overflow-hidden mb-6 group">
+<div class="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-20"></div>
+<!-- Placeholder Banner Image -->
+<div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&amp;fit=crop&amp;q=80&amp;w=1000')] bg-cover bg-center mix-blend-overlay" data-alt="A bright, modern coffee shop interior viewed from behind a sleek, minimalist counter. The lighting is high-key soft white, creating a premium, clean aesthetic suitable for a modern business profile. Subtle hints of corporate indigo and violet exist in the ambient lighting, reflecting a tech-optimist fintech brand style. The space feels authoritative, welcoming, and high-trust."></div>
+<button class="absolute top-4 right-4 bg-surface/80 backdrop-blur-md p-2 rounded-full text-on-surface shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<!-- Logo Avatar overlay -->
+<div class="absolute -bottom-6 left-6 w-20 h-20 rounded-xl bg-surface-container-lowest border-4 border-surface-container-lowest shadow-md flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-gradient-to-br from-secondary-container to-primary-container flex items-center justify-center text-on-primary font-bold text-2xl">
+                                CB
+                            </div>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-1">Store Name</label>
+<div class="text-body-md font-body-md text-on-surface p-3 bg-surface rounded-lg border border-surface-container">
+                                CryptoBrews Coffee
+                            </div>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-1">Short Description</label>
+<div class="text-body-md font-body-md text-on-surface p-3 bg-surface rounded-lg border border-surface-container truncate">
+                                Premium artisanal coffee accepting web3 payments.
+                            </div>
+</div>
+</div>
+</section>
+<!-- Contact & Hours Bento -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-card-gap md:gap-6">
+<!-- Contact Info -->
+<section class="floating-card rounded-xl p-6">
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">contact_support</span>
+                            Contact
+                        </h3>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Support Email</p>
+<p class="text-body-md font-body-md text-on-surface">hello@cryptobrews.eth</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Physical Location</p>
+<p class="text-body-md font-body-md text-on-surface">124 Satoshi St, Block 4</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Business Hours -->
+<section class="floating-card rounded-xl p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">schedule</span>
+                                Hours
+                            </h3>
+<span class="bg-tertiary-container/20 text-tertiary text-label-sm font-label-sm px-2 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Open Now
+                            </span>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-body-md font-body-md">
+<span class="text-on-surface-variant">Mon - Fri</span>
+<span class="text-on-surface font-medium">07:00 - 18:00</span>
+</div>
+<div class="flex justify-between items-center text-body-md font-body-md">
+<span class="text-on-surface-variant">Saturday</span>
+<span class="text-on-surface font-medium">08:00 - 16:00</span>
+</div>
+<div class="flex justify-between items-center text-body-md font-body-md">
+<span class="text-on-surface-variant">Sunday</span>
+<span class="text-error font-medium">Closed</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Products & Services List -->
+<section class="floating-card rounded-xl p-6">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+                                Active Listings
+                            </h3>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1">Manage what customers see on your profile.</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-container px-4 py-2 rounded-lg text-label-md font-label-md transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            New
+                        </button>
+</div>
+<div class="space-y-3">
+<!-- Item 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg border border-surface-container hover:bg-surface transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">local_cafe</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-on-surface">Artisan Espresso Blend</p>
+<p class="text-body-md font-body-md text-on-surface-variant">12 USDC</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-primary transition-all duration-300 right-0 z-10" id="toggle1" name="toggle" type="checkbox">
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-primary cursor-pointer" for="toggle1"></label>
+</div>
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg border border-surface-container hover:bg-surface transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">card_giftcard</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-on-surface">Digital Gift Card</p>
+<p class="text-body-md font-body-md text-on-surface-variant">Custom Amount</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-primary transition-all duration-300 right-0 z-10" id="toggle2" name="toggle" type="checkbox">
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-primary cursor-pointer" for="toggle2"></label>
+</div>
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Item 3 (Inactive) -->
+<div class="flex items-center justify-between p-3 rounded-lg border border-surface-container hover:bg-surface transition-colors group opacity-70">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">bakery_dining</span>
+</div>
+<div>
+<p class="text-label-md font-label-md text-on-surface">Seasonal Pastry Box</p>
+<p class="text-body-md font-body-md text-on-surface-variant">25 USDC</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-surface-variant transition-all duration-300 left-0 z-10" id="toggle3" name="toggle" type="checkbox">
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-variant cursor-pointer" for="toggle3"></label>
+</div>
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column (Live Preview) -->
+<div class="md:col-span-4 flex flex-col gap-card-gap md:gap-6">
+<section class="glass-panel rounded-2xl p-6 sticky top-[96px]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">visibility</span>
+                            Live Preview
+                        </h3>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded">Customer View</span>
+</div>
+<!-- Simulated Mobile Device Frame -->
+<div class="border-[6px] border-surface-container-highest rounded-[32px] overflow-hidden bg-surface-container-lowest shadow-inner relative h-[500px]">
+<!-- Notch -->
+<div class="absolute top-0 inset-x-0 h-6 bg-surface-container-highest rounded-b-xl w-32 mx-auto z-10"></div>
+<!-- Screen Content -->
+<div class="h-full w-full overflow-y-auto pb-4 scrollbar-hide">
+<!-- Banner -->
+<div class="h-24 bg-gradient-to-br from-primary to-secondary w-full relative">
+<!-- Banner Overlay for contrast -->
+<div class="absolute inset-0 bg-black/10"></div>
+</div>
+<!-- Content -->
+<div class="px-4 relative -mt-8">
+<div class="w-16 h-16 rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary font-bold text-xl border-2 border-surface-container-lowest mx-auto mb-3">
+                                    CB
+                                </div>
+<div class="text-center mb-4">
+<h4 class="text-headline-sm font-headline-sm text-on-surface">CryptoBrews</h4>
+<p class="text-label-sm font-label-sm text-on-surface-variant mt-1">Premium artisanal coffee.</p>
+</div>
+<div class="flex justify-center gap-2 mb-6">
+<span class="bg-surface-container text-on-surface text-label-sm font-label-sm px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-tertiary">star</span> 4.9
+                                    </span>
+<span class="bg-surface-container text-on-surface text-label-sm font-label-sm px-2 py-1 rounded-md">
+                                        Coffee
+                                    </span>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg text-label-md font-label-md mb-6 shadow-sm">
+                                    Pay Merchant
+                                </button>
+<div class="space-y-3">
+<h5 class="text-label-md font-label-md text-on-surface mb-2">Featured</h5>
+<!-- Preview Item -->
+<div class="flex gap-3 p-2 border border-surface-container rounded-lg">
+<div class="w-12 h-12 bg-surface-container-low rounded-md"></div>
+<div class="flex-1">
+<p class="text-label-sm font-label-sm text-on-surface font-semibold">Artisan Espresso</p>
+<p class="text-[10px] text-on-surface-variant">12 USDC</p>
+</div>
+</div>
+<div class="flex gap-3 p-2 border border-surface-container rounded-lg">
+<div class="w-12 h-12 bg-surface-container-low rounded-md"></div>
+<div class="flex-1">
+<p class="text-label-sm font-label-sm text-on-surface font-semibold">Digital Gift Card</p>
+<p class="text-[10px] text-on-surface-variant">Custom</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 flex justify-center">
+<button class="text-primary text-label-md font-label-md flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span> Open full preview
+                        </button>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter pb-4 pt-2 bg-surface dark:bg-surface border-t border-outline-variant dark:border-outline-variant shadow-md rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-label-sm font-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-label-sm font-label-sm mt-1">Market</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span class="text-label-sm font-label-sm mt-1">Scan &amp; Pay</span>
+</a>
+<a class="flex flex-col items-center justify-center flex flex-col items-center justify-center bg-primary-container dark:bg-primary-container text-on-primary-container dark:text-on-primary-container rounded-full px-4 py-1 scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+<span class="text-label-sm font-label-sm mt-1">Dashboard</span>
+</a>
+</nav>
+<style>
+        /* Hide scrollbar for the preview screen but keep functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>
