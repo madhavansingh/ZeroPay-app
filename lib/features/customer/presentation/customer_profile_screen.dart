@@ -98,7 +98,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                  // Trust Score
                  InkWell(
-                   onTap: () => context.go('/trust/dashboard'),
+                   onTap: () => context.push('/trust/dashboard'),
                    borderRadius: BorderRadius.circular(12),
                    child: Container(
                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -223,7 +223,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             title: const Text('Security Center', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
             subtitle: const Text('Manage FaceID locks, passcode setup, and active connected devices.', style: TextStyle(fontSize: 10)),
             trailing: const Icon(Icons.chevron_right, size: 16),
-            onTap: () => context.go('/security-center'),
+            onTap: () => context.push('/security-center'),
           ),
           const Divider(),
           ListTile(
@@ -232,7 +232,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             title: const Text('App Store & Onboarding Assets', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
             subtitle: const Text('Review store screenshots narrative layout, splash setups, and privacy policies.', style: TextStyle(fontSize: 10)),
             trailing: const Icon(Icons.chevron_right, size: 16),
-            onTap: () => context.go('/onboarding/assets'),
+            onTap: () => context.push('/onboarding/assets'),
           ),
           const Divider(),
           SwitchListTile(

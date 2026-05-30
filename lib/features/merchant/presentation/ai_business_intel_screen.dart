@@ -39,7 +39,7 @@ class _AiBusinessIntelScreenState extends ConsumerState<AiBusinessIntelScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go('/merchant/dashboard'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/merchant/dashboard'),
         ),
       ),
       body: intelAsync.when(

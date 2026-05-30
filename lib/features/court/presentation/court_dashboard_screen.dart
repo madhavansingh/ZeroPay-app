@@ -93,7 +93,7 @@ class _CourtDashboardScreenState extends ConsumerState<CourtDashboardScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-            onPressed: () => context.go('/customer/home'),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
           ),
         ),
         body: ErrorStateView(
@@ -115,7 +115,7 @@ class _CourtDashboardScreenState extends ConsumerState<CourtDashboardScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go('/customer/home'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
         ),
         actions: [
           IconButton(
@@ -130,7 +130,7 @@ class _CourtDashboardScreenState extends ConsumerState<CourtDashboardScreen> {
               title: 'No active disputes',
               description: 'All escrow transactions are currently clear.',
               buttonText: 'View Workspace Dashboard',
-              onButtonPressed: () => context.go('/customer/home'),
+              onButtonPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -564,7 +564,7 @@ class _CourtDashboardScreenState extends ConsumerState<CourtDashboardScreen> {
       title: 'No active disputes',
       description: 'All escrow transactions are currently clear.',
       buttonText: 'View Workspace Dashboard',
-      onButtonPressed: () => context.go('/customer/home'),
+      onButtonPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
     );
   }
 }

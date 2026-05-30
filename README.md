@@ -10,9 +10,6 @@
   <a href="#"><img src="https://img.shields.io/badge/Network-Cardano%20%7C%20Base-0033AD?style=flat-square" alt="Network"></a>
   <a href="https://github.com/madhavansingh/ZeroPay-app/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"></a>
 </p>
-
-[**Ecosystem API**](file:///Users/maddy/ZeroPay) • [**Documentation**](#) • [**Demo Video**](#)
-
 ---
 
 ## 📖 Product Overview
@@ -33,21 +30,23 @@
 
 ---
 
-## 📸 Interface Showcase
+## Product Experience
 
-| Customer Experience | Merchant HQ | AI Negotiation |
-| :---: | :---: | :---: |
-| ![Customer Home](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/customer_home.png) | ![Merchant HQ](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/merchant_hq.png) | ![AI Negotiation](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/ai_negotiation.png) |
-| *Multi-asset wallet, dynamic QR generation, and active milestone tracking.* | *Revenue analytics, webhook settings, and settlement telemetry logs.* | *Gemini-integrated pricing conversation workspace with guardrail limits.* |
+ZeroPay provides a unified commerce platform spanning buyers, merchants, escrow operations, wallet infrastructure, blockchain settlements, QR commerce, AI assistance, and dispute resolution.
 
-| Storefront Catalog | Dispute Resolution | Telemetry & Operations |
+| Customer Home Dashboard | Merchant Commerce Dashboard | Storefront Management |
 | :---: | :---: | :---: |
-| ![Storefront Catalog](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/storefront_catalog.png) | ![Juror Court](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/juror_court.png) | ![Telemetry Dashboard](https://raw.githubusercontent.com/madhavansingh/ZeroPay-app/main/assets/readme/telemetry.png) |
-| *Add items, configure pricing, and instantly generate billing POS QR codes.* | *Staked juror case files, evidence briefs, and consensus voting splits.* | *Real-time risk scoring, wallet velocity monitoring, and SLA metrics.* |
+| ![Customer Home Dashboard](docs/images/customer-home-dashboard.png) | ![Merchant Commerce Dashboard](docs/images/merchant-dashboard.png) | ![Storefront Management](docs/images/storefront-management.png) |
+| *Portfolio management, escrow tracking, wallet activity, and AI-powered insights.* | *Revenue analytics, settlement visibility, operational monitoring, and payout workflows.* | *Catalog administration, QR invoice generation, inventory controls, and commerce configuration.* |
+
+| Merchant HQ Operations | Smart Escrow Builder | Send Assets Flow |
+| :---: | :---: | :---: |
+| ![Merchant HQ Operations](docs/images/merchant-hq-operations.png) | ![Smart Escrow Builder](docs/images/escrow-builder.png) | ![Send Assets Flow](docs/images/send-assets.png) |
+| *Contract lifecycle management, milestone monitoring, dispute workflows, and settlement operations.* | *Multi-stage programmable escrow creation with blockchain-backed validation and milestone locking.* | *Cryptographic transaction invoice details, network gas estimation, and secure token signing.* |
 
 ---
 
-## 🏗️ Visual System-Design Showcase
+## 🏗️ Visual System-Design Architecture
 
 ### 1. High-Level System Architecture
 Overview of the decoupled off-chain API gateways, BullMQ asynchronous worker engines, databases, and blockchain networks.
@@ -157,8 +156,8 @@ flowchart TB
     RepoCheck -->|Simulated UI Runs| MockRepo["MockZeroPayRepository"]
     RepoCheck -->|Production builds| RealRepo["RealZeroPayRepository"]
     
-    subgraph MockRepo_Flow ["Sandbox Repository Mock"]
-        MockRepo --> DataGen["demoDatasetProvider"]
+    subgraph MockRepo_Flow ["Sandbox Repository Local Mock"]
+        MockRepo --> DataGen["localDatasetProvider"]
     end
 
     subgraph RealRepo_Flow ["Production Repository Interface"]

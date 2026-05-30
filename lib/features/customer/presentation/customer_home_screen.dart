@@ -293,7 +293,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     Widget buildActionBtn(IconData icon, String label, String route) {
       return Expanded(
         child: GestureDetector(
-          onTap: () => context.go(route),
+          onTap: () {
+            if (route == '/customer/marketplace' || route == '/customer/wallet') {
+              context.go(route);
+            } else {
+              context.push(route);
+            }
+          },
           child: Column(
             children: [
               Container(
@@ -379,7 +385,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   final usdValue = asset.balance * livePrice;
 
                   return GestureDetector(
-                    onTap: () => context.go('/customer/wallet/asset/${asset.symbol}'),
+                    onTap: () => context.push('/customer/wallet/asset/${asset.symbol}'),
                     child: Container(
                       width: 250,
                       margin: const EdgeInsets.only(right: 14),

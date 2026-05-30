@@ -249,7 +249,14 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go('/customer/home'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              final role = ref.read(authProvider).currentRole;
+              context.go(role == 'merchant' ? '/merchant/dashboard' : '/customer/home');
+            }
+          },
         ),
       ),
       body: Stack(
@@ -904,7 +911,12 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           onPressed: () {
-                            context.go('/customer/home');
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              final role = ref.read(authProvider).currentRole;
+                              context.go(role == 'merchant' ? '/merchant/dashboard' : '/customer/home');
+                            }
                           },
                           child: const Text('Back to Home'),
                         ),

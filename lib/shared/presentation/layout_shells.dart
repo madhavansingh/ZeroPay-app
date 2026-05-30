@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
@@ -227,69 +228,80 @@ class CustomerShellLayout extends ConsumerWidget {
 
     final offlineState = ref.watch(offlineProvider);
 
-    return Scaffold(
-      appBar: _buildShellAppBar(context, ref, 'customer'),
-      body: Column(
-        children: [
-          if (offlineState.isOffline) _buildOfflineBanner(context, ref, offlineState),
-          Expanded(child: child),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
-        ),
-        child: NavigationBar(
-          selectedIndex: currentIndex,
-          elevation: 0,
-          backgroundColor: AppColors.surfaceContainerLowest,
-          indicatorColor: AppColors.primary.withOpacity(0.08),
-          onDestinationSelected: (index) {
-            switch (index) {
-              case 0:
-                context.go('/customer/home');
-                break;
-              case 1:
-                context.go('/customer/marketplace');
-                break;
-              case 2:
-                context.go('/customer/escrow');
-                break;
-              case 3:
-                context.go('/customer/wallet');
-                break;
-              case 4:
-                context.go('/customer/profile');
-                break;
-            }
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: AppColors.primary),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.storefront_outlined),
-              selectedIcon: Icon(Icons.storefront, color: AppColors.primary),
-              label: 'Marketplace',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.lock_outlined),
-              selectedIcon: Icon(Icons.lock, color: AppColors.primary),
-              label: 'Escrow',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
-              label: 'Wallet',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: AppColors.primary),
-              label: 'Profile',
-            ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (currentIndex != 0) {
+          context.go('/customer/home');
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: _buildShellAppBar(context, ref, 'customer'),
+        body: Column(
+          children: [
+            if (offlineState.isOffline) _buildOfflineBanner(context, ref, offlineState),
+            Expanded(child: child),
           ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
+          ),
+          child: NavigationBar(
+            selectedIndex: currentIndex,
+            elevation: 0,
+            backgroundColor: AppColors.surfaceContainerLowest,
+            indicatorColor: AppColors.primary.withOpacity(0.08),
+            onDestinationSelected: (index) {
+              switch (index) {
+                case 0:
+                  context.go('/customer/home');
+                  break;
+                case 1:
+                  context.go('/customer/marketplace');
+                  break;
+                case 2:
+                  context.go('/customer/escrow');
+                  break;
+                case 3:
+                  context.go('/customer/wallet');
+                  break;
+                case 4:
+                  context.go('/customer/profile');
+                  break;
+              }
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home, color: AppColors.primary),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.storefront_outlined),
+                selectedIcon: Icon(Icons.storefront, color: AppColors.primary),
+                label: 'Marketplace',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.lock_outlined),
+                selectedIcon: Icon(Icons.lock, color: AppColors.primary),
+                label: 'Escrow',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.account_balance_wallet_outlined),
+                selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
+                label: 'Wallet',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person, color: AppColors.primary),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -315,69 +327,80 @@ class MerchantShellLayout extends ConsumerWidget {
 
     final offlineState = ref.watch(offlineProvider);
 
-    return Scaffold(
-      appBar: _buildShellAppBar(context, ref, 'merchant'),
-      body: Column(
-        children: [
-          if (offlineState.isOffline) _buildOfflineBanner(context, ref, offlineState),
-          Expanded(child: child),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
-        ),
-        child: NavigationBar(
-          selectedIndex: currentIndex,
-          elevation: 0,
-          backgroundColor: AppColors.surfaceContainerLowest,
-          indicatorColor: AppColors.secondary.withOpacity(0.08),
-          onDestinationSelected: (index) {
-            switch (index) {
-              case 0:
-                context.go('/merchant/dashboard');
-                break;
-              case 1:
-                context.go('/merchant/store');
-                break;
-              case 2:
-                context.go('/merchant/escrows');
-                break;
-              case 3:
-                context.go('/merchant/analytics');
-                break;
-              case 4:
-                context.go('/merchant/profile');
-                break;
-            }
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard, color: AppColors.secondary),
-              label: 'Dashboard',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.store_outlined),
-              selectedIcon: Icon(Icons.store, color: AppColors.secondary),
-              label: 'Store',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.lock_person_outlined),
-              selectedIcon: Icon(Icons.lock_person, color: AppColors.secondary),
-              label: 'Escrows',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.analytics_outlined),
-              selectedIcon: Icon(Icons.analytics, color: AppColors.secondary),
-              label: 'Analytics',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: AppColors.secondary),
-              label: 'Profile',
-            ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (currentIndex != 0) {
+          context.go('/merchant/dashboard');
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: _buildShellAppBar(context, ref, 'merchant'),
+        body: Column(
+          children: [
+            if (offlineState.isOffline) _buildOfflineBanner(context, ref, offlineState),
+            Expanded(child: child),
           ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
+          ),
+          child: NavigationBar(
+            selectedIndex: currentIndex,
+            elevation: 0,
+            backgroundColor: AppColors.surfaceContainerLowest,
+            indicatorColor: AppColors.secondary.withOpacity(0.08),
+            onDestinationSelected: (index) {
+              switch (index) {
+                case 0:
+                  context.go('/merchant/dashboard');
+                  break;
+                case 1:
+                  context.go('/merchant/store');
+                  break;
+                case 2:
+                  context.go('/merchant/escrows');
+                  break;
+                case 3:
+                  context.go('/merchant/analytics');
+                  break;
+                case 4:
+                  context.go('/merchant/profile');
+                  break;
+              }
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard, color: AppColors.secondary),
+                label: 'Dashboard',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.store_outlined),
+                selectedIcon: Icon(Icons.store, color: AppColors.secondary),
+                label: 'Store',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.lock_person_outlined),
+                selectedIcon: Icon(Icons.lock_person, color: AppColors.secondary),
+                label: 'Escrows',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.analytics_outlined),
+                selectedIcon: Icon(Icons.analytics, color: AppColors.secondary),
+                label: 'Analytics',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person, color: AppColors.secondary),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );

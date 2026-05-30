@@ -169,7 +169,12 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             if (_selectedThread != null && widget.preselectedThreadId == null) {
               setState(() => _selectedThread = null);
             } else {
-              context.go('/customer/home');
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                final role = ref.read(authProvider).currentRole;
+                context.go(role == 'merchant' ? '/merchant/dashboard' : '/customer/home');
+              }
             }
           },
         ),
@@ -326,7 +331,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             ),
             onPressed: () {
               // Direct route to contract analysis
-              context.go('/ai/contract-analysis');
+              context.push('/ai/contract-analysis');
             },
             child: const Text('Analyze Terms', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
           ),
@@ -552,7 +557,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             icon: const Icon(Icons.attach_file, color: AppColors.outline),
             onPressed: () {
               // Direct route to evidence upload
-              context.go('/court/evidence-upload');
+              context.push('/court/evidence-upload');
             },
           ),
           Expanded(

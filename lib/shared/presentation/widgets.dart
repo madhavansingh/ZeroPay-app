@@ -300,13 +300,13 @@ class _CommandPaletteSheetState extends State<CommandPaletteSheet> {
                         } else if (item == 'Go to Merchant Dashboard') {
                           context.go('/merchant/dashboard');
                         } else if (item == 'Scan dynamic POS QR Code') {
-                          context.go('/customer/wallet/send');
+                          context.push('/customer/wallet/send');
                         } else if (item == 'AI Escrow Contract Audit') {
-                          context.go('/ai/contract-analysis');
+                          context.push('/ai/contract-analysis');
                         } else if (item == 'Raise active milestone dispute') {
-                          context.go('/court/dashboard');
+                          context.push('/court/dashboard');
                         } else if (item == 'Open ADA Cardano Wallet details') {
-                          context.go('/customer/wallet/asset/ADA');
+                          context.push('/customer/wallet/asset/ADA');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Triggered Action: $item')),

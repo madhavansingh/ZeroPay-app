@@ -163,7 +163,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go(isMerchant ? '/merchant/profile' : '/customer/profile'),
+          onPressed: () => context.canPop() ? context.pop() : context.go(isMerchant ? '/merchant/profile' : '/customer/profile'),
         ),
       ),
       body: _isLoading

@@ -180,7 +180,13 @@ class WalletHomeScreen extends ConsumerWidget {
     Widget buildAction(IconData icon, String label, String route) {
       return Expanded(
         child: GestureDetector(
-          onTap: () => context.go(route),
+          onTap: () {
+            if (route == '/customer/marketplace' || route == '/customer/wallet') {
+              context.go(route);
+            } else {
+              context.push(route);
+            }
+          },
           child: Column(
             children: [
               Container(
@@ -224,7 +230,7 @@ class WalletHomeScreen extends ConsumerWidget {
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               child: BentoCard(
-                onTap: () => context.go('/customer/wallet/asset/${asset.symbol}'),
+                onTap: () => context.push('/customer/wallet/asset/${asset.symbol}'),
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [

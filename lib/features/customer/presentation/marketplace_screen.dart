@@ -217,7 +217,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         ),
         const SizedBox(height: 12),
         BentoCard(
-          onTap: () => context.go('/customer/marketplace/merchant/${featured.id}'),
+          onTap: () => context.push('/customer/marketplace/merchant/${featured.id}'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -299,7 +299,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: BentoCard(
-        onTap: () => context.go('/customer/marketplace/merchant/${merchant.id}'),
+        onTap: () => context.push('/customer/marketplace/merchant/${merchant.id}'),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

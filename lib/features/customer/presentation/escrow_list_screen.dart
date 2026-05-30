@@ -110,7 +110,7 @@ class _EscrowListScreenState extends ConsumerState<EscrowListScreen> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         child: BentoCard(
-                          onTap: () => context.go('/customer/escrow/${escrow.id}'),
+                          onTap: () => context.push('/customer/escrow/${escrow.id}'),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

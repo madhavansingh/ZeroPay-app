@@ -69,7 +69,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-            onPressed: () => context.go(isMerchant ? '/merchant/home' : '/customer/home'),
+            onPressed: () => context.canPop() ? context.pop() : context.go(isMerchant ? '/merchant/home' : '/customer/home'),
           ),
         ),
         body: ErrorStateView(
@@ -91,7 +91,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go(isMerchant ? '/merchant/home' : '/customer/home'),
+          onPressed: () => context.canPop() ? context.pop() : context.go(isMerchant ? '/merchant/home' : '/customer/home'),
         ),
       ),
       body: SingleChildScrollView(

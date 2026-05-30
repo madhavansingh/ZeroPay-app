@@ -61,7 +61,11 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
             if (_selectedClient != null) {
               setState(() => _selectedClient = null);
             } else {
-              context.go('/merchant/dashboard');
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/merchant/dashboard');
+              }
             }
           },
         ),

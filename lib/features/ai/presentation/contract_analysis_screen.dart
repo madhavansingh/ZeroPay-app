@@ -65,7 +65,14 @@ class ContractAnalysisScreen extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              final role = ref.read(authProvider).currentRole;
+              context.go(role == 'merchant' ? '/merchant/dashboard' : '/customer/home');
+            }
+          },
         ),
       ),
       body: ListView(

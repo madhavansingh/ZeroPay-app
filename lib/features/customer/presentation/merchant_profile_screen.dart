@@ -82,7 +82,7 @@ class MerchantProfileScreen extends ConsumerWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/marketplace'),
         ),
         title: detailAsync.when(
           data: (detail) => Text(
@@ -437,7 +437,7 @@ class MerchantProfileScreen extends ConsumerWidget {
                       onPressed: () {
                         // Pre-populate checkout parameters and navigate to Send Tokens screen
                         // For demo: go to send screen with arguments in query parameters
-                        context.go('/customer/wallet/send?address=${detail.address}&amount=${item.price}&symbol=${item.symbol}');
+                        context.push('/customer/wallet/send?address=${detail.address}&amount=${item.price}&symbol=${item.symbol}');
                       },
                     ),
                   ],

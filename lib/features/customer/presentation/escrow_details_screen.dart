@@ -109,7 +109,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-            onPressed: () => context.pop(),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/customer/escrow'),
           ),
           title: Text(
             'Escrow Details #${widget.escrowId}',
@@ -133,7 +133,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/escrow'),
         ),
         title: Text(
           'Escrow Details #${escrow.id}',

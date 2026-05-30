@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/presentation/widgets.dart';
+import '../../../shared/providers/global_providers.dart';
 
 class AppStoreAssetsScreen extends ConsumerStatefulWidget {
   const AppStoreAssetsScreen({super.key});
@@ -98,7 +99,14 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.onBackground),
-          onPressed: () => context.go('/customer/home'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              final role = ref.read(authProvider).currentRole;
+              context.go(role == 'merchant' ? '/merchant/profile' : '/customer/profile');
+            }
+          },
         ),
       ),
       body: ListView(

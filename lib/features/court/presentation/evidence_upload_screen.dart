@@ -172,7 +172,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go('/court/dashboard'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/court/dashboard'),
         ),
       ),
       body: Stack(

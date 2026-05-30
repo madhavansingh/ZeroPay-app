@@ -28,7 +28,7 @@ class _ReceiveTokensScreenState extends ConsumerState<ReceiveTokensScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
         ),
         title: const Text('Receive Assets', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onSurface)),
       ),

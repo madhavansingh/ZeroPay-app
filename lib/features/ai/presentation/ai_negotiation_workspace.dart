@@ -73,7 +73,7 @@ class _AiNegotiationWorkspaceState extends ConsumerState<AiNegotiationWorkspace>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
-          onPressed: () => context.go('/customer/home'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/customer/home'),
         ),
       ),
       body: ListView(

@@ -341,7 +341,13 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
     Widget buildNavBtn(IconData icon, String label, String route, Color color) {
       return BentoCard(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        onTap: () => context.go(route),
+        onTap: () {
+          if (route == '/merchant/store' || route == '/merchant/escrows') {
+            context.go(route);
+          } else {
+            context.push(route);
+          }
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
