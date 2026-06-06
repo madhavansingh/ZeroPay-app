@@ -18,8 +18,9 @@ export function validateStartup(): void {
 
     // 2. Reject mock/placeholder Gemini keys in production
     const geminiKey = env.GEMINI_API_KEY;
-    if (geminiKey.startsWith('mock-') || geminiKey.startsWith('test-') || geminiKey.startsWith('AQ.')) {
-      errors.push('CRITICAL: GEMINI_API_KEY cannot be a mock, test, or placeholder key (e.g. starting with AQ.) in production.');
+    const isPlaceholder = /placeholder|your_|your-|todo|changeme|mock-gemini|test-key/i.test(geminiKey) || geminiKey.trim() === '';
+    if (isPlaceholder) {
+      errors.push('CRITICAL: GEMINI_API_KEY cannot be a placeholder, mock, or test key in production.');
     }
 
     // 3. Reject default admin password in production

@@ -65,10 +65,11 @@ const envSchema = z.object({
   GITHUB_TOKEN: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === 'production') {
-    if (data.GEMINI_API_KEY.startsWith('mock-') || data.GEMINI_API_KEY.startsWith('test-') || data.GEMINI_API_KEY.startsWith('AQ.')) {
+    const isPlaceholder = /placeholder|your_|your-|todo|changeme|mock-gemini|test-key/i.test(data.GEMINI_API_KEY) || data.GEMINI_API_KEY.trim() === '';
+    if (isPlaceholder) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'GEMINI_API_KEY cannot be a mock/test/AQ. placeholder key in production mode',
+        message: 'GEMINI_API_KEY cannot be a placeholder, mock, or test key in production mode',
         path: ['GEMINI_API_KEY'],
       });
     }
