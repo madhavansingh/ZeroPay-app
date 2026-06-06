@@ -21,6 +21,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
   bool _isPageLoading = true;
   String? _error;
   Escrow? _escrowState;
+  List<dynamic> _githubAudits = [];
 
   @override
   void initState() {
@@ -36,8 +37,17 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
     try {
       final repo = ref.read(zeroPayRepositoryProvider);
       final data = await repo.getEscrowDetails(widget.escrowId);
+      List<dynamic> audits = [];
+      if (data.projectPlanId != null) {
+        try {
+          audits = await repo.getProjectGitHubAudits(data.projectPlanId!);
+        } catch (_) {
+          // Fallback if route fails
+        }
+      }
       setState(() {
         _escrowState = data;
+        _githubAudits = audits;
         _isPageLoading = false;
       });
     } catch (e) {
@@ -148,6 +158,10 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
               // Value Header
               _buildValueHeader(escrow),
               const SizedBox(height: 24),
+
+              // GitHub AI Audit Card
+              _buildGitHubAuditCard(escrow),
+              if (escrow.projectPlanId != null) const SizedBox(height: 24),
 
               // Milestones Vertical Timeline Stepper
               _buildMilestonesStepper(escrow),
@@ -491,6 +505,180 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildGitHubAuditCard(Escrow escrow) {
+    if (escrow.projectPlanId == null) return const SizedBox.shrink();
+
+    if (_githubAudits.isEmpty) {
+      return BentoCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'GitHub Code Verification',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
+                  },
+                  child: Row(
+                    children: const [
+                      Text(
+                        'Audit Dashboard',
+                        style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No audits have been executed yet for this project plan.',
+              style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
+              },
+              icon: const Icon(Icons.link, size: 16),
+              label: const Text('Connect Repository & Run Audit', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final latestAudit = _githubAudits.first;
+    final score = (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0;
+    final recommendation = latestAudit['releaseRecommendation'] as String? ?? 'UNKNOWN';
+    final status = latestAudit['auditStatus'] as String? ?? 'UNKNOWN';
+    
+    Color statusColor = Colors.orange;
+    IconData statusIcon = Icons.warning;
+    if (status == 'PASSED') {
+      statusColor = AppColors.tertiary;
+      statusIcon = Icons.check_circle;
+    } else if (status == 'FAILED') {
+      statusColor = AppColors.error;
+      statusIcon = Icons.cancel;
+    }
+
+    return BentoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'GitHub AI Audit Status',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              GestureDetector(
+                onTap: () {
+                  context.push('/trust/github-audit?auditId=${latestAudit['auditId']}&projectPlanId=${escrow.projectPlanId}');
+                },
+                child: Row(
+                  children: const [
+                    Text(
+                      'View Audit Report',
+                      style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.primary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 70,
+                    height: 70,
+                    child: CircularProgressIndicator(
+                      value: score / 100,
+                      strokeWidth: 8,
+                      backgroundColor: AppColors.surfaceContainerHigh,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        score >= 80
+                            ? AppColors.tertiary
+                            : score >= 60
+                                ? Colors.orange
+                                : AppColors.error,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${score.toInt()}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(statusIcon, color: statusColor, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Verdict: $status',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getRecommendationText(recommendation),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Verified via GitHub MCP Audit Agent',
+                      style: TextStyle(fontSize: 10, color: AppColors.outline),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getRecommendationText(String rec) {
+    switch (rec) {
+      case 'RECOMMEND_RELEASE':
+        return 'Safe to release funds. High implementation coverage.';
+      case 'RECOMMEND_MINOR_FIXES':
+        return 'Minor fixes suggested, release at your discretion.';
+      case 'RECOMMEND_MAJOR_REWORK':
+        return 'Rework recommended. Crucial components are missing.';
+      case 'RECOMMEND_DISPUTE_REVIEW':
+        return 'Dispute review requested. Mismatch of requirements.';
+      default:
+        return 'Verification pending.';
+    }
   }
 
   Color _getStatusColor(String status) {

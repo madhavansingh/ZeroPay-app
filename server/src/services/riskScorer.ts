@@ -55,7 +55,7 @@ export class RiskScorer {
 
       // Get count and sum within the window
       const rawCount = await upstashRedis.zcard(countKey);
-      const volumeMembers = await upstashRedis.zrange<string[]>(volumeKey, 0, -1);
+      const volumeMembers = await (upstashRedis as any).zrange(volumeKey, 0, -1);
       
       let totalLovelace = 0;
       for (const m of volumeMembers) {

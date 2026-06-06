@@ -178,3 +178,25 @@ export function verifyPayment(
   if (txInfo.totalOutputLovelace < expectedLovelace) return 'amount-mismatch';
   return 'amount-matched';
 }
+
+export async function getWalletAddressBalance(address: string): Promise<Array<{ unit: string; quantity: string }>> {
+  const breaker = circuitRegistry.getOrCreate('blockfrost');
+  return breaker.execute(
+    async () => {
+      try {
+        const data = await blockfrost.addresses(address);
+        return data.amount;
+      } catch (err: any) {
+        if (err.status_code === 404 || (err.message && err.message.includes('not found'))) {
+          return [{ unit: 'lovelace', quantity: '0' }];
+        }
+        throw err;
+      }
+    },
+    async (err) => {
+      console.warn(`[blockchain] Blockfrost address fetch failed, returning zero balance fallback: ${err.message}`);
+      return [{ unit: 'lovelace', quantity: '0' }];
+    }
+  );
+}
+

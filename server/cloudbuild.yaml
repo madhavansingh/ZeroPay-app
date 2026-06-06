@@ -1,0 +1,44 @@
+steps:
+  # 1. Build the container image using the root context (enabling access to shared/)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/zeropay-backend:$COMMIT_SHA'
+      - '-f'
+      - 'server/Dockerfile'
+      - '.'
+
+  # 2. Push the container image to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/zeropay-backend:$COMMIT_SHA'
+
+  # 3. Pre-process cloudrun.service.yaml to inject the correct image tag and project ID
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sed -i "s|asia-south1-docker.pkg.dev/PROJECT_ID/zeropay-repo/zeropay-backend:latest|$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/zeropay-backend:$COMMIT_SHA|g" server/cloudrun.service.yaml
+
+  # 4. Deploy the container image to Google Cloud Run using the service configuration
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'services'
+      - 'replace'
+      - 'server/cloudrun.service.yaml'
+
+images:
+  - '$_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/zeropay-backend:$COMMIT_SHA'
+
+substitutions:
+  _AR_HOSTNAME: 'asia-south1-docker.pkg.dev'
+  _AR_REPOSITORY: 'zeropay-repo'
+  _DEPLOY_REGION: 'asia-south1'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

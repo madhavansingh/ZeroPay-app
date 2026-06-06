@@ -80,6 +80,7 @@ class WalletApiService {
     required String recipientAddress,
     required double amount,
     required String tokenSymbol,
+    String? mnemonic,
   }) async {
     return await _client.post(
       ApiEndpoints.walletSend,
@@ -87,6 +88,20 @@ class WalletApiService {
         'recipient': recipientAddress,
         'amount': amount,
         'symbol': tokenSymbol,
+        if (mnemonic != null) 'mnemonic': mnemonic,
+      },
+    );
+  }
+
+  Future<Response> signTransaction({
+    required String unsignedCbor,
+    required List<String> mnemonic,
+  }) async {
+    return await _client.post(
+      '/wallet/sign',
+      data: {
+        'unsignedCbor': unsignedCbor,
+        'mnemonic': mnemonic.join(' '),
       },
     );
   }
@@ -257,6 +272,10 @@ class MerchantApiService {
 
   Future<Response> fetchInvoicesList() async {
     return await _client.get('/invoices/merchant/list');
+  }
+
+  Future<Response> fetchWebhookDeliveries() async {
+    return await _client.get('/webhooks/deliveries');
   }
 }
 
@@ -481,4 +500,67 @@ class TelemetryApiService {
 
 final telemetryApiServiceProvider = Provider<TelemetryApiService>((ref) {
   return TelemetryApiService(ref.read(apiClientProvider));
+});
+
+// ----------------------------------------------------
+// GitHub Audit API Service
+// ----------------------------------------------------
+class GithubAuditApiService {
+  final BaseApiClient _client;
+  GithubAuditApiService(this._client);
+
+  Future<Response> connectRepository({
+    required String projectPlanId,
+    required String repositoryUrl,
+    String? branch,
+  }) async {
+    return await _client.post(
+      '/github/connect',
+      data: {
+        'projectPlanId': projectPlanId,
+        'repositoryUrl': repositoryUrl,
+        if (branch != null) 'branch': branch,
+      },
+    );
+  }
+
+  Future<Response> triggerMilestoneAudit({
+    required String projectPlanId,
+    required String milestoneId,
+  }) async {
+    return await _client.post(
+      '/github/audit',
+      data: {
+        'projectPlanId': projectPlanId,
+        'milestoneId': milestoneId,
+      },
+    );
+  }
+
+  Future<Response> getAuditDetails(String auditId) async {
+    return await _client.get('/github/audit/$auditId');
+  }
+
+  Future<Response> getProjectAudits(String projectPlanId) async {
+    return await _client.get('/github/audit/project/$projectPlanId');
+  }
+
+  Future<Response> reverifyAudit(String auditId) async {
+    return await _client.post('/github/audit/$auditId/reverify');
+  }
+
+  Future<Response> requestFixes(String auditId, String feedback) async {
+    return await _client.post(
+      '/github/audit/$auditId/request-fixes',
+      data: {'feedback': feedback},
+    );
+  }
+
+  Future<Response> getReleaseRecommendation(String auditId) async {
+    return await _client.post('/github/audit/$auditId/release-recommendation');
+  }
+}
+
+final githubAuditApiServiceProvider = Provider<GithubAuditApiService>((ref) {
+  return GithubAuditApiService(ref.read(apiClientProvider));
 });

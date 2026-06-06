@@ -18,11 +18,35 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
   Escrow? _selectedEscrow;
   final TextEditingController _evidenceController = TextEditingController();
   bool _isSubmitting = false;
+  List<dynamic> _githubAudits = [];
+  bool _isLoadingAudits = false;
 
   @override
   void dispose() {
     _evidenceController.dispose();
     super.dispose();
+  }
+
+  void _selectEscrow(Escrow escrow) async {
+    setState(() {
+      _selectedEscrow = escrow;
+      _githubAudits = [];
+      _isLoadingAudits = true;
+    });
+    if (escrow.projectPlanId != null) {
+      try {
+        final repo = ref.read(zeroPayRepositoryProvider);
+        final audits = await repo.getProjectGitHubAudits(escrow.projectPlanId!);
+        setState(() {
+          _githubAudits = audits;
+          _isLoadingAudits = false;
+        });
+      } catch (_) {
+        setState(() => _isLoadingAudits = false);
+      }
+    } else {
+      setState(() => _isLoadingAudits = false);
+    }
   }
 
   @override
@@ -39,7 +63,11 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
           onPressed: () {
             if (_selectedEscrow != null) {
-              setState(() => _selectedEscrow = null);
+              setState(() {
+                _selectedEscrow = null;
+                _githubAudits = [];
+                _isLoadingAudits = false;
+              });
             } else {
               context.go('/merchant/dashboard');
             }
@@ -80,7 +108,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: BentoCard(
-                onTap: () => setState(() => _selectedEscrow = escrow),
+                onTap: () => _selectEscrow(escrow),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -157,6 +185,12 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
         ),
         const SizedBox(height: 20),
 
+        // GitHub AI Audit Panel
+        if (escrow.projectPlanId != null) ...[
+          _buildMerchantAuditStatusCard(escrow),
+          const SizedBox(height: 20),
+        ],
+
         // Milestone Manager Panel
         Text('Milestone Progression Manager', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
@@ -215,27 +249,56 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
                       children: [
                         Text('${m.amount} ${escrow.assetSymbol}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         const SizedBox(height: 4),
-                        if (isInProgress)
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 24),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () async {
-                              await repository.releaseMilestone(escrow.id, m.id);
-                              final updated = await repository.getEscrowDetails(escrow.id);
-                              setState(() {
-                                _selectedEscrow = updated;
-                              });
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Pushed milestone release confirmation request to customer.')),
+                        if (isInProgress) ...[
+                          if (_isLoadingAudits)
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          else if (_githubAudits.isEmpty && escrow.projectPlanId != null)
+                            const Text(
+                              'Audit Req.',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
+                            )
+                          else
+                            Builder(
+                              builder: (context) {
+                                final latestAudit = _githubAudits.isNotEmpty ? _githubAudits.first : null;
+                                final score = latestAudit != null ? (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0 : 0.0;
+                                final status = latestAudit != null ? latestAudit['auditStatus'] as String? ?? 'FAILED' : 'FAILED';
+                                final canRequest = status == 'PASSED' && score >= 70.0;
+                                
+                                if (!canRequest && escrow.projectPlanId != null) {
+                                  return Text(
+                                    'Blocked (${score.toInt()}%)',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
+                                  );
+                                }
+                                
+                                return TextButton(
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 24),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () async {
+                                    await repository.releaseMilestone(escrow.id, m.id);
+                                    final updated = await repository.getEscrowDetails(escrow.id);
+                                    setState(() {
+                                      _selectedEscrow = updated;
+                                    });
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Pushed milestone release confirmation request to customer.')),
+                                      );
+                                    }
+                                  },
+                                  child: const Text('Request Release', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary)),
                                 );
                               }
-                            },
-                            child: const Text('Request Release', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary)),
-                          )
+                            ),
+                        ]
                         else
                           Text(m.status, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isReleased ? AppColors.tertiary : AppColors.outline)),
                       ],
@@ -444,6 +507,81 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMerchantAuditStatusCard(Escrow escrow) {
+    if (_isLoadingAudits) {
+      return const BentoCard(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (_githubAudits.isEmpty) {
+      return BentoCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('GitHub Code Audit', style: TextStyle(fontWeight: FontWeight.bold)),
+                GestureDetector(
+                  onTap: () {
+                    context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
+                  },
+                  child: const Text('View Dashboard →', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'No audits have been executed yet. Payout release requests are locked until the code repository is connected and audited.',
+              style: TextStyle(fontSize: 12, color: AppColors.error),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final latestAudit = _githubAudits.first;
+    final score = (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0;
+    final status = latestAudit['auditStatus'] as String? ?? 'FAILED';
+    final isPassed = status == 'PASSED' && score >= 70.0;
+
+    return BentoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'GitHub Audit: ${isPassed ? "PASSED" : "FAILED"}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: isPassed ? AppColors.tertiary : AppColors.error),
+              ),
+              GestureDetector(
+                onTap: () {
+                  context.push('/trust/github-audit?auditId=${latestAudit['auditId']}&projectPlanId=${escrow.projectPlanId}');
+                },
+                child: const Text('View Findings →', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isPassed
+                ? 'Your code has passed verification (Release Score: ${score.toInt()}%). You may now request milestone release.'
+                : 'Your code does not meet verification thresholds (Release Score: ${score.toInt()}%). Request release is currently locked. Please check the findings and resolve errors.',
+            style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 }

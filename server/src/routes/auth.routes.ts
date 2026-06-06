@@ -7,6 +7,7 @@ import { requireAuth, ensureMerchantProvisioned } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { authRateLimit } from '../middleware/rateLimit';
 import { upstashRedis, cacheKeys } from '../config/redis';
+import { env } from '../config/env';
 
 const router = Router();
 
@@ -48,6 +49,10 @@ router.post(
       let decoded: { uid: string; phone_number?: string; name?: string };
 
       if (token.startsWith('dev_token_')) {
+        if (env.NODE_ENV === 'production' || !env.DEV_AUTH_ENABLED) {
+          res.status(401).json({ success: false, error: 'Developer authentication bypass is disabled in production' });
+          return;
+        }
         const role = token.slice(10);
         decoded = {
           uid: `dev_uid_${role}`,

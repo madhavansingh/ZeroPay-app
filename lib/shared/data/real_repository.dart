@@ -4,6 +4,7 @@ import '../../core/api/api_client.dart';
 import '../../core/security/secure_cache.dart';
 import '../../core/offline/offline_manager.dart';
 import '../../core/offline/conflict_resolver.dart';
+import '../../core/security/security_service.dart';
 import '../domain/models.dart';
 import 'repository.dart';
 
@@ -16,6 +17,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
   final CourtApiService courtService;
   final TelemetryApiService telemetryService;
   final MerchantApiService merchantService;
+  final GithubAuditApiService githubAuditService;
+  final SecurityService securityService;
   
   final SecureCacheManager cache;
   final OfflineQueueManager queue;
@@ -29,10 +32,31 @@ class RealZeroPayRepository implements ZeroPayRepository {
     required this.courtService,
     required this.telemetryService,
     required this.merchantService,
+    required this.githubAuditService,
+    required this.securityService,
     SecureCacheManager? cache,
     OfflineQueueManager? queue,
   })  : cache = cache ?? SecureCacheManager(),
         queue = queue ?? OfflineQueueManager(apiClient: BaseApiClient());
+
+  // ----------------------------------------------------
+  // Cryptographic Transaction Signing Helper
+  // ----------------------------------------------------
+  Future<String> _signAndSubmitTx(String unsignedCbor) async {
+    final mnemonic = await securityService.getMnemonic();
+    if (mnemonic == null || mnemonic.isEmpty) {
+      throw StateError('No wallet mnemonic found in secure storage. Please setup or import a wallet first.');
+    }
+    final response = await walletService.signTransaction(
+      unsignedCbor: unsignedCbor,
+      mnemonic: mnemonic,
+    );
+    final responseData = response.data['data'];
+    if (responseData == null || responseData['txHash'] == null) {
+      throw Exception('Failed to sign and submit transaction: ${response.data}');
+    }
+    return responseData['txHash'] as String;
+  }
 
   // ----------------------------------------------------
   // Denomination Helpers (DTO Contract Safety)
@@ -198,10 +222,14 @@ class RealZeroPayRepository implements ZeroPayRepository {
     };
 
     try {
+      final mnemonicList = await securityService.getMnemonic();
+      final mnemonicStr = mnemonicList?.join(' ');
+
       await walletService.sendTransfer(
         recipientAddress: address,
         amount: amount, // api service accepts double and will format data accordingly
         tokenSymbol: symbol,
+        mnemonic: mnemonicStr,
       );
     } catch (e) {
       // Offline first queueing
@@ -302,7 +330,7 @@ class RealZeroPayRepository implements ZeroPayRepository {
   }
 
   @override
-  Future<void> createEscrow(Escrow escrow) async {
+  Future<String> createEscrow(Escrow escrow) async {
     final isAda = escrow.assetSymbol == 'ADA';
 
     // Backend expects integer amountPaise (INR) regardless of display currency.
@@ -334,29 +362,77 @@ class RealZeroPayRepository implements ZeroPayRepository {
     };
 
     try {
-      await escrowService.createEscrowContract(payload);
+      // 1. Resolve or Create the invoice contract
+      String invoiceId = escrow.id;
+      String paymentAddress = escrow.contractAddress;
+      
+      if (!invoiceId.startsWith('INV-')) {
+        final response = await escrowService.createEscrowContract(payload);
+        final responseData = response.data['data'];
+        invoiceId = responseData['invoiceId'] as String;
+        paymentAddress = responseData['paymentAddress'] as String? ?? '';
+      }
+
+      // 2. Fetch current user wallet address
+      final user = await getCurrentUser();
+      final customerAddress = user.walletAddress;
+      if (customerAddress == null || customerAddress.isEmpty) {
+        throw Exception('User wallet address is empty. Setup wallet before locking funds.');
+      }
+
+      // 3. Build lock transaction
+      final lockResponse = await escrowService.triggerEscrowLock(invoiceId, customerAddress);
+      final lockData = lockResponse.data['data'];
+      final unsignedCbor = lockData['txCbor'] as String? ?? lockData['unsignedCbor'] as String?;
+      if (unsignedCbor == null || unsignedCbor.isEmpty) {
+        throw Exception('Failed to construct Lock transaction CBOR.');
+      }
+
+      // 4. Sign and submit on-chain
+      final txHash = await _signAndSubmitTx(unsignedCbor);
+
+      // 5. Submit locked confirmation to server
+      await escrowService.submitEscrowLock(invoiceId, txHash, customerAddress);
+
+      // 6. Cache updated escrow details
+      final updatedEscrow = Escrow(
+        id: invoiceId,
+        title: escrow.title,
+        counterpartyAddress: escrow.counterpartyAddress,
+        counterpartyName: escrow.counterpartyName,
+        totalValue: escrow.totalValue,
+        assetSymbol: escrow.assetSymbol,
+        status: 'submitted',
+        milestones: escrow.milestones,
+        contractAddress: paymentAddress.isNotEmpty ? paymentAddress : (lockData['scriptAddress'] as String? ?? escrow.contractAddress),
+        chainName: escrow.chainName,
+        createdAt: DateTime.now(),
+        projectPlanId: escrow.projectPlanId,
+      );
+
+      await cache.cacheData('escrow_$invoiceId', updatedEscrow.toJson());
+
+      final customerCached = await cache.getCachedList('escrows_customer');
+      final customerList = customerCached != null
+          ? customerCached.map((e) => Escrow.fromJson(e)).toList()
+          : <Escrow>[];
+      customerList.removeWhere((e) => e.id == escrow.id || e.id == invoiceId);
+      customerList.add(updatedEscrow);
+      await cache.cacheList('escrows_customer', customerList.map((e) => e.toJson()).toList());
+
+      final merchantCached = await cache.getCachedList('escrows_merchant');
+      final merchantList = merchantCached != null
+          ? merchantCached.map((e) => Escrow.fromJson(e)).toList()
+          : <Escrow>[];
+      merchantList.removeWhere((e) => e.id == escrow.id || e.id == invoiceId);
+      merchantList.add(updatedEscrow);
+      await cache.cacheList('escrows_merchant', merchantList.map((e) => e.toJson()).toList());
+      return txHash;
     } catch (e) {
-      debugPrint('[RealRepo] createEscrow backend error: $e');
-      // Queue offline — will replay when connectivity is restored
+      debugPrint('[RealRepo] createEscrow failed: $e');
       await queue.enqueueAction('/invoices/create', 'POST', payload);
+      rethrow;
     }
-
-    // Cache locally for immediate UI feedback
-    await cache.cacheData('escrow_${escrow.id}', escrow.toJson());
-
-    final customerCached = await cache.getCachedList('escrows_customer');
-    final customerList = customerCached != null
-        ? customerCached.map((e) => Escrow.fromJson(e)).toList()
-        : <Escrow>[];
-    customerList.add(escrow);
-    await cache.cacheList('escrows_customer', customerList.map((e) => e.toJson()).toList());
-
-    final merchantCached = await cache.getCachedList('escrows_merchant');
-    final merchantList = merchantCached != null
-        ? merchantCached.map((e) => Escrow.fromJson(e)).toList()
-        : <Escrow>[];
-    merchantList.add(escrow);
-    await cache.cacheList('escrows_merchant', merchantList.map((e) => e.toJson()).toList());
   }
 
   @override
@@ -436,8 +512,32 @@ class RealZeroPayRepository implements ZeroPayRepository {
     };
 
     try {
-      await escrowService.triggerMilestoneRelease(escrowId, milestoneId);
+      final user = await getCurrentUser();
+      final customerAddress = user.walletAddress;
+      if (customerAddress == null || customerAddress.isEmpty) {
+        throw Exception('User wallet address is empty. Cannot authorize release.');
+      }
+
+      // 1. Build release transaction on backend
+      final response = await escrowService.triggerMilestoneRelease(escrowId, milestoneId, customerAddress: customerAddress);
+      final responseData = response.data['data'];
+      final unsignedCbor = responseData['unsignedCbor'] as String? ?? responseData['txCbor'] as String?;
+      if (unsignedCbor == null || unsignedCbor.isEmpty) {
+        throw Exception('Failed to construct milestone release transaction CBOR.');
+      }
+
+      // 2. Sign and submit on-chain
+      final txHash = await _signAndSubmitTx(unsignedCbor);
+
+      // 3. Submit confirmation to server
+      await escrowService.submitMilestoneRelease(escrowId, txHash);
+
+      // 4. Force cache update for updated status
+      final updatedDetails = await getEscrowDetails(escrowId);
+      await cache.cacheData('escrow_$escrowId', updatedDetails.toJson());
+
     } catch (e) {
+      debugPrint('[RealRepo] releaseMilestone failed: $e');
       // Offline action queueing
       await queue.enqueueAction('/escrow/release-milestone', 'POST', payload);
 
@@ -474,8 +574,32 @@ class RealZeroPayRepository implements ZeroPayRepository {
     final payload = {'escrow_id': escrowId};
     
     try {
-      await escrowService.triggerEscrowDispute(escrowId);
+      final user = await getCurrentUser();
+      final signerAddress = user.walletAddress;
+      if (signerAddress == null || signerAddress.isEmpty) {
+        throw Exception('User wallet address is empty. Cannot file dispute.');
+      }
+
+      // 1. Build dispute transaction on backend
+      final response = await escrowService.triggerEscrowDispute(escrowId, signerAddress: signerAddress);
+      final responseData = response.data['data'];
+      final unsignedCbor = responseData['unsignedCbor'] as String? ?? responseData['txCbor'] as String?;
+      if (unsignedCbor == null || unsignedCbor.isEmpty) {
+        throw Exception('Failed to construct dispute transaction CBOR.');
+      }
+
+      // 2. Sign and submit on-chain
+      final txHash = await _signAndSubmitTx(unsignedCbor);
+
+      // 3. Submit confirmation to server
+      await escrowService.submitEscrowDispute(escrowId, txHash);
+
+      // 4. Force cache update for updated status
+      final updatedDetails = await getEscrowDetails(escrowId);
+      await cache.cacheData('escrow_$escrowId', updatedDetails.toJson());
+
     } catch (e) {
+      debugPrint('[RealRepo] raiseDispute failed: $e');
       await queue.enqueueAction('/escrow/dispute', 'POST', payload);
 
       final cached = await cache.getCachedData('escrow_$escrowId');
@@ -759,19 +883,23 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<List<WebhookDelivery>> getWebhookHistory() async {
     try {
       await telemetryService.logMetric('webhook_poll', 1.0); // Simple ping trigger
-      // Direct webhook telemetry list mapping
-      final list = [
-        WebhookDelivery(
-          id: 'web_1',
-          url: 'https://api.merchantstore.io/hooks',
-          event: 'escrow.created',
-          statusCode: 200,
-          timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-          responseBody: '{"received":true}',
-        ),
-      ];
-      return list;
+      final response = await merchantService.fetchWebhookDeliveries();
+      final dataList = response.data['data'] as List?;
+      if (dataList == null) return [];
+      
+      return dataList.map((e) {
+        final json = Map<String, dynamic>.from(e as Map);
+        return WebhookDelivery(
+          id: json['_id'] as String? ?? json['id'] as String? ?? 'wh_${DateTime.now().millisecondsSinceEpoch}',
+          url: json['url'] as String? ?? '',
+          event: json['event'] as String? ?? '',
+          statusCode: json['statusCode'] as int? ?? 200,
+          timestamp: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+          responseBody: json['responseBody'] as String? ?? '',
+        );
+      }).toList();
     } catch (e) {
+      debugPrint('[RealRepo] getWebhookHistory error: $e');
       rethrow;
     }
   }
@@ -1059,6 +1187,94 @@ class RealZeroPayRepository implements ZeroPayRepository {
         'projectPlan': plan,
         'invoice': data['invoice'] as Map<String, dynamic>,
       };
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // GitHub Auditing
+  @override
+  Future<Map<String, dynamic>> connectGitHubRepository({
+    required String projectPlanId,
+    required String repositoryUrl,
+    String? branch,
+  }) async {
+    try {
+      final response = await githubAuditService.connectRepository(
+        projectPlanId: projectPlanId,
+        repositoryUrl: repositoryUrl,
+        branch: branch,
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> triggerMilestoneAudit({
+    required String projectPlanId,
+    required String milestoneId,
+  }) async {
+    try {
+      final response = await githubAuditService.triggerMilestoneAudit(
+        projectPlanId: projectPlanId,
+        milestoneId: milestoneId,
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getGitHubAuditDetails(String auditId) async {
+    try {
+      final response = await githubAuditService.getAuditDetails(auditId);
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<dynamic>> getProjectGitHubAudits(String projectPlanId) async {
+    try {
+      final response = await githubAuditService.getProjectAudits(projectPlanId);
+      if (response.data['data'] is List) {
+        return List<dynamic>.from(response.data['data'] as List);
+      }
+      return [];
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> reverifyGitHubAudit(String auditId) async {
+    try {
+      final response = await githubAuditService.reverifyAudit(auditId);
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> requestGitHubFixes(String auditId, String feedback) async {
+    try {
+      final response = await githubAuditService.requestFixes(auditId, feedback);
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getGitHubReleaseRecommendation(String auditId) async {
+    try {
+      final response = await githubAuditService.getReleaseRecommendation(auditId);
+      return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
       rethrow;
     }

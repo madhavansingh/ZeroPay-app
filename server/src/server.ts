@@ -13,10 +13,12 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { connectDatabase } from './config/db';
 import { initFirebase } from './config/firebase-admin';
-import { bullMqRedis } from './config/redis';
+import { bullMqRedis, upstashRedis } from './config/redis';
 import { initSocketServer } from './config/socketServer';
+import { validateStartup } from './config/startupValidation';
 
 import authRoutes from './routes/auth.routes';
+import courtRoutes from './routes/court.routes';
 import merchantRoutes from './routes/merchant.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import paymentRoutes from './routes/payment.routes';
@@ -36,7 +38,9 @@ import analyticsRoutes from './routes/analytics.routes';
 import marketplaceRoutes from './routes/marketplace.routes';
 import opsRoutes from './routes/ops.routes';
 import walletRoutes from './routes/wallet.routes';
+import telemetryRoutes from './routes/telemetry.routes';
 import projectRoutes from './routes/project.routes';
+import githubAuditRoutes from './routes/githubAudit.routes';
 
 import { initSubscribers } from './events/subscribers';
 import { metricsCollector, createMetricsRouter } from './middleware/metrics.middleware';
@@ -61,6 +65,21 @@ process.on('unhandledRejection', (reason: unknown) => {
 });
 
 async function bootstrap(): Promise<void> {
+  // 1. Run environment and configuration validations
+  validateStartup();
+
+  // 2. Verify Upstash Redis REST connectivity in production
+  if (env.NODE_ENV === 'production') {
+    logger.info('[Redis] Verifying Upstash Redis REST endpoint connectivity...');
+    try {
+      await upstashRedis.get('ping-check');
+      logger.info('[Redis] Upstash Redis REST endpoint verified online.');
+    } catch (err: any) {
+      logger.error('[Redis] Upstash Redis REST endpoint check failed', { detail: err.message });
+      throw new Error(`Upstash Redis REST connection check failed: ${err.message}`);
+    }
+  }
+
   initFirebase();
   await connectDatabase();
   initSubscribers();
@@ -125,8 +144,9 @@ async function bootstrap(): Promise<void> {
 
   // ── API routes ────────────────────────────────────────────────────────────
   app.use('/api/v1/auth', authRoutes);
-  app.use('/api/v1/merchant', merchantRoutes);
+  app.use('/api/v1/court', courtRoutes);
   app.use('/api/v1/merchant', dashboardRoutes);
+  app.use('/api/v1/merchant', merchantRoutes);
   app.use('/api/v1/invoices', invoiceRoutes);
   app.use('/api/v1/payments', paymentRoutes);
   app.use('/api/v1/price', priceRoutes);
@@ -143,7 +163,9 @@ async function bootstrap(): Promise<void> {
   app.use('/api/v1/marketplace', marketplaceRoutes);
   app.use('/api/v1/ops', opsRoutes);
   app.use('/api/v1/wallet', walletRoutes);
+  app.use('/api/v1/telemetry', telemetryRoutes);
   app.use('/api/v1/projects', projectRoutes);
+  app.use('/api/v1/github', githubAuditRoutes);
 
   // ── Sentry Error Handler (must be before custom error handlers) ───────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

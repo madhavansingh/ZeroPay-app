@@ -13,6 +13,7 @@ export const PROMPT_VERSIONS = {
   GENERATE_MILESTONES: 'v2.1-milestone-structurer',
   SUMMARIZE_DISPUTE: 'v3.2-dispute-arbitrator',
   DETECT_ANOMALY: 'v1.0-anomaly-scorer',
+  AUDIT_MILESTONE: 'v1.0-code-auditor',
 } as const;
 
 // Instantiate the SDK only if not in mock mode to prevent initialization errors
@@ -136,7 +137,8 @@ export const projectPlanResponseSchema = z.object({
 async function generateContentWithRetry(
   prompt: string,
   responseSchema: any,
-  maxAttempts: number = 3
+  maxAttempts: number = 3,
+  modelName: string = 'gemini-2.0-flash'
 ): Promise<{ text: string; latencyMs: number }> {
   let attempt = 0;
   let delay = 1000;
@@ -150,7 +152,7 @@ async function generateContentWithRetry(
       }
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: modelName,
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -1556,5 +1558,318 @@ Provide assumptions, unknowns, risk factors, and planning confidence (0-100).`;
 
     // Fallback to mock plan
     return getMockProjectPlan(requirements, totalAmountPaise);
+  }
+}
+
+export const githubAuditResponseSchema = z.object({
+  auditStatus: z.enum(['PASSED', 'PARTIALLY_COMPLETED', 'FAILED', 'INSUFFICIENT_EVIDENCE']),
+  releaseRecommendation: z.enum(['RECOMMEND_RELEASE', 'RECOMMEND_MINOR_FIXES', 'RECOMMEND_MAJOR_REWORK', 'RECOMMEND_DISPUTE_REVIEW']),
+  confidenceScore: z.number().int().min(0).max(100),
+  releaseConfidenceScore: z.number().int().min(0).max(100),
+  auditSummary: z.string(),
+  findings: z.string(),
+  implementationCoverage: z.number().int().min(0).max(100),
+  missingRequirements: z.array(z.string()),
+  securityIssues: z.array(z.string()),
+  performanceIssues: z.array(z.string()),
+  architectureIssues: z.array(z.string()),
+  recommendedActions: z.array(z.string()),
+  requirementTraceMatrix: z.array(
+    z.object({
+      requirementId: z.string(),
+      requirementText: z.string(),
+      completionPercentage: z.number().int().min(0).max(100),
+      confidenceScore: z.number().int().min(0).max(100),
+      evidenceFiles: z.array(z.string()),
+      evidenceCommits: z.array(z.string()),
+      evidencePRs: z.array(z.string()),
+      status: z.enum(['PASSED', 'PARTIAL', 'FAILED', 'INSUFFICIENT_EVIDENCE']),
+    })
+  ),
+  explainability: z.object({
+    whyVerdictAssigned: z.string(),
+    evidenceUsed: z.string(),
+    missingImplementation: z.string(),
+    suggestedFixes: z.string(),
+  }),
+});
+
+export type GitHubAuditResponse = z.infer<typeof githubAuditResponseSchema>;
+
+export async function auditMilestoneCompletion(
+  snapshot: any,
+  projectPlan: any,
+  milestoneId: string,
+  actorId: string = 'system',
+  requestId?: string
+): Promise<GitHubAuditResponse> {
+  const startTime = Date.now();
+  const promptTemplate = `[Prompt Version: ${PROMPT_VERSIONS.AUDIT_MILESTONE}] You are a professional codebase auditor and smart contract release safety advisor.
+You are auditing milestone "${milestoneId}" for a project plan.
+
+Project Requirements:
+\${JSON.stringify(projectPlan.requirements)}
+
+Milestones & Requirements Breakdown:
+\${JSON.stringify(projectPlan.requirementTrace || projectPlan.requirementTraceability || [])}
+
+Target Milestone to Audit:
+\${JSON.stringify(projectPlan.milestones.find((m: any) => m.milestoneId === milestoneId) || {})}
+
+Repository Code Snapshot (GitHub MCP Source of Truth):
+- Connected URL: \${snapshot.repositoryUrl}
+- Active Branch: \${snapshot.branch}
+- Repository Trees/Files: \${JSON.stringify(snapshot.repositoryTree)}
+- Commit Hashes: \${JSON.stringify(snapshot.commitHashes)}
+- Pull Request reviews & comments: \${JSON.stringify(snapshot.prMetadata)}
+- GitHub Actions Workflow Runs: \${JSON.stringify(snapshot.workflowRuns)}
+- Release Tags: \${JSON.stringify(snapshot.releaseTags)}
+
+CRITICAL VERIFICATION RULES:
+1. Compare the connected repository evidence (files, commits, PR comments/reviews) against the milestone githubAuditRequirements.
+2. For each requirement associated with this milestone, compile a detailed RequirementTraceMatrix entry:
+   - Identify evidenceFiles (files that implement it), evidenceCommits (commits that added/modified it), and evidencePRs.
+   - Set status (PASSED, PARTIAL, FAILED, INSUFFICIENT_EVIDENCE) and completionPercentage (0-100).
+3. If any CI/CD workflow run is in a failed status (conclusion: 'failure' or similar), the overall auditStatus MUST NOT be 'PASSED'. Set it to 'FAILED' or 'PARTIALLY_COMPLETED'.
+4. Calculate the releaseConfidenceScore (0-100) using the formula:
+   releaseConfidenceScore = (0.4 * implementationCoverage) + (0.3 * requirementCompletionRate) + (0.15 * CI_Success_Rate) - (0.15 * Security_Issues_Count * 10)
+   Ensure the score is bound between 0 and 100.
+5. Set releaseRecommendation:
+   - RECOMMEND_RELEASE: Audit status is PASSED and releaseConfidenceScore >= 80.
+   - RECOMMEND_MINOR_FIXES: Audit status is PARTIALLY_COMPLETED/PASSED but has minor issues or releaseConfidenceScore between 70 and 79.
+   - RECOMMEND_MAJOR_REWORK: Audit status is FAILED or has failing CI/CD, or releaseConfidenceScore between 40 and 69.
+   - RECOMMEND_DISPUTE_REVIEW: Insufficient evidence, major security breaches, or releaseConfidenceScore < 40.
+6. Provide comprehensive explainability fields.
+
+Return your response strictly as a JSON object matching this schema:
+\${JSON.stringify({
+  auditStatus: 'PASSED | PARTIALLY_COMPLETED | FAILED | INSUFFICIENT_EVIDENCE',
+  releaseRecommendation: 'RECOMMEND_RELEASE | RECOMMEND_MINOR_FIXES | RECOMMEND_MAJOR_REWORK | RECOMMEND_DISPUTE_REVIEW',
+  confidenceScore: 90,
+  releaseConfidenceScore: 85,
+  auditSummary: 'Summary of the audit findings',
+  findings: 'Detailed technical findings',
+  implementationCoverage: 85,
+  missingRequirements: ['list of missing requirements'],
+  securityIssues: ['list of security issues'],
+  performanceIssues: ['list of performance issues'],
+  architectureIssues: ['list of architecture issues'],
+  recommendedActions: ['actions to take'],
+  requirementTraceMatrix: [
+    {
+      requirementId: 'REQ-001',
+      requirementText: 'Requirement text',
+      completionPercentage: 100,
+      confidenceScore: 95,
+      evidenceFiles: ['src/file.ts'],
+      evidenceCommits: ['sha123'],
+      evidencePRs: ['1'],
+      status: 'PASSED',
+    },
+  ],
+  explainability: {
+    whyVerdictAssigned: 'Explain the reason behind this verdict',
+    evidenceUsed: 'Explain what evidence was verified',
+    missingImplementation: 'Describe what was missing',
+    suggestedFixes: 'Describe what to fix',
+  },
+})}`;
+
+  const inputData = { milestoneId, projectPlanId: projectPlan.planId, promptVersion: PROMPT_VERSIONS.AUDIT_MILESTONE };
+
+  if (isMockMode) {
+    const mockOutput: GitHubAuditResponse = {
+      auditStatus: 'PASSED',
+      releaseRecommendation: 'RECOMMEND_RELEASE',
+      confidenceScore: 95,
+      releaseConfidenceScore: 90,
+      auditSummary: 'Milestone requirements have been fully verified and tested. Code quality is high, and all unit tests pass successfully.',
+      findings: 'All core modules for this milestone are fully implemented. Lint checks and security scans are passing. Verification matrix links requirements to specific codebase entries.',
+      implementationCoverage: 100,
+      missingRequirements: [],
+      securityIssues: [],
+      performanceIssues: [],
+      architectureIssues: [],
+      recommendedActions: ['Proceed with release of funds from escrow.'],
+      requirementTraceMatrix: (projectPlan.requirementTrace || []).map((r: any) => ({
+        requirementId: r.requirementId,
+        requirementText: r.requirement,
+        completionPercentage: 100,
+        confidenceScore: 95,
+        evidenceFiles: r.githubAuditRequirements?.requiredFiles || ['src/server.ts'],
+        evidenceCommits: snapshot.commitHashes || ['c8f391a2bb28384818cc65fa28a8a65bb919a3b2'],
+        evidencePRs: ['1'],
+        status: 'PASSED',
+      })),
+      explainability: {
+        whyVerdictAssigned: 'All requirements have corresponding verified code files and commits. The build and test pipelines are completely green.',
+        evidenceUsed: 'Inspected repo file list, verified commits, and checked PR reviews.',
+        missingImplementation: 'None.',
+        suggestedFixes: 'None.',
+      },
+    };
+
+    await AIAuditLog.create({
+      timestamp: new Date(),
+      action: 'audit-milestone',
+      actorId,
+      requestId,
+      promptTemplate,
+      inputData,
+      rawResponse: JSON.stringify(mockOutput),
+      parsedResponse: mockOutput,
+      confidenceScore: 100,
+      latencyMs: Date.now() - startTime,
+      status: 'success',
+    });
+
+    return mockOutput;
+  }
+
+  try {
+    const { text, latencyMs } = await generateContentWithRetry(
+      promptTemplate,
+      {
+        type: 'OBJECT',
+        properties: {
+          auditStatus: { type: 'STRING' },
+          releaseRecommendation: { type: 'STRING' },
+          confidenceScore: { type: 'INTEGER' },
+          releaseConfidenceScore: { type: 'INTEGER' },
+          auditSummary: { type: 'STRING' },
+          findings: { type: 'STRING' },
+          implementationCoverage: { type: 'INTEGER' },
+          missingRequirements: { type: 'ARRAY', items: { type: 'STRING' } },
+          securityIssues: { type: 'ARRAY', items: { type: 'STRING' } },
+          performanceIssues: { type: 'ARRAY', items: { type: 'STRING' } },
+          architectureIssues: { type: 'ARRAY', items: { type: 'STRING' } },
+          recommendedActions: { type: 'ARRAY', items: { type: 'STRING' } },
+          requirementTraceMatrix: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                requirementId: { type: 'STRING' },
+                requirementText: { type: 'STRING' },
+                completionPercentage: { type: 'INTEGER' },
+                confidenceScore: { type: 'INTEGER' },
+                evidenceFiles: { type: 'ARRAY', items: { type: 'STRING' } },
+                evidenceCommits: { type: 'ARRAY', items: { type: 'STRING' } },
+                evidencePRs: { type: 'ARRAY', items: { type: 'STRING' } },
+                status: { type: 'STRING' },
+              },
+              required: [
+                'requirementId',
+                'requirementText',
+                'completionPercentage',
+                'confidenceScore',
+                'evidenceFiles',
+                'evidenceCommits',
+                'evidencePRs',
+                'status',
+              ],
+            },
+          },
+          explainability: {
+            type: 'OBJECT',
+            properties: {
+              whyVerdictAssigned: { type: 'STRING' },
+              evidenceUsed: { type: 'STRING' },
+              missingImplementation: { type: 'STRING' },
+              suggestedFixes: { type: 'STRING' },
+            },
+            required: ['whyVerdictAssigned', 'evidenceUsed', 'missingImplementation', 'suggestedFixes'],
+          },
+        },
+        required: [
+          'auditStatus',
+          'releaseRecommendation',
+          'confidenceScore',
+          'releaseConfidenceScore',
+          'auditSummary',
+          'findings',
+          'implementationCoverage',
+          'missingRequirements',
+          'securityIssues',
+          'performanceIssues',
+          'architectureIssues',
+          'recommendedActions',
+          'requirementTraceMatrix',
+          'explainability',
+        ],
+      },
+      3,
+      'gemini-2.5-pro'
+    );
+
+    const rawParsed = JSON.parse(text);
+    const parsed = githubAuditResponseSchema.safeParse(rawParsed);
+
+    if (!parsed.success) {
+      throw new Error(`Zod audit schema validation failed: \${parsed.error.message}`);
+    }
+
+    await AIAuditLog.create({
+      timestamp: new Date(),
+      action: 'audit-milestone',
+      actorId,
+      requestId,
+      promptTemplate,
+      inputData,
+      rawResponse: text,
+      parsedResponse: parsed.data,
+      confidenceScore: parsed.data.confidenceScore,
+      latencyMs: Date.now() - startTime,
+      status: 'success',
+    });
+
+    return parsed.data;
+  } catch (err: any) {
+    const latencyMs = Date.now() - startTime;
+    logger.error('[AI Service] Failed to audit milestone, running fallback', { error: err.message });
+
+    await AIAuditLog.create({
+      timestamp: new Date(),
+      action: 'audit-milestone',
+      actorId,
+      requestId,
+      promptTemplate,
+      inputData,
+      validationErrors: err.message,
+      latencyMs,
+      status: 'failure',
+    });
+
+    // High fidelity fallback when live Gemini call fails
+    return {
+      auditStatus: 'INSUFFICIENT_EVIDENCE',
+      releaseRecommendation: 'RECOMMEND_DISPUTE_REVIEW',
+      confidenceScore: 0,
+      releaseConfidenceScore: 0,
+      auditSummary: `Failed to compile automated audit: \${err.message}`,
+      findings: 'The automated code audit agent experienced an internal parsing exception.',
+      implementationCoverage: 0,
+      missingRequirements: [],
+      securityIssues: [],
+      performanceIssues: [],
+      architectureIssues: [],
+      recommendedActions: ['Please manually verify code commits or re-run the verification agent.'],
+      requirementTraceMatrix: (projectPlan.requirementTrace || []).map((r: any) => ({
+        requirementId: r.requirementId,
+        requirementText: r.requirement,
+        completionPercentage: 0,
+        confidenceScore: 0,
+        evidenceFiles: [],
+        evidenceCommits: [],
+        evidencePRs: [],
+        status: 'INSUFFICIENT_EVIDENCE',
+      })),
+      explainability: {
+        whyVerdictAssigned: 'Evaluation failed due to an internal error.',
+        evidenceUsed: 'None.',
+        missingImplementation: 'Unknown.',
+        suggestedFixes: 'Contact system administrator.',
+      },
+    };
   }
 }

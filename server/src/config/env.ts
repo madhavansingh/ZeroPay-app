@@ -54,6 +54,25 @@ const envSchema = z.object({
   ESCROW_ADMIN_ADDRESS: z.string().regex(/^addr(_test)?1[a-z0-9]+$/).default('addr_test1vqg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygxrcya6'),
   ESCROW_TREASURY_ADDRESS: z.string().regex(/^addr(_test)?1[a-z0-9]+$/).default('addr_test1vq3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygswahgq5'),
   ESCROW_PLATFORM_FEE_LOVELACE: z.string().default('2000000').transform(Number),
+
+  // Dev Mode Auth Bypass Configuration
+  DEV_AUTH_ENABLED: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(false),
+
+  // Workflows API Base URL
+  WORKFLOW_API_BASE_URL: z.string().url('WORKFLOW_API_BASE_URL must be a valid URL').default('http://localhost:4000/api/v1'),
+
+  // GitHub token (optional)
+  GITHUB_TOKEN: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production') {
+    if (data.GEMINI_API_KEY.startsWith('mock-') || data.GEMINI_API_KEY.startsWith('test-') || data.GEMINI_API_KEY.startsWith('AQ.')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'GEMINI_API_KEY cannot be a mock/test/AQ. placeholder key in production mode',
+        path: ['GEMINI_API_KEY'],
+      });
+    }
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);

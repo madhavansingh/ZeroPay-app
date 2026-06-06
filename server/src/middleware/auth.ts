@@ -15,6 +15,7 @@ declare global {
 import { Merchant } from '../models/Merchant';
 import { AIAgentConfig } from '../models/AIAgentConfig';
 import { upstashRedis } from '../config/redis';
+import { env } from '../config/env';
 
 export async function ensureMerchantProvisioned(user: any): Promise<void> {
   if (user.role === 'merchant' || user.role === 'both') {
@@ -76,6 +77,10 @@ export async function requireAuth(
     let decoded: { uid: string; phone_number?: string; name?: string };
 
     if (token.startsWith('dev_token_')) {
+      if (env.NODE_ENV === 'production' || !env.DEV_AUTH_ENABLED) {
+        res.status(401).json({ success: false, error: 'Developer authentication bypass is disabled in production' });
+        return;
+      }
       const role = token.slice(10); // 'customer' or 'merchant' or 'both'
       decoded = {
         uid: `dev_uid_${role}`,

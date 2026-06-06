@@ -859,6 +859,10 @@ class ProjectPlan {
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? repositoryUrl;
+  final String? repositoryOwner;
+  final String? repositoryName;
+  final String? branch;
 
   ProjectPlan({
     required this.planId,
@@ -888,6 +892,10 @@ class ProjectPlan {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.repositoryUrl,
+    this.repositoryOwner,
+    this.repositoryName,
+    this.branch,
   });
 
   factory ProjectPlan.fromJson(Map<String, dynamic> json) {
@@ -934,6 +942,10 @@ class ProjectPlan {
       status: data['status'] as String? ?? 'Draft',
       createdAt: data['createdAt'] != null ? DateTime.parse(data['createdAt'] as String) : DateTime.now(),
       updatedAt: data['updatedAt'] != null ? DateTime.parse(data['updatedAt'] as String) : DateTime.now(),
+      repositoryUrl: data['repositoryUrl'] as String? ?? data['repository_url'] as String?,
+      repositoryOwner: data['repositoryOwner'] as String? ?? data['repository_owner'] as String?,
+      repositoryName: data['repositoryName'] as String? ?? data['repository_name'] as String?,
+      branch: data['branch'] as String?,
     );
   }
 
@@ -969,6 +981,10 @@ class ProjectPlan {
         'status': status,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
+        'repositoryUrl': repositoryUrl,
+        'repositoryOwner': repositoryOwner,
+        'repositoryName': repositoryName,
+        'branch': branch,
       };
 }
 

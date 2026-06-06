@@ -94,6 +94,29 @@ router.get('/', requireAuth, requireMerchant, async (req: Request, res: Response
   }
 });
 
+// ── GET /api/v1/webhooks/deliveries ──────────────────────────────────────────
+router.get('/deliveries', requireAuth, requireMerchant, async (req: Request, res: Response) => {
+  try {
+    const merchant = await Merchant.findOne({ userId: req.user._id });
+    if (!merchant) {
+      res.status(404).json({ success: false, error: 'Merchant profile not found' });
+      return;
+    }
+
+    const subscriptions = await WebhookSubscription.find({ merchantId: merchant._id });
+    const subIds = subscriptions.map((s) => s._id);
+
+    const deliveries = await WebhookDeliveryLog.find({ webhookSubscriptionId: { $in: subIds } })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json({ success: true, data: deliveries });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to fetch deliveries';
+    res.status(500).json({ success: false, error: msg });
+  }
+});
+
 // ── DELETE /api/v1/webhooks/:id ──────────────────────────────────────────────
 router.delete('/:id', requireAuth, requireMerchant, async (req: Request, res: Response) => {
   try {

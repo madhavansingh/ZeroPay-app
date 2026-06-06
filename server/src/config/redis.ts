@@ -1,4 +1,5 @@
 import IORedis from 'ioredis';
+import { Redis } from '@upstash/redis';
 import { env } from './env';
 import { logger } from './logger';
 
@@ -121,7 +122,12 @@ class InMemoryRedisMock {
   }
 }
 
-export const upstashRedis = new InMemoryRedisMock();
+export const upstashRedis = env.NODE_ENV === 'production'
+  ? new Redis({
+      url: env.UPSTASH_REDIS_REST_URL,
+      token: env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  : (new InMemoryRedisMock() as any);
 
 // ─── Dynamic IORedis (for BullMQ — connects to TLS or local TCP Redis) ────────
 // Only applies TLS configurations when using secure "rediss://" connection protocol

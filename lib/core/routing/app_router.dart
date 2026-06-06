@@ -36,6 +36,7 @@ import '../../features/escrow/presentation/escrow_builder_screen.dart';
 import '../../features/court/presentation/court_dashboard_screen.dart';
 import '../../features/court/presentation/evidence_upload_screen.dart';
 import '../../features/trust/presentation/trust_risk_dashboard.dart';
+import '../../features/trust/presentation/github_audit_screen.dart';
 import '../../features/auth/presentation/security_center_screen.dart';
 import '../../features/splash/presentation/app_store_assets_screen.dart';
 
@@ -225,6 +226,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/trust/dashboard',
         builder: (context, state) => const TrustRiskDashboard(),
+      ),
+      GoRoute(
+        path: '/trust/github-audit',
+        builder: (context, state) {
+          final auditId = state.uri.queryParameters['auditId'];
+          final projectPlanId = state.uri.queryParameters['projectPlanId'];
+          return GitHubAuditScreen(
+            auditId: auditId,
+            projectPlanId: projectPlanId,
+          );
+        },
       ),
       GoRoute(
         path: '/security-center',

@@ -256,74 +256,7 @@ router.post(
   }
 );
 
-// GET /api/v1/merchant/dashboard
-router.get(
-  '/dashboard',
-  requireAuth,
-  requireMerchant,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const merchant = await Merchant.findOne({ userId: req.user.id });
-      if (!merchant) {
-        res.status(404).json({ success: false, error: 'Merchant profile not found' });
-        return;
-      }
+// GET /api/v1/merchant/dashboard is implemented in dashboard.routes.ts
 
-      // Last 7 days stats
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const [recentInvoices, statusCounts] = await Promise.all([
-        Invoice.find({ merchantId: merchant._id, createdAt: { $gte: sevenDaysAgo } })
-          .sort({ createdAt: -1 })
-          .limit(20)
-          .lean(),
-        Invoice.aggregate([
-          { $match: { merchantId: merchant._id } },
-          { $group: { _id: '$status', count: { $sum: 1 } } },
-        ]),
-      ]);
-
-      const stats: Record<string, number> = {};
-      statusCounts.forEach((s: { _id: string; count: number }) => {
-        stats[s._id] = s.count;
-      });
-
-      res.json({
-        success: true,
-        data: {
-          merchant: {
-            merchantId: merchant.merchantId,
-            shopName: merchant.shopName,
-            category: merchant.category,
-            paymentAddress: merchant.paymentAddress,
-            totalReceivedLovelace: merchant.totalReceivedLovelace,
-            totalOrders: merchant.totalOrders,
-            invoiceExpiry: merchant.invoiceExpiry,
-            slug: merchant.slug,
-            profileImageUrl: merchant.profileImageUrl,
-            bannerImageUrl: merchant.bannerImageUrl,
-            location: merchant.location,
-            socialLinks: merchant.socialLinks,
-            isPublicStorefront: merchant.isPublicStorefront,
-            businessHours: merchant.businessHours,
-            reputationScore: merchant.reputationScore,
-            reliabilityTier: merchant.reliabilityTier,
-          },
-          stats,
-          recentInvoices: recentInvoices.map((inv) => ({
-            invoiceId: inv.invoiceId,
-            amountPaise: inv.amountPaise,
-            amountLovelace: inv.amountLovelace,
-            status: inv.status,
-            createdAt: inv.createdAt,
-            settledAt: inv.settledAt,
-          })),
-        },
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Dashboard fetch failed';
-      res.status(500).json({ success: false, error: message });
-    }
-  }
-);
 
 export default router;

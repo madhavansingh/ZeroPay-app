@@ -1,0 +1,119 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: zeropay-backend
+  labels:
+    cloud.googleapis.com/location: asia-south1
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # Autoscaling Configuration
+        autoscaling.knative.dev/minScale: '1' # Prevents cold starts for instant response times
+        autoscaling.knative.dev/maxScale: '10' # Budget protection cap
+        run.googleapis.com/cpu-throttling: 'true'
+    spec:
+      containerConcurrency: 80 # Parallel requests handled per instance
+      timeoutSeconds: 300
+      containers:
+        # Image URL to be substituted during deploy, or defaults to latest tag
+        - image: asia-south1-docker.pkg.dev/PROJECT_ID/zeropay-repo/zeropay-backend:latest
+          resources:
+            limits:
+              cpu: '1000m' # 1 vCPU
+              memory: 512Mi
+          ports:
+            - name: http1
+              containerPort: 4000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: '4000'
+            - name: ALLOWED_ORIGINS
+              value: 'https://zeropay.network'
+            - name: BLOCKFROST_NETWORK
+              value: 'preprod'
+            - name: DEV_AUTH_ENABLED
+              value: 'false'
+            - name: WORKFLOW_API_BASE_URL
+              value: 'https://zeropay.network/api/v1'
+
+            # Production Secrets loaded from Google Secret Manager
+            - name: MONGODB_URI
+              valueSource:
+                secretKeyRef:
+                  name: MONGODB_URI
+                  key: latest
+            - name: FIREBASE_PROJECT_ID
+              valueSource:
+                secretKeyRef:
+                  name: FIREBASE_PROJECT_ID
+                  key: latest
+            - name: FIREBASE_PRIVATE_KEY
+              valueSource:
+                secretKeyRef:
+                  name: FIREBASE_PRIVATE_KEY
+                  key: latest
+            - name: FIREBASE_CLIENT_EMAIL
+              valueSource:
+                secretKeyRef:
+                  name: FIREBASE_CLIENT_EMAIL
+                  key: latest
+            - name: FIREBASE_DATABASE_URL
+              valueSource:
+                secretKeyRef:
+                  name: FIREBASE_DATABASE_URL
+                  key: latest
+            - name: UPSTASH_REDIS_REST_URL
+              valueSource:
+                secretKeyRef:
+                  name: UPSTASH_REDIS_REST_URL
+                  key: latest
+            - name: UPSTASH_REDIS_REST_TOKEN
+              valueSource:
+                secretKeyRef:
+                  name: UPSTASH_REDIS_REST_TOKEN
+                  key: latest
+            - name: UPSTASH_REDIS_TLS_URL
+              valueSource:
+                secretKeyRef:
+                  name: UPSTASH_REDIS_TLS_URL
+                  key: latest
+            - name: BLOCKFROST_PROJECT_ID
+              valueSource:
+                secretKeyRef:
+                  name: BLOCKFROST_PROJECT_ID
+                  key: latest
+            - name: PINATA_API_KEY
+              valueSource:
+                secretKeyRef:
+                  name: PINATA_API_KEY
+                  key: latest
+            - name: PINATA_SECRET_KEY
+              valueSource:
+                secretKeyRef:
+                  name: PINATA_SECRET_KEY
+                  key: latest
+            - name: PINATA_JWT
+              valueSource:
+                secretKeyRef:
+                  name: PINATA_JWT
+                  key: latest
+            - name: GEMINI_API_KEY
+              valueSource:
+                secretKeyRef:
+                  name: GEMINI_API_KEY
+                  key: latest
+            - name: ADMIN_USERNAME
+              valueSource:
+                secretKeyRef:
+                  name: ADMIN_USERNAME
+                  key: latest
+            - name: ADMIN_PASSWORD
+              valueSource:
+                secretKeyRef:
+                  name: ADMIN_PASSWORD
+                  key: latest

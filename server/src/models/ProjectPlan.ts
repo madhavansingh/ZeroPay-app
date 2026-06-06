@@ -83,6 +83,10 @@ export interface IProjectPlan extends Document {
     structure: string;
     rationale: string;
   };
+  repositoryUrl?: string;
+  repositoryOwner?: string;
+  repositoryName?: string;
+  branch?: string;
   workflowMetadata?: Record<string, any>;
   status: 'Draft' | 'AI Generated' | 'User Edited' | 'Approved' | 'Invoice Created' | 'Escrow Created';
   createdAt: Date;
@@ -173,6 +177,10 @@ const projectPlanSchema = new Schema<IProjectPlan>(
       structure: { type: String, required: true },
       rationale: { type: String, required: true },
     },
+    repositoryUrl: { type: String },
+    repositoryOwner: { type: String },
+    repositoryName: { type: String },
+    branch: { type: String },
     workflowMetadata: { type: Schema.Types.Mixed },
     status: {
       type: String,

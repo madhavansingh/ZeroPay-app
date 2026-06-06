@@ -7,9 +7,9 @@ const COINGECKO_URL =
 
 export async function getAdaInrRate(): Promise<AdaInrRate> {
   // 1. Try Redis cache (60s TTL)
-  const cached = await upstashRedis.get<{ rate: number; cachedAt: string }>(
+  const cached = (await (upstashRedis as any).get(
     cacheKeys.adaInrRate()
-  );
+  )) as { rate: number; cachedAt: string } | null;
 
   if (cached) {
     return { ...cached, source: 'cached' };
@@ -34,9 +34,9 @@ export async function getAdaInrRate(): Promise<AdaInrRate> {
     return { rate, cachedAt, source: 'live' };
   } catch {
     // 3. CoinGecko down — use last-known fallback
-    const fallback = await upstashRedis.get<{ rate: number; cachedAt: string }>(
+    const fallback = (await (upstashRedis as any).get(
       cacheKeys.adaInrRateFallback()
-    );
+    )) as { rate: number; cachedAt: string } | null;
 
     if (fallback) {
       return { ...fallback, source: 'fallback' };

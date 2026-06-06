@@ -5,6 +5,7 @@ import 'mock_data.dart';
 import 'real_repository.dart';
 import '../../core/api/api_services.dart';
 import '../../core/security/secure_cache.dart';
+import '../../core/security/security_service.dart';
 import '../../core/offline/offline_manager.dart';
 
 // Interface
@@ -24,7 +25,7 @@ abstract class ZeroPayRepository {
   Future<Escrow> getEscrowDetails(String id);
   Future<void> releaseMilestone(String escrowId, String milestoneId);
   Future<void> raiseDispute(String escrowId);
-  Future<void> createEscrow(Escrow escrow);
+  Future<String> createEscrow(Escrow escrow);
 
   // Dispute & Court
   Future<DisputeCase> getDisputeCase(String caseId);
@@ -76,6 +77,15 @@ abstract class ZeroPayRepository {
   Future<ProjectPlan> updateProjectPlan(String planId, Map<String, dynamic> data);
   Future<ProjectPlan> regenerateProjectPlan(String planId, {String? requirements, int? totalAmountPaise, String? customerId});
   Future<Map<String, dynamic>> approveProjectPlan(String planId, {String? network});
+
+  // GitHub Auditing
+  Future<Map<String, dynamic>> connectGitHubRepository({required String projectPlanId, required String repositoryUrl, String? branch});
+  Future<Map<String, dynamic>> triggerMilestoneAudit({required String projectPlanId, required String milestoneId});
+  Future<Map<String, dynamic>> getGitHubAuditDetails(String auditId);
+  Future<List<dynamic>> getProjectGitHubAudits(String projectPlanId);
+  Future<Map<String, dynamic>> reverifyGitHubAudit(String auditId);
+  Future<Map<String, dynamic>> requestGitHubFixes(String auditId, String feedback);
+  Future<Map<String, dynamic>> getGitHubReleaseRecommendation(String auditId);
 }
 
 // Mock Implementation
@@ -954,9 +964,10 @@ class MockZeroPayRepository implements ZeroPayRepository {
   }
 
   @override
-  Future<void> createEscrow(Escrow escrow) async {
+  Future<String> createEscrow(Escrow escrow) async {
     await Future.delayed(const Duration(milliseconds: 200));
     _escrows.add(escrow);
+    return 'tx_mock_${DateTime.now().millisecondsSinceEpoch}';
   }
 
   @override
@@ -1553,6 +1564,111 @@ class MockZeroPayRepository implements ZeroPayRepository {
       },
     };
   }
+
+  @override
+  Future<Map<String, dynamic>> connectGitHubRepository({required String projectPlanId, required String repositoryUrl, String? branch}) async {
+    return {'success': true, 'owner': 'madhavansingh', 'name': 'ZeroPay-app'};
+  }
+
+  @override
+  Future<Map<String, dynamic>> triggerMilestoneAudit({required String projectPlanId, required String milestoneId}) async {
+    return {
+      'success': true,
+      'data': {
+        'auditId': 'AUDIT-MOCK-123',
+        'projectPlanId': projectPlanId,
+        'milestoneId': milestoneId,
+        'auditStatus': 'PASSED',
+        'releaseRecommendation': 'RECOMMEND_RELEASE',
+        'confidenceScore': 95,
+        'releaseConfidenceScore': 90,
+        'auditSummary': 'Mock summary',
+        'findings': 'Mock findings',
+        'implementationCoverage': 100,
+        'missingRequirements': <String>[],
+        'securityIssues': <String>[],
+        'requirementTraceMatrix': [],
+        'explainability': {
+          'whyVerdictAssigned': 'Mock explain',
+          'evidenceUsed': 'Mock evidence',
+          'missingImplementation': 'None',
+          'suggestedFixes': 'None'
+        }
+      }
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> getGitHubAuditDetails(String auditId) async {
+    return {
+      'success': true,
+      'data': {
+        'audit': {
+          'auditId': auditId,
+          'auditStatus': 'PASSED',
+          'releaseRecommendation': 'RECOMMEND_RELEASE',
+          'confidenceScore': 95,
+          'releaseConfidenceScore': 90,
+          'auditSummary': 'Milestone requirements verified.',
+          'findings': 'Code tree matches deliverables.',
+          'implementationCoverage': 100,
+          'missingRequirements': <String>[],
+          'securityIssues': <String>[],
+          'requirementTraceMatrix': [],
+          'explainability': {
+            'whyVerdictAssigned': 'Mock explanation',
+            'evidenceUsed': 'Mock evidence',
+            'missingImplementation': 'None',
+            'suggestedFixes': 'None'
+          }
+        },
+        'snapshot': {
+          'snapshotId': 'SNAP-MOCK-123',
+          'repositoryTree': <String>['src/main.ts'],
+          'commitHashes': <String>['c8f391a2bb28384818cc65fa28a8a65bb919a3b2'],
+          'sha256Hash': 'mocksha256hash'
+        }
+      }
+    };
+  }
+
+  @override
+  Future<List<dynamic>> getProjectGitHubAudits(String projectPlanId) async {
+    return [
+      {
+        'auditId': 'AUDIT-MOCK-123',
+        'projectPlanId': projectPlanId,
+        'milestoneId': 'MS-1',
+        'auditStatus': 'PASSED',
+        'releaseRecommendation': 'RECOMMEND_RELEASE',
+        'confidenceScore': 95,
+        'releaseConfidenceScore': 90,
+        'createdAt': DateTime.now().toIso8601String()
+      }
+    ];
+  }
+
+  @override
+  Future<Map<String, dynamic>> reverifyGitHubAudit(String auditId) async {
+    return {'success': true};
+  }
+
+  @override
+  Future<Map<String, dynamic>> requestGitHubFixes(String auditId, String feedback) async {
+    return {'success': true};
+  }
+
+  @override
+  Future<Map<String, dynamic>> getGitHubReleaseRecommendation(String auditId) async {
+    return {
+      'success': true,
+      'data': {
+        'auditId': auditId,
+        'releaseRecommendation': 'RECOMMEND_RELEASE',
+        'releaseConfidenceScore': 90
+      }
+    };
+  }
 }
 
 // Riverpod Providers for Cache and Queue
@@ -1572,6 +1688,8 @@ final zeroPayRepositoryProvider = Provider<ZeroPayRepository>((ref) {
     courtService: ref.read(courtApiServiceProvider),
     telemetryService: ref.read(telemetryApiServiceProvider),
     merchantService: ref.read(merchantApiServiceProvider),
+    githubAuditService: ref.read(githubAuditApiServiceProvider),
+    securityService: ref.read(securityServiceProvider),
     cache: ref.read(secureCacheProvider),
     queue: ref.read(offlineQueueProvider),
   );
