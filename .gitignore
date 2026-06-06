@@ -73,3 +73,5 @@ google-services.json.backup
 service-account*.json
 secrets/
 credentials/
+.agents/loop-state/
+dump.rdb
