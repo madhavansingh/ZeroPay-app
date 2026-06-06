@@ -34,15 +34,22 @@ class AuthApiService {
   }
 
   Future<Response> syncFirebaseSession(String idToken) async {
-    return await _client.post('/auth/sync', data: {'id_token': idToken});
+    return await _client.post(
+      '/auth/sync',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $idToken',
+        },
+      ),
+    );
   }
 
   Future<Response> updateProfile(Map<String, dynamic> data) async {
-    return await _client.post('/auth/profile', data: data);
+    return await _client.put(ApiEndpoints.authProfile, data: data);
   }
 
   Future<Response> switchRole(String role) async {
-    return await _client.post('/auth/role', data: {'role': role});
+    return await _client.put(ApiEndpoints.authRole, data: {'role': role});
   }
 }
 
@@ -59,6 +66,10 @@ class WalletApiService {
 
   Future<Response> fetchBalances() async {
     return await _client.get(ApiEndpoints.walletBalances);
+  }
+
+  Future<Response> fetchAdaInrRate() async {
+    return await _client.get('/price/ada-inr');
   }
 
   Future<Response> fetchTransactionHistory() async {
@@ -92,28 +103,77 @@ class EscrowApiService {
   final BaseApiClient _client;
   EscrowApiService(this._client);
 
-  Future<Response> listContracts() async {
-    return await _client.get(ApiEndpoints.escrowList);
+  Future<Response> listContracts(String role) async {
+    final path = role == 'merchant' ? ApiEndpoints.escrowMerchantList : ApiEndpoints.escrowCustomerList;
+    return await _client.get(path);
+  }
+
+  Future<Response> getEscrowDetails(String invoiceId) async {
+    return await _client.get('/invoices/$invoiceId');
   }
 
   Future<Response> createEscrowContract(Map<String, dynamic> contractData) async {
     return await _client.post(ApiEndpoints.escrowCreate, data: contractData);
   }
 
-  Future<Response> triggerMilestoneRelease(String escrowId, String milestoneId) async {
+  Future<Response> triggerEscrowLock(String escrowId, String customerAddress) async {
     return await _client.post(
-      ApiEndpoints.escrowReleaseMilestone,
+      '/escrow/$escrowId/lock',
       data: {
-        'escrow_id': escrowId,
+        'customerAddress': customerAddress,
+      },
+    );
+  }
+
+  Future<Response> submitEscrowLock(String escrowId, String txHash, String customerAddress) async {
+    return await _client.post(
+      '/escrow/$escrowId/lock/submit',
+      data: {
+        'txHash': txHash,
+        'customerAddress': customerAddress,
+      },
+    );
+  }
+
+  Future<Response> triggerMilestoneRelease(String escrowId, String milestoneId, {String? customerAddress}) async {
+    final path = ApiEndpoints.escrowReleaseMilestone.replaceFirst(':invoiceId', escrowId);
+    return await _client.post(
+      path,
+      data: {
+        'customerAddress': customerAddress ?? '',
         'milestone_id': milestoneId,
       },
     );
   }
 
-  Future<Response> triggerEscrowDispute(String escrowId) async {
+  Future<Response> submitMilestoneRelease(String escrowId, String txHash, {int? payoutLovelace}) async {
+    final path = '/escrow/$escrowId/release/submit';
     return await _client.post(
-      ApiEndpoints.escrowRaiseDispute,
-      data: {'escrow_id': escrowId},
+      path,
+      data: {
+        'txHash': txHash,
+        'payoutLovelace': payoutLovelace ?? 2000000,
+      },
+    );
+  }
+
+  Future<Response> triggerEscrowDispute(String escrowId, {String? signerAddress}) async {
+    final path = ApiEndpoints.escrowRaiseDispute.replaceFirst(':invoiceId', escrowId);
+    return await _client.post(
+      path,
+      data: {
+        'signerAddress': signerAddress ?? '',
+      },
+    );
+  }
+
+  Future<Response> submitEscrowDispute(String escrowId, String txHash) async {
+    final path = '/escrow/$escrowId/dispute/submit';
+    return await _client.post(
+      path,
+      data: {
+        'txHash': txHash,
+      },
     );
   }
 }
@@ -211,12 +271,37 @@ class AiApiService {
   final BaseApiClient _client;
   AiApiService(this._client);
 
-  Future<Response> sendChatMessage(String prompt, String contextId) async {
+  Future<Response> sendChatMessage(String roomId, String invoiceId, String message) async {
+    final path = '/chat/rooms/$roomId/messages';
     return await _client.post(
-      ApiEndpoints.aiNegotiateChat,
+      path,
       data: {
-        'prompt': prompt,
-        'context_id': contextId,
+        'invoiceId': invoiceId,
+        'message': message,
+      },
+    );
+  }
+
+  Future<Response> getChatRooms() async {
+    return await _client.get('/chat/rooms');
+  }
+
+  Future<Response> getChatRoomDetails(String roomId) async {
+    return await _client.get('/chat/rooms/$roomId');
+  }
+
+  Future<Response> createChatRoom(String merchantStringId) async {
+    return await _client.post('/chat/rooms/create', data: {
+      'merchantStringId': merchantStringId,
+    });
+  }
+
+  Future<Response> generateMilestones(String description, int totalAmountPaise) async {
+    return await _client.post(
+      '/ai/milestones/generate',
+      data: {
+        'description': description,
+        'totalAmountPaise': totalAmountPaise,
       },
     );
   }
@@ -235,6 +320,73 @@ class AiApiService {
 
 final aiApiServiceProvider = Provider<AiApiService>((ref) {
   return AiApiService(ref.read(apiClientProvider));
+});
+
+// ----------------------------------------------------
+// Project API Service
+// ----------------------------------------------------
+class ProjectApiService {
+  final BaseApiClient _client;
+  ProjectApiService(this._client);
+
+  Future<Response> generateProjectPlan({
+    required String requirements,
+    required int totalAmountPaise,
+    String? customerId,
+  }) async {
+    return await _client.post(
+      '/projects/plan',
+      data: {
+        'requirements': requirements,
+        'totalAmountPaise': totalAmountPaise,
+        if (customerId != null) 'customerId': customerId,
+      },
+    );
+  }
+
+  Future<Response> getLatestPlan(String planId) async {
+    return await _client.get('/projects/plan/$planId');
+  }
+
+  Future<Response> getPlanVersions(String planId) async {
+    return await _client.get('/projects/plan/$planId/versions');
+  }
+
+  Future<Response> getPlanVersion(String planId, int version) async {
+    return await _client.get('/projects/plan/$planId/version/$version');
+  }
+
+  Future<Response> updatePlan(String planId, Map<String, dynamic> data) async {
+    return await _client.put('/projects/plan/$planId', data: data);
+  }
+
+  Future<Response> regeneratePlan(String planId, {
+    String? requirements,
+    int? totalAmountPaise,
+    String? customerId,
+  }) async {
+    return await _client.post(
+      '/projects/plan/$planId/regenerate',
+      data: {
+        if (requirements != null) 'requirements': requirements,
+        if (totalAmountPaise != null) 'totalAmountPaise': totalAmountPaise,
+        if (customerId != null) 'customerId': customerId,
+      },
+    );
+  }
+
+  Future<Response> approvePlan(String planId, {String? network}) async {
+    return await _client.post(
+      '/projects/plan/$planId/approve',
+      data: {
+        if (network != null) 'network': network,
+      },
+    );
+  }
+}
+
+final projectApiServiceProvider = Provider<ProjectApiService>((ref) {
+  return ProjectApiService(ref.read(apiClientProvider));
 });
 
 // ----------------------------------------------------

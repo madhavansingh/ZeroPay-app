@@ -247,6 +247,9 @@ class Escrow {
   final String contractAddress;
   final String chainName;
   final DateTime createdAt;
+  final String? chatRoomId;
+  final String? merchantStringId;
+  final String? projectPlanId;
 
   Escrow({
     required this.id,
@@ -260,6 +263,9 @@ class Escrow {
     required this.contractAddress,
     required this.chainName,
     required this.createdAt,
+    this.chatRoomId,
+    this.merchantStringId,
+    this.projectPlanId,
   });
 
   factory Escrow.fromJson(Map<String, dynamic> json) {
@@ -277,6 +283,9 @@ class Escrow {
       contractAddress: json['contractAddress'] as String,
       chainName: json['chainName'] as String? ?? 'Cardano',
       createdAt: DateTime.parse(json['createdAt'] as String),
+      chatRoomId: json['chatRoomId'] as String?,
+      merchantStringId: json['merchantStringId'] as String?,
+      projectPlanId: json['projectPlanId'] as String?,
     );
   }
 
@@ -292,6 +301,9 @@ class Escrow {
         'contractAddress': contractAddress,
         'chainName': chainName,
         'createdAt': createdAt.toIso8601String(),
+        'chatRoomId': chatRoomId,
+        'merchantStringId': merchantStringId,
+        'projectPlanId': projectPlanId,
       };
 }
 
@@ -616,3 +628,347 @@ class AIRecommendation {
         'metaData': metaData,
       };
 }
+
+class GithubAuditReqs {
+  final List<String> requiredFiles;
+  final List<String> requiredFeatures;
+  final List<String> requiredTests;
+  final List<String> requiredDocumentation;
+
+  GithubAuditReqs({
+    required this.requiredFiles,
+    required this.requiredFeatures,
+    required this.requiredTests,
+    required this.requiredDocumentation,
+  });
+
+  factory GithubAuditReqs.fromJson(Map<String, dynamic> json) {
+    return GithubAuditReqs(
+      requiredFiles: List<String>.from(json['requiredFiles'] ?? []),
+      requiredFeatures: List<String>.from(json['requiredFeatures'] ?? []),
+      requiredTests: List<String>.from(json['requiredTests'] ?? []),
+      requiredDocumentation: List<String>.from(json['requiredDocumentation'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'requiredFiles': requiredFiles,
+        'requiredFeatures': requiredFeatures,
+        'requiredTests': requiredTests,
+        'requiredDocumentation': requiredDocumentation,
+      };
+}
+
+class ProjectPlanMilestone {
+  final String milestoneId;
+  final String title;
+  final String description;
+  final int amountPaise;
+  final String status;
+  final GithubAuditReqs githubAuditRequirements;
+
+  ProjectPlanMilestone({
+    required this.milestoneId,
+    required this.title,
+    required this.description,
+    required this.amountPaise,
+    required this.status,
+    required this.githubAuditRequirements,
+  });
+
+  factory ProjectPlanMilestone.fromJson(Map<String, dynamic> json) {
+    return ProjectPlanMilestone(
+      milestoneId: json['milestoneId'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      amountPaise: json['amountPaise'] as int? ?? 0,
+      status: json['status'] as String? ?? 'pending',
+      githubAuditRequirements: json['githubAuditRequirements'] != null
+          ? GithubAuditReqs.fromJson(json['githubAuditRequirements'] as Map<String, dynamic>)
+          : GithubAuditReqs(requiredFiles: [], requiredFeatures: [], requiredTests: [], requiredDocumentation: []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'milestoneId': milestoneId,
+        'title': title,
+        'description': description,
+        'amountPaise': amountPaise,
+        'status': status,
+        'githubAuditRequirements': githubAuditRequirements.toJson(),
+      };
+}
+
+class ProjectTask {
+  final String taskId;
+  final String title;
+  final String description;
+  final int estimatedHours;
+  final String priority;
+  final List<String> acceptanceCriteria;
+  final GithubAuditReqs githubAuditRequirements;
+
+  ProjectTask({
+    required this.taskId,
+    required this.title,
+    required this.description,
+    required this.estimatedHours,
+    required this.priority,
+    required this.acceptanceCriteria,
+    required this.githubAuditRequirements,
+  });
+
+  factory ProjectTask.fromJson(Map<String, dynamic> json) {
+    return ProjectTask(
+      taskId: json['taskId'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      estimatedHours: json['estimatedHours'] as int? ?? 0,
+      priority: json['priority'] as String? ?? 'medium',
+      acceptanceCriteria: List<String>.from(json['acceptanceCriteria'] ?? []),
+      githubAuditRequirements: json['githubAuditRequirements'] != null
+          ? GithubAuditReqs.fromJson(json['githubAuditRequirements'] as Map<String, dynamic>)
+          : GithubAuditReqs(requiredFiles: [], requiredFeatures: [], requiredTests: [], requiredDocumentation: []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'taskId': taskId,
+        'title': title,
+        'description': description,
+        'estimatedHours': estimatedHours,
+        'priority': priority,
+        'acceptanceCriteria': acceptanceCriteria,
+        'githubAuditRequirements': githubAuditRequirements.toJson(),
+      };
+}
+
+class RequirementTraceability {
+  final String requirementId;
+  final String requirement;
+  final List<String> milestoneIds;
+  final List<String> taskIds;
+  final GithubAuditReqs githubAuditRequirements;
+
+  RequirementTraceability({
+    required this.requirementId,
+    required this.requirement,
+    required this.milestoneIds,
+    required this.taskIds,
+    required this.githubAuditRequirements,
+  });
+
+  factory RequirementTraceability.fromJson(Map<String, dynamic> json) {
+    return RequirementTraceability(
+      requirementId: json['requirementId'] as String? ?? '',
+      requirement: json['requirement'] as String? ?? '',
+      milestoneIds: List<String>.from(json['milestoneIds'] ?? []),
+      taskIds: List<String>.from(json['taskIds'] ?? []),
+      githubAuditRequirements: json['githubAuditRequirements'] != null
+          ? GithubAuditReqs.fromJson(json['githubAuditRequirements'] as Map<String, dynamic>)
+          : GithubAuditReqs(requiredFiles: [], requiredFeatures: [], requiredTests: [], requiredDocumentation: []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'requirementId': requirementId,
+        'requirement': requirement,
+        'milestoneIds': milestoneIds,
+        'taskIds': taskIds,
+        'githubAuditRequirements': githubAuditRequirements.toJson(),
+      };
+}
+
+class RequirementTrace {
+  final String requirement;
+  final List<String> linkedMilestones;
+  final List<String> linkedTasks;
+
+  RequirementTrace({
+    required this.requirement,
+    required this.linkedMilestones,
+    required this.linkedTasks,
+  });
+
+  factory RequirementTrace.fromJson(Map<String, dynamic> json) {
+    return RequirementTrace(
+      requirement: json['requirement'] as String? ?? '',
+      linkedMilestones: List<String>.from(json['linkedMilestones'] ?? []),
+      linkedTasks: List<String>.from(json['linkedTasks'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'requirement': requirement,
+        'linkedMilestones': linkedMilestones,
+        'linkedTasks': linkedTasks,
+      };
+}
+
+class BudgetCategory {
+  final String category;
+  final int percentage;
+  final int amountPaise;
+
+  BudgetCategory({
+    required this.category,
+    required this.percentage,
+    required this.amountPaise,
+  });
+
+  factory BudgetCategory.fromJson(Map<String, dynamic> json) {
+    return BudgetCategory(
+      category: json['category'] as String? ?? '',
+      percentage: json['percentage'] as int? ?? 0,
+      amountPaise: json['amountPaise'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'category': category,
+        'percentage': percentage,
+        'amountPaise': amountPaise,
+      };
+}
+
+class ProjectPlan {
+  final String planId;
+  final int version;
+  final String merchantId;
+  final String? customerId;
+  final String? invoiceId;
+  final String requirements;
+  final String projectSummary;
+  final String scope;
+  final List<ProjectPlanMilestone> milestones;
+  final List<ProjectTask> tasks;
+  final List<RequirementTrace> requirementsBreakdown;
+  final List<RequirementTraceability> requirementTrace;
+  final int optimisticDays;
+  final int realisticDays;
+  final int conservativeDays;
+  final String timelineSummary;
+  final List<String> acceptanceCriteria;
+  final List<String> riskFactors;
+  final int planningConfidence;
+  final List<String> assumptions;
+  final List<String> unknowns;
+  final List<BudgetCategory> budgetAllocation;
+  final String escrowStructure;
+  final String escrowRationale;
+  final String status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  ProjectPlan({
+    required this.planId,
+    required this.version,
+    required this.merchantId,
+    this.customerId,
+    this.invoiceId,
+    required this.requirements,
+    required this.projectSummary,
+    required this.scope,
+    required this.milestones,
+    required this.tasks,
+    required this.requirementsBreakdown,
+    required this.requirementTrace,
+    required this.optimisticDays,
+    required this.realisticDays,
+    required this.conservativeDays,
+    required this.timelineSummary,
+    required this.acceptanceCriteria,
+    required this.riskFactors,
+    required this.planningConfidence,
+    required this.assumptions,
+    required this.unknowns,
+    required this.budgetAllocation,
+    required this.escrowStructure,
+    required this.escrowRationale,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory ProjectPlan.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] != null ? json['data'] as Map<String, dynamic> : json;
+    
+    final timelineObj = data['timeline'] as Map<String, dynamic>? ?? {};
+    final escrowObj = data['escrowPlan'] as Map<String, dynamic>? ?? {};
+
+    return ProjectPlan(
+      planId: data['planId'] as String? ?? '',
+      version: data['version'] as int? ?? 1,
+      merchantId: data['merchantId'] as String? ?? '',
+      customerId: data['customerId'] as String?,
+      invoiceId: data['invoiceId'] as String?,
+      requirements: data['requirements'] as String? ?? '',
+      projectSummary: data['projectSummary'] as String? ?? '',
+      scope: data['scope'] as String? ?? '',
+      milestones: (data['milestones'] as List? ?? [])
+          .map((e) => ProjectPlanMilestone.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      tasks: (data['tasks'] as List? ?? [])
+          .map((e) => ProjectTask.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      requirementsBreakdown: (data['requirementsBreakdown'] as List? ?? [])
+          .map((e) => RequirementTrace.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      requirementTrace: (data['requirementTrace'] as List? ?? [])
+          .map((e) => RequirementTraceability.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      optimisticDays: timelineObj['optimisticDays'] as int? ?? 0,
+      realisticDays: timelineObj['realisticDays'] as int? ?? 0,
+      conservativeDays: timelineObj['conservativeDays'] as int? ?? 0,
+      timelineSummary: timelineObj['summary'] as String? ?? '',
+      acceptanceCriteria: List<String>.from(data['acceptanceCriteria'] ?? []),
+      riskFactors: List<String>.from(data['riskFactors'] ?? []),
+      planningConfidence: data['planningConfidence'] as int? ?? 0,
+      assumptions: List<String>.from(data['assumptions'] ?? []),
+      unknowns: List<String>.from(data['unknowns'] ?? []),
+      budgetAllocation: (data['budgetAllocation'] as List? ?? [])
+          .map((e) => BudgetCategory.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      escrowStructure: escrowObj['structure'] as String? ?? '',
+      escrowRationale: escrowObj['rationale'] as String? ?? '',
+      status: data['status'] as String? ?? 'Draft',
+      createdAt: data['createdAt'] != null ? DateTime.parse(data['createdAt'] as String) : DateTime.now(),
+      updatedAt: data['updatedAt'] != null ? DateTime.parse(data['updatedAt'] as String) : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'planId': planId,
+        'version': version,
+        'merchantId': merchantId,
+        'customerId': customerId,
+        'invoiceId': invoiceId,
+        'requirements': requirements,
+        'projectSummary': projectSummary,
+        'scope': scope,
+        'milestones': milestones.map((e) => e.toJson()).toList(),
+        'tasks': tasks.map((e) => e.toJson()).toList(),
+        'requirementsBreakdown': requirementsBreakdown.map((e) => e.toJson()).toList(),
+        'requirementTrace': requirementTrace.map((e) => e.toJson()).toList(),
+        'timeline': {
+          'optimisticDays': optimisticDays,
+          'realisticDays': realisticDays,
+          'conservativeDays': conservativeDays,
+          'summary': timelineSummary,
+        },
+        'acceptanceCriteria': acceptanceCriteria,
+        'riskFactors': riskFactors,
+        'planningConfidence': planningConfidence,
+        'assumptions': assumptions,
+        'unknowns': unknowns,
+        'budgetAllocation': budgetAllocation.map((e) => e.toJson()).toList(),
+        'escrowPlan': {
+          'structure': escrowStructure,
+          'rationale': escrowRationale,
+        },
+        'status': status,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+}
+

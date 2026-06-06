@@ -467,13 +467,11 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
                 side: BorderSide(color: AppColors.outlineVariant.withOpacity(0.6)),
               ),
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Request update sent to Merchant.')),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_outline, size: 16),
-            label: const Text('Chat'),
+             onPressed: () {
+               context.push('/customer/chat?invoiceId=${widget.escrowId}');
+             },
+             icon: const Icon(Icons.chat_bubble_outline, size: 16),
+             label: const Text('Chat'),
           ),
         ),
         const SizedBox(width: 12),

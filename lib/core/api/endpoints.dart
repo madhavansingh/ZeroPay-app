@@ -10,6 +10,8 @@ class ApiEndpoints {
   static const String authLogin = '/auth/login';
   static const String authKeyValidate = '/auth/keys/validate';
   static const String authVerifyToken = '/auth/session/verify';
+  static const String authProfile = '/auth/profile';
+  static const String authRole = '/auth/role';
 
   // Wallet & Ledger
   static const String walletBalances = '/wallet/balances';
@@ -18,10 +20,11 @@ class ApiEndpoints {
   static const String ledgerHistory = '/ledger/history';
 
   // Escrow Engine
-  static const String escrowCreate = '/escrow/contracts';
-  static const String escrowList = '/escrow/contracts';
-  static const String escrowReleaseMilestone = '/escrow/release-milestone';
-  static const String escrowRaiseDispute = '/escrow/dispute';
+  static const String escrowCreate = '/invoices/create';
+  static const String escrowMerchantList = '/invoices/merchant/list';
+  static const String escrowCustomerList = '/invoices/customer/list';
+  static const String escrowReleaseMilestone = '/escrow/:invoiceId/release';
+  static const String escrowRaiseDispute = '/escrow/:invoiceId/dispute';
 
   // Merchant Portal
   static const String merchantProfile = '/merchant/profile';
@@ -29,8 +32,8 @@ class ApiEndpoints {
   static const String merchantRevenueStats = '/merchant/stats/revenue';
   static const String merchantPayouts = '/merchant/payouts';
 
-  // AI Negotiation
-  static const String aiNegotiateChat = '/ai/negotiation/chat';
+  // AI Negotiation & Chat
+  static const String chatSendMessage = '/chat/rooms/:roomId/messages';
   static const String aiAuditContract = '/ai/contract/audit';
   static const String aiRecommendations = '/ai/insights/recommendations';
 

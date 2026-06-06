@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../domain/models.dart' as domain;
 import '../data/mock_data.dart';
 import '../data/repository.dart';
+import '../../core/api/api_services.dart';
 
 enum DemoDataset {
   newUser,
@@ -100,22 +101,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final onboardingVal = await storage.read(key: 'onboarding_completed');
       final onboardingCompleted = onboardingVal == 'true';
-      
+
       final authenticatedVal = await storage.read(key: 'is_authenticated');
       final isAuthenticated = authenticatedVal == 'true';
-      
+
       final currentRole = await storage.read(key: 'selected_role') ?? 'customer';
-      
+
       domain.User? user;
       if (isAuthenticated) {
+        // Ensure the stored dev token is present so the API interceptor can attach it
+        final storedToken = await storage.read(key: 'auth_jwt_token');
+        if (storedToken == null) {
+          final devToken = 'dev_token_$currentRole';
+          await storage.write(key: 'auth_jwt_token', value: devToken);
+        }
+
         final repo = _ref.read(zeroPayRepositoryProvider);
         try {
           user = await repo.getCurrentUser();
           if (user.currentRole != currentRole) {
             user = await repo.switchRole(currentRole);
           }
-        } catch (_) {
-          // Secondary fallback to default safe profile
+        } catch (e) {
+          // Log backend failure — do NOT silently fall to mock
+          debugPrint('[AuthNotifier] recoverSession backend error: $e');
+          // Use last-known offline profile only when the backend is unreachable
           user = domain.User(
             uid: 'usr_offline',
             email: 'offline.user@zeropay.io',
@@ -126,7 +136,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           );
         }
       }
-      
+
       state = AuthState(
         user: user,
         currentRole: currentRole,
@@ -134,7 +144,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isAuthenticated: isAuthenticated,
         onboardingCompleted: onboardingCompleted,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[AuthNotifier] recoverSession fatal: $e');
       state = state.copyWith(isLoading: false);
     }
   }
@@ -170,27 +181,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<bool> verifyOTP(String code) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    await Future.delayed(const Duration(milliseconds: 600)); // Simulate verification
     if (code == '123456' || code.length == 6) {
-      final repo = _ref.read(zeroPayRepositoryProvider);
-      final user = await repo.getCurrentUser();
-      
-      const storage = FlutterSecureStorage();
-      await storage.write(key: 'is_authenticated', value: 'true');
-      await storage.write(key: 'onboarding_completed', value: 'true');
-      await storage.write(key: 'selected_role', value: user.currentRole);
+      try {
+        const storage = FlutterSecureStorage();
 
-      state = AuthState(
-        user: user,
-        currentRole: user.currentRole,
-        isLoading: false,
-        isAuthenticated: true,
-        onboardingCompleted: true,
-        phoneNumber: state.phoneNumber,
-      );
-      return true;
+        // Write the dev token so the Dio interceptor attaches it as Bearer
+        const devToken = 'dev_token_customer';
+        await storage.write(key: 'auth_jwt_token', value: devToken);
+
+        // Provision / sync user record on the real backend
+        final authService = _ref.read(authApiServiceProvider);
+        await authService.syncFirebaseSession(devToken);
+
+        // Fetch the canonical user profile from the backend
+        final repo = _ref.read(zeroPayRepositoryProvider);
+        final user = await repo.getCurrentUser();
+
+        await storage.write(key: 'is_authenticated', value: 'true');
+        await storage.write(key: 'onboarding_completed', value: 'true');
+        await storage.write(key: 'selected_role', value: user.currentRole);
+
+        state = AuthState(
+          user: user,
+          currentRole: user.currentRole,
+          isLoading: false,
+          isAuthenticated: true,
+          onboardingCompleted: true,
+          phoneNumber: state.phoneNumber,
+        );
+        return true;
+      } catch (e) {
+        debugPrint('[AuthNotifier] verifyOTP backend error: $e');
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Could not connect to backend: $e',
+        );
+        return false;
+      }
     } else {
-      state = state.copyWith(isLoading: false, errorMessage: 'Invalid verification code. Please check the code and try again.');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Invalid verification code. Please check the code and try again.',
+      );
       return false;
     }
   }
@@ -198,10 +230,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithSeedPhrase() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
+      const storage = FlutterSecureStorage();
+
+      // Write the dev token so the Dio interceptor attaches it as Bearer
+      const devToken = 'dev_token_customer';
+      await storage.write(key: 'auth_jwt_token', value: devToken);
+
+      // Provision / sync user on the real backend
+      final authService = _ref.read(authApiServiceProvider);
+      await authService.syncFirebaseSession(devToken);
+
       final repo = _ref.read(zeroPayRepositoryProvider);
       final user = await repo.getCurrentUser();
-      
-      const storage = FlutterSecureStorage();
+
       await storage.write(key: 'is_authenticated', value: 'true');
       await storage.write(key: 'onboarding_completed', value: 'true');
       await storage.write(key: 'selected_role', value: user.currentRole);
@@ -214,28 +255,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
         onboardingCompleted: true,
       );
     } catch (e) {
+      debugPrint('[AuthNotifier] signInWithSeedPhrase backend error: $e');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> signInBiometrically() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
-    await Future.delayed(const Duration(milliseconds: 400));
-    final repo = _ref.read(zeroPayRepositoryProvider);
-    final user = await repo.getCurrentUser();
+    try {
+      const storage = FlutterSecureStorage();
 
-    const storage = FlutterSecureStorage();
-    await storage.write(key: 'is_authenticated', value: 'true');
-    await storage.write(key: 'onboarding_completed', value: 'true');
-    await storage.write(key: 'selected_role', value: user.currentRole);
+      // Write the dev token so the Dio interceptor attaches it as Bearer
+      final currentRole = state.currentRole;
+      final devToken = 'dev_token_$currentRole';
+      await storage.write(key: 'auth_jwt_token', value: devToken);
 
-    state = AuthState(
-      user: user,
-      currentRole: user.currentRole,
-      isLoading: false,
-      isAuthenticated: true,
-      onboardingCompleted: true,
-    );
+      // Provision / sync user on the real backend
+      final authService = _ref.read(authApiServiceProvider);
+      await authService.syncFirebaseSession(devToken);
+
+      final repo = _ref.read(zeroPayRepositoryProvider);
+      final user = await repo.getCurrentUser();
+
+      await storage.write(key: 'is_authenticated', value: 'true');
+      await storage.write(key: 'onboarding_completed', value: 'true');
+      await storage.write(key: 'selected_role', value: user.currentRole);
+
+      state = AuthState(
+        user: user,
+        currentRole: user.currentRole,
+        isLoading: false,
+        isAuthenticated: true,
+        onboardingCompleted: true,
+      );
+    } catch (e) {
+      debugPrint('[AuthNotifier] signInBiometrically backend error: $e');
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
   }
 
   Future<void> selectWorkspaceRole(String role) async {

@@ -195,7 +195,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/customer/chat',
         builder: (context, state) {
           final threadId = state.uri.queryParameters['threadId'];
-          return CommerceChatScreen(preselectedThreadId: threadId);
+          final invoiceId = state.uri.queryParameters['invoiceId'];
+          return CommerceChatScreen(
+            preselectedThreadId: threadId,
+            preselectedInvoiceId: invoiceId,
+          );
         },
       ),
       GoRoute(

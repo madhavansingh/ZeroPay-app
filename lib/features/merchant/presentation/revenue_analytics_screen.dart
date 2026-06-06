@@ -12,21 +12,9 @@ final merchantRevenueAnalyticsProvider = FutureProvider.autoDispose<Map<String, 
   // Watch the merchant escrows provider to trigger re-computation when new escrows are added
   final liveEscrows = ref.watch(merchantEscrowsProvider).valueOrNull ?? [];
   
-  Map<String, dynamic> summary = {};
-  Map<String, dynamic> timeline = {};
-  Map<String, dynamic> dashboard = {};
-  
-  try {
-    summary = await repo.getMerchantAnalyticsSummary(30);
-  } catch (_) {}
-  
-  try {
-    timeline = await repo.getMerchantRevenueTimeline(7);
-  } catch (_) {}
-  
-  try {
-    dashboard = await repo.getMerchantDashboard();
-  } catch (_) {}
+  final summary = await repo.getMerchantAnalyticsSummary(30);
+  final timeline = await repo.getMerchantRevenueTimeline(7);
+  final dashboard = await repo.getMerchantDashboard();
 
   // Compute live volume from cached escrows (includes newly created ones)
   double liveVolumePaise = 0.0;
@@ -39,51 +27,12 @@ final merchantRevenueAnalyticsProvider = FutureProvider.autoDispose<Map<String, 
     }
   }
   
-  // Seed fallback values if the returned data maps are empty or null
-  if (summary.isEmpty || (summary['totalVolumePaise'] == null && summary['totalVolumeLovelace'] == null)) {
-    summary = {
-      'totalVolumePaise': liveVolumePaise > 0 ? liveVolumePaise : 3450000.0,
-      'totalVolumeLovelace': liveVolumeLovelace > 0 ? liveVolumeLovelace : 1500000000.0,
-      'averageSettlementTime': 1.8,
-      'retentionRate': 92.5,
-      'conversionRate': 4.1,
-    };
-  } else {
-    // Merge live escrow volumes on top of server values
-    if (liveVolumePaise > 0) {
-      summary['totalVolumePaise'] = ((summary['totalVolumePaise'] as num? ?? 0) + liveVolumePaise);
-    }
+  // Merge live escrow volumes on top of server values
+  if (liveVolumePaise > 0) {
+    summary['totalVolumePaise'] = ((summary['totalVolumePaise'] as num? ?? 0) + liveVolumePaise);
   }
-  
-  if (timeline.isEmpty || timeline['timeline'] == null || (timeline['timeline'] as Map).isEmpty) {
-    timeline = {
-      'timeline': {
-        'Mon': {'paise': 2400000, 'lovelace': 0},
-        'Tue': {'paise': 4500000, 'lovelace': 0},
-        'Wed': {'paise': 1500000, 'lovelace': 0},
-        'Thu': {'paise': 8000000, 'lovelace': 0},
-        'Fri': {'paise': 3500000, 'lovelace': 0},
-        'Sat': {'paise': 6200000, 'lovelace': 0},
-        'Sun': {'paise': 11000000, 'lovelace': 0},
-      }
-    };
-  }
-  
-  if (dashboard.isEmpty || dashboard['merchant'] == null) {
-    dashboard = {
-      'merchant': {
-        'id': 'mer_cryptobrews_789',
-        'name': 'CryptoBrews Coffee',
-        'slug': 'cryptobrews-coffee',
-        'tier': 'Platinum',
-        'trustScore': 99.8,
-        'description': 'Premium artisanal coffee accepting web3 payments.',
-      },
-      'sales_count': liveEscrows.length + 152,
-      'active_listings': 3,
-      'rating': 4.9,
-      'recentInvoices': [],
-    };
+  if (liveVolumeLovelace > 0) {
+    summary['totalVolumeLovelace'] = ((summary['totalVolumeLovelace'] as num? ?? 0) + liveVolumeLovelace);
   }
   
   return {

@@ -37,81 +37,16 @@ class StorefrontItem {
 
 final storefrontManagementProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final repo = ref.watch(zeroPayRepositoryProvider);
-  Map<String, dynamic> dashboard = {};
-  try {
-    dashboard = await repo.getMerchantDashboard();
-  } catch (_) {}
+  final dashboard = await repo.getMerchantDashboard();
+  final merchant = dashboard['merchant'] ?? dashboard['data']?['merchant'] ?? {};
+  final slug = merchant['slug'] as String? ?? '';
   
-  Map<String, dynamic> merchant = dashboard['merchant'] ?? dashboard['data']?['merchant'] ?? {};
-  if (merchant.isEmpty || merchant['slug'] == null || (merchant['slug'] as String).isEmpty) {
-    merchant = {
-      'id': 'mer_cryptobrews_789',
-      'name': 'CryptoBrews Coffee',
-      'shopName': 'CryptoBrews Coffee',
-      'slug': 'cryptobrews-coffee',
-      'tier': 'Platinum',
-      'trustScore': 99.8,
-      'reputationScore': 99.8,
-      'description': 'Premium artisanal coffee accepting web3 payments.',
-      'email': 'hello@cryptobrews.eth',
-      'address': '124 Satoshi St, Block 4',
-      'walletAddress': 'addr1q8a72b100641de406d824855a782b13fa92c3ff',
-      'logoUrl': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdfAeOMz-hFgPjpiSRxpTx0AAlPyn8qa-XK6UpF-3R3lWc2cTNz15gXwvfYDGcLnRJ0aSQxr9fQuTxZUMEUge2NAeynKx2UZ_pSvK8m8mbdydskZuUmqCAWgD53bCs0cxzYSlzrKHjgJBNMN-muTLZGUwCRojxEU-hL11_FqT-oqAxscm6P6nTZKsEIV8CZvw54mcerz09JqJ1iZb4rURhHwTr6oMA1f0oUdsq1XD2oKu-VXBXR_XwFZMlXIDQ8w6vdyYRzrXbxoxt',
-      'bannerUrl': 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&q=80&w=1000',
-    };
-  }
-  
-  final slug = merchant['slug'] as String;
-  
-  List<Map<String, dynamic>> catalog = [];
-  try {
-    catalog = await repo.getStorefrontCatalog(slug);
-  } catch (_) {}
-  
-  if (catalog.isEmpty) {
-    catalog = [
-      {
-        'id': 'prod_beans_1',
-        'title': 'Premium Espresso Blend',
-        'price': 15.0,
-        'symbol': 'USDC',
-        'category': 'physical',
-        'description': 'Rich dark roast coffee beans with chocolate notes.',
-        'isActive': true,
-        'salesCount': 84,
-      },
-      {
-        'id': 'prod_mug_2',
-        'title': 'Lumina Ceramic Travel Mug',
-        'price': 25.0,
-        'symbol': 'USDC',
-        'category': 'physical',
-        'description': 'Matte-finish double-walled insulated ceramic mug.',
-        'isActive': true,
-        'salesCount': 42,
-      },
-      {
-        'id': 'prod_cold_3',
-        'title': 'Nitro Cold Brew Pack',
-        'price': 18.0,
-        'symbol': 'USDC',
-        'category': 'physical',
-        'description': '4-pack of nitrogen-infused smooth cold brew cans.',
-        'isActive': true,
-        'salesCount': 29,
-      },
-    ];
-  }
-
-  // Also query invoices list to populate reviews dynamically
-  Map<String, dynamic> invoices = {};
-  try {
-    invoices = await repo.getInvoicesList();
-  } catch (_) {}
+  final catalog = await repo.getStorefrontCatalog(slug);
+  final invoices = await repo.getInvoicesList();
   
   return {
     'merchant': merchant,
-    'dashboard': dashboard.isEmpty ? {'merchant': merchant, 'sales_count': 155, 'active_listings': 3, 'rating': 4.9} : dashboard,
+    'dashboard': dashboard,
     'catalog': catalog,
     'invoices': invoices,
   };

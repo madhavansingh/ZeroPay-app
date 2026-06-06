@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,41 +6,33 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/domain/models.dart';
 import '../../../shared/presentation/widgets.dart';
 import '../../../shared/providers/global_providers.dart';
-
-class ChatThread {
-  final String id;
-  final String senderName;
-  final String lastMessage;
-  final String timestamp;
-  final bool isUnread;
-  final String contractReference;
-  final String status;
-
-  ChatThread({
-    required this.id,
-    required this.senderName,
-    required this.lastMessage,
-    required this.timestamp,
-    required this.isUnread,
-    required this.contractReference,
-    required this.status,
-  });
-}
+import '../../../shared/data/repository.dart';
 
 class CommerceChatScreen extends ConsumerStatefulWidget {
   final String? preselectedThreadId;
-  const CommerceChatScreen({this.preselectedThreadId, super.key});
+  final String? preselectedInvoiceId;
+
+  const CommerceChatScreen({
+    this.preselectedThreadId,
+    this.preselectedInvoiceId,
+    super.key,
+  });
 
   @override
   ConsumerState<CommerceChatScreen> createState() => _CommerceChatScreenState();
 }
 
 class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with TickerProviderStateMixin {
-  ChatThread? _selectedThread;
+  Map<String, dynamic>? _selectedRoom;
   final List<ChatMessage> _messages = [];
   final TextEditingController _msgController = TextEditingController();
-  final List<ChatThread> _threads = [];
-  bool _initialized = false;
+  List<Map<String, dynamic>> _rooms = [];
+  bool _isLoadingRooms = false;
+  bool _isLoadingMessages = false;
+  String? _roomsError;
+  String? _messagesError;
+  Timer? _pollingTimer;
+  Escrow? _linkedEscrow;
 
   // Animation controller for fund lock success overlay
   late AnimationController _lockAnimationController;
@@ -57,108 +50,305 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
       parent: _lockAnimationController,
       curve: Curves.elasticOut,
     );
+
+    _fetchRooms();
+
+    if (widget.preselectedInvoiceId != null) {
+      _resolvePreselectedInvoice();
+    }
   }
 
   @override
   void dispose() {
     _msgController.dispose();
     _lockAnimationController.dispose();
+    _pollingTimer?.cancel();
     super.dispose();
   }
 
-  void _initializeThreads(DemoDataset dataset) {
-    if (_initialized) return;
-    _threads.clear();
-    _messages.clear();
+  Future<void> _fetchRooms() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingRooms = true;
+      _roomsError = null;
+    });
 
-    switch (dataset) {
-      case DemoDataset.freelanceProject:
-        _threads.add(ChatThread(
-          id: 'th_f',
-          senderName: 'DevCo Solutions (Lead Dev)',
-          lastMessage: 'I completed the onboarding UI. Code committed to Github.',
-          timestamp: '10m ago',
-          isUnread: true,
-          contractReference: 'ZP-FREL-1',
-          status: 'Locked',
-        ));
-        _messages.addAll([
-          ChatMessage(id: 'msg_f_10', text: 'Hey Sarah! We just compiled the baseline project scaffolding on Cardano devnet.', timestamp: DateTime.now().subtract(const Duration(days: 2)), sender: 'counterparty', isAIHelper: false),
-          ChatMessage(id: 'msg_f_11', text: 'Looks great. I verified the pre-funded lock is registered on-chain.', timestamp: DateTime.now().subtract(const Duration(days: 2)), sender: 'user', isAIHelper: false),
-          ChatMessage(id: 'msg_f_12', text: 'Onboarding UI development is completed. Can you review and release Milestone 1?', timestamp: DateTime.now().subtract(const Duration(minutes: 10)), sender: 'counterparty', isAIHelper: false),
-        ]);
-        break;
-      case DemoDataset.marketplacePurchase:
-        _threads.add(ChatThread(
-          id: 'th_m',
-          senderName: 'Retro Gaming Source (Seller)',
-          lastMessage: 'Vintage NES console package has been shipped. Carrier updated.',
-          timestamp: '1h ago',
-          isUnread: false,
-          contractReference: 'ZP-MKT-BUY',
-          status: 'Active',
-        ));
-        _messages.addAll([
-          ChatMessage(id: 'msg_m_10', text: 'Thank you for locking the ADA! I am preparing the NES shipment.', timestamp: DateTime.now().subtract(const Duration(days: 1)), sender: 'counterparty', isAIHelper: false),
-          ChatMessage(id: 'msg_m_11', text: 'Tracking updated. Package picked up by courier.', timestamp: DateTime.now().subtract(const Duration(hours: 1)), sender: 'counterparty', isAIHelper: false),
-        ]);
-        break;
-      default:
-        _threads.addAll([
-          ChatThread(
-            id: 'th_default_1',
-            senderName: 'DevCo Solutions',
-            lastMessage: 'Onboarding UI development completed.',
-            timestamp: '10m ago',
-            isUnread: true,
-            contractReference: 'ZP-FREL-1',
-            status: 'Locked',
-          ),
-          ChatThread(
-            id: 'th_default_2',
-            senderName: 'Registrar Domain Agents',
-            lastMessage: 'Domain transfer auth code verified.',
-            timestamp: 'Yesterday',
-            isUnread: false,
-            contractReference: 'ZP-DOM-9',
-            status: 'Confirming',
-          ),
-        ]);
-        _messages.addAll([
-          ChatMessage(id: 'msg_def_1', text: 'Welcome to ZeroPay Chat. Link your contract or lock invoices.', timestamp: DateTime.now().subtract(const Duration(hours: 12)), sender: 'ai', isAIHelper: true),
-        ]);
-    }
+    try {
+      final repo = ref.read(zeroPayRepositoryProvider);
+      final rooms = await repo.getChatRooms();
+      if (!mounted) return;
 
-    if (widget.preselectedThreadId != null) {
-      final index = _threads.indexWhere((element) => element.id == widget.preselectedThreadId);
-      if (index != -1) {
-        _selectedThread = _threads[index];
+      setState(() {
+        _rooms = rooms;
+        _isLoadingRooms = false;
+      });
+
+      // If we have a preselected thread ID, look it up and select it
+      if (widget.preselectedThreadId != null && _selectedRoom == null) {
+        final idx = rooms.indexWhere((r) => r['roomId'] == widget.preselectedThreadId);
+        if (idx != -1) {
+          _selectRoom(rooms[idx]);
+        }
       }
-    } else if (_threads.isNotEmpty && _selectedThread == null) {
-      _selectedThread = _threads.first;
+    } catch (e) {
+      debugPrint('[CommerceChatScreen] _fetchRooms error: $e');
+      if (!mounted) return;
+      setState(() {
+        _roomsError = 'Failed to load chat rooms: $e';
+        _isLoadingRooms = false;
+      });
+    }
+  }
+
+  Future<void> _resolvePreselectedInvoice() async {
+    final invoiceId = widget.preselectedInvoiceId;
+    if (invoiceId == null) return;
+
+    setState(() {
+      _isLoadingMessages = true;
+      _messagesError = null;
+    });
+
+    try {
+      final repo = ref.read(zeroPayRepositoryProvider);
+      final escrow = await repo.getEscrowDetails(invoiceId);
+      if (!mounted) return;
+
+      setState(() {
+        _linkedEscrow = escrow;
+      });
+
+      if (escrow.chatRoomId != null && escrow.chatRoomId!.isNotEmpty) {
+        final mockRoom = {
+          'roomId': escrow.chatRoomId,
+          'shopName': escrow.counterpartyName,
+        };
+        _selectRoom(mockRoom);
+      } else {
+        // Chat room doesn't exist yet, provision one!
+        final merchantStringId = escrow.merchantStringId;
+        if (merchantStringId == null || merchantStringId.isEmpty) {
+          throw Exception('No merchant ID associated with this invoice to start a chat.');
+        }
+
+        final newRoom = await repo.createChatRoom(merchantStringId);
+        if (!mounted) return;
+
+        final roomId = newRoom['roomId'] as String;
+        final mockRoom = {
+          'roomId': roomId,
+          'shopName': escrow.counterpartyName,
+        };
+
+        _selectRoom(mockRoom);
+        // Refresh rooms list so the new room appears
+        _fetchRooms();
+      }
+    } catch (e) {
+      debugPrint('[CommerceChatScreen] _resolvePreselectedInvoice error: $e');
+      if (!mounted) return;
+      setState(() {
+        _messagesError = 'Failed to load/provision chat for invoice: $e';
+        _isLoadingMessages = false;
+      });
+    }
+  }
+
+  void _selectRoom(Map<String, dynamic> room) {
+    setState(() {
+      _selectedRoom = room;
+      _messages.clear();
+    });
+
+    final roomId = room['roomId'] as String;
+    _fetchMessages(roomId);
+    _startPolling(roomId);
+  }
+
+  void _startPolling(String roomId) {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _fetchMessages(roomId, isSilent: true);
+    });
+  }
+
+  Future<void> _fetchMessages(String roomId, {bool isSilent = false}) async {
+    if (!mounted) return;
+    if (!isSilent) {
+      setState(() {
+        _isLoadingMessages = true;
+        _messagesError = null;
+      });
     }
 
-    _initialized = true;
+    try {
+      final repo = ref.read(zeroPayRepositoryProvider);
+      final details = await repo.getChatRoomDetails(roomId);
+      if (!mounted) return;
+
+      final messagesList = details['messages'] as List?;
+      final currentUserId = ref.read(authProvider).user?.uid;
+
+      final List<ChatMessage> newMessages = [];
+      if (messagesList != null) {
+        for (final msg in messagesList) {
+          final m = Map<String, dynamic>.from(msg as Map);
+          final senderId = m['senderId'] as String?;
+
+          String sender;
+          if (senderId == currentUserId) {
+            sender = 'user';
+          } else if (senderId == 'zeropay-ai-agent') {
+            sender = 'ai';
+          } else {
+            sender = 'counterparty';
+          }
+
+          final payload = m['payload'] as Map?;
+          final text = payload != null ? (payload['text'] as String? ?? '') : '';
+          final timestampVal = m['timestamp'];
+          DateTime timestamp = DateTime.now();
+          if (timestampVal is int) {
+            timestamp = DateTime.fromMillisecondsSinceEpoch(timestampVal);
+          } else if (timestampVal is String) {
+            timestamp = DateTime.parse(timestampVal);
+          }
+
+          newMessages.add(ChatMessage(
+            id: m['id'] as String? ?? m['key'] as String? ?? 'msg_${timestamp.millisecondsSinceEpoch}',
+            text: text,
+            timestamp: timestamp,
+            sender: sender,
+            isAIHelper: sender == 'ai',
+          ));
+        }
+      }
+
+      setState(() {
+        _messages.clear();
+        _messages.addAll(newMessages);
+        _isLoadingMessages = false;
+      });
+    } catch (e) {
+      debugPrint('[CommerceChatScreen] _fetchMessages error: $e');
+      if (!mounted) return;
+      if (!isSilent) {
+        setState(() {
+          _messagesError = 'Failed to load messages: $e';
+          _isLoadingMessages = false;
+        });
+      }
+    }
+  }
+
+  String _determineInvoiceId(Escrow? activeEscrow) {
+    if (widget.preselectedInvoiceId != null) return widget.preselectedInvoiceId!;
+    if (activeEscrow != null) return activeEscrow.id;
+    // Fallback to first available escrow in the user's role
+    final role = ref.read(authProvider).currentRole;
+    final provider = role == 'merchant' ? merchantEscrowsProvider : customerEscrowsProvider;
+    final escrowsVal = ref.read(provider).value;
+    if (escrowsVal != null && escrowsVal.isNotEmpty) {
+      return escrowsVal.first.id;
+    }
+    return 'INV-FALLBACK';
+  }
+
+  Future<void> _sendMessage(String text, Escrow? activeEscrow) async {
+    if (text.trim().isEmpty || _selectedRoom == null) return;
+
+    final roomId = _selectedRoom!['roomId'] as String;
+    final invoiceId = _determineInvoiceId(activeEscrow);
+    final msgText = text.trim();
+
+    _msgController.clear();
+
+    // Optimistically append the customer message
+    final tempId = 'custom_msg_${DateTime.now().millisecondsSinceEpoch}';
+    final userMsg = ChatMessage(
+      id: tempId,
+      text: msgText,
+      timestamp: DateTime.now(),
+      sender: 'user',
+      isAIHelper: false,
+    );
+
+    setState(() {
+      _messages.add(userMsg);
+    });
+
+    try {
+      final repo = ref.read(zeroPayRepositoryProvider);
+      await repo.sendChatMessage(roomId, invoiceId, msgText);
+      await _fetchMessages(roomId, isSilent: true);
+    } catch (e) {
+      debugPrint('[CommerceChatScreen] _sendMessage error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send message: $e')),
+      );
+    }
+  }
+
+  String _formatTime(dynamic timestamp) {
+    if (timestamp == null) return '';
+    DateTime dateTime;
+    if (timestamp is int) {
+      dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    } else if (timestamp is String) {
+      dateTime = DateTime.parse(timestamp);
+    } else {
+      return '';
+    }
+
+    final difference = DateTime.now().difference(dateTime);
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else {
+      return '${dateTime.day}/${dateTime.month}';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final dataset = ref.watch(demoDatasetProvider);
-    _initializeThreads(dataset);
 
     ref.listen(demoDatasetProvider, (previous, next) {
       setState(() {
-        _initialized = false;
-        _selectedThread = null;
-        _initializeThreads(next);
+        _selectedRoom = null;
+        _linkedEscrow = null;
+        _messages.clear();
       });
+      _fetchRooms();
     });
+
+    final role = ref.watch(authProvider).currentRole;
+    final escrowsAsync = ref.watch(role == 'merchant' ? merchantEscrowsProvider : customerEscrowsProvider);
+
+    Escrow? activeEscrow = _linkedEscrow;
+    if (_selectedRoom != null && activeEscrow == null) {
+      final roomId = _selectedRoom!['roomId'] as String;
+      escrowsAsync.whenData((escrows) {
+        final idx = escrows.indexWhere((e) => e.chatRoomId == roomId);
+        if (idx != -1) {
+          activeEscrow = escrows[idx];
+        }
+      });
+    }
+
+    final shopName = _selectedRoom?['shopName'] as String? ?? 'Discussion';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          _selectedThread == null ? 'Commerce Discussions' : _selectedThread!.senderName,
+          _selectedRoom == null ? 'Commerce Discussions' : shopName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.background,
@@ -166,8 +356,11 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.onBackground),
           onPressed: () {
-            if (_selectedThread != null && widget.preselectedThreadId == null) {
-              setState(() => _selectedThread = null);
+            if (_selectedRoom != null && widget.preselectedThreadId == null && widget.preselectedInvoiceId == null) {
+              setState(() {
+                _selectedRoom = null;
+                _pollingTimer?.cancel();
+              });
             } else {
               if (context.canPop()) {
                 context.pop();
@@ -181,33 +374,80 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
       ),
       body: Stack(
         children: [
-          _selectedThread == null
-              ? _buildThreadsList()
-              : _buildConversationView(dataset),
+          _selectedRoom == null
+              ? _buildRoomsList(escrowsAsync)
+              : _buildConversationView(dataset, activeEscrow),
           if (_showLockAnimation) _buildLockAnimationOverlay(),
         ],
       ),
     );
   }
 
-  Widget _buildThreadsList() {
+  Widget _buildRoomsList(AsyncValue<List<Escrow>> escrowsAsync) {
+    if (_isLoadingRooms && _rooms.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+    if (_roomsError != null && _rooms.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_roomsError!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _fetchRooms,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_rooms.isEmpty) {
+      return const Center(
+        child: Text(
+          'No active discussions found.',
+          style: TextStyle(color: AppColors.outline),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _threads.length,
+      itemCount: _rooms.length,
       itemBuilder: (context, index) {
-        final thread = _threads[index];
+        final room = _rooms[index];
+        final roomId = room['roomId'] as String? ?? '';
+        final shopName = room['shopName'] as String? ?? 'Discussion';
+        final lastMsgMap = room['lastMessage'] as Map?;
+        final lastMessage = lastMsgMap != null ? (lastMsgMap['preview'] as String? ?? '') : 'No messages yet';
+        final timestampVal = lastMsgMap != null ? lastMsgMap['timestamp'] : null;
+        final timestampStr = _formatTime(timestampVal);
+        final unreadCount = room['unreadCount'] as int? ?? 0;
+        final isUnread = unreadCount > 0;
+
+        Escrow? matchedEscrow;
+        escrowsAsync.whenData((escrows) {
+          final idx = escrows.indexWhere((e) => e.chatRoomId == roomId);
+          if (idx != -1) {
+            matchedEscrow = escrows[idx];
+          }
+        });
+
+        final contractReference = matchedEscrow?.id ?? 'None';
+        final status = matchedEscrow?.status ?? 'Active';
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: BentoCard(
-            onTap: () => setState(() {
-              _selectedThread = thread;
-              _initialized = false; // reload messages
-            }),
+            onTap: () => _selectRoom(room),
             child: Row(
               children: [
                 CircleAvatar(
                   backgroundColor: AppColors.primary.withOpacity(0.08),
-                  child: Text(thread.senderName[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  child: Text(
+                    shopName.isNotEmpty ? shopName[0].toUpperCase() : 'C',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -217,19 +457,19 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(thread.senderName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text(thread.timestamp, style: const TextStyle(fontSize: 10, color: AppColors.outline)),
+                          Text(shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(timestampStr, style: const TextStyle(fontSize: 10, color: AppColors.outline)),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        thread.lastMessage,
+                        lastMessage,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          color: thread.isUnread ? AppColors.onSurface : AppColors.onSurfaceVariant,
-                          fontWeight: thread.isUnread ? FontWeight.bold : FontWeight.normal,
+                          color: isUnread ? AppColors.onSurface : AppColors.onSurfaceVariant,
+                          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -239,7 +479,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.06), borderRadius: BorderRadius.circular(6)),
                             child: Text(
-                              'Contract: ${thread.contractReference}',
+                              'Contract: $contractReference',
                               style: const TextStyle(fontSize: 8, color: AppColors.primary, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -248,7 +488,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppColors.tertiary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
                             child: Text(
-                              thread.status.toUpperCase(),
+                              status.toUpperCase(),
                               style: const TextStyle(fontSize: 8, color: AppColors.tertiary, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -265,44 +505,76 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
     );
   }
 
-  Widget _buildConversationView(DemoDataset dataset) {
+  Widget _buildConversationView(DemoDataset dataset, Escrow? activeEscrow) {
     return Column(
       children: [
         // Shared Escrow Status Alert header
-        _buildSharedContextBar(),
+        _buildSharedContextBar(activeEscrow),
 
         // Chat messages timeline
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              // Chat message history
-              ..._messages.map((msg) => _buildChatMessageBubble(msg)),
+          child: _isLoadingMessages && _messages.isEmpty
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _messagesError != null && _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_messagesError!, style: const TextStyle(color: Colors.red)),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => _fetchMessages(_selectedRoom!['roomId']),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.all(16.0),
+                      children: [
+                        if (_messages.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20.0),
+                              child: Text(
+                                'No messages yet. Send a message to start negotiation.',
+                                style: TextStyle(color: AppColors.outline, fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        // Chat message history
+                        ..._messages.map((msg) => _buildChatMessageBubble(msg)),
 
-              // Dynamic Inline Workflows based on active demo context
-              if (dataset == DemoDataset.freelanceProject) ...[
-                const SizedBox(height: 16),
-                _buildInvoiceInlineCard('ZP-FREL-1', 1500.00, 'USDC'),
-                const SizedBox(height: 12),
-                _buildMilestonesTimelineCard('ZP-FREL-1', 'USDC'),
-                const SizedBox(height: 12),
-                _buildAiSuggestionPanel('DevCo Solutions submitted Figma designs. Ledger audits confirm git commit branch synced. Recommend unlocking milestone.'),
-              ],
-              if (dataset == DemoDataset.marketplacePurchase) ...[
-                const SizedBox(height: 16),
-                _buildFulfillmentDeliveryCard('ZP-MKT-BUY', 'Cardano ADA'),
-              ],
-            ],
-          ),
+                        // Dynamic Inline Workflows based on active demo context
+                        if (dataset == DemoDataset.freelanceProject) ...[
+                          const SizedBox(height: 16),
+                          _buildInvoiceInlineCard('ZP-FREL-1', 1500.00, 'USDC'),
+                          const SizedBox(height: 12),
+                          _buildMilestonesTimelineCard('ZP-FREL-1', 'USDC'),
+                          const SizedBox(height: 12),
+                          _buildAiSuggestionPanel('DevCo Solutions submitted Figma designs. Ledger audits confirm git commit branch synced. Recommend unlocking milestone.'),
+                        ],
+                        if (dataset == DemoDataset.marketplacePurchase) ...[
+                          const SizedBox(height: 16),
+                          _buildFulfillmentDeliveryCard('ZP-MKT-BUY', 'Cardano ADA'),
+                        ],
+                        // If we have a real activeEscrow, we can show its milestones dynamically
+                        if (activeEscrow != null && dataset != DemoDataset.freelanceProject && dataset != DemoDataset.marketplacePurchase) ...[
+                          const SizedBox(height: 16),
+                          _buildRealEscrowCard(activeEscrow),
+                        ],
+                      ],
+                    ),
         ),
 
         // Message input bar
-        _buildMessageInput(),
+        _buildMessageInput(activeEscrow),
       ],
     );
   }
 
-  Widget _buildSharedContextBar() {
+  Widget _buildSharedContextBar(Escrow? activeEscrow) {
+    final contractReference = activeEscrow?.id ?? 'None';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -318,7 +590,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
               const Icon(Icons.shield_outlined, color: AppColors.tertiary, size: 16),
               const SizedBox(width: 8),
               Text(
-                'Linked Escrow: ${_selectedThread!.contractReference}',
+                'Linked Escrow: $contractReference',
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ],
@@ -422,7 +694,6 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                   Text('\$${amount.toStringAsFixed(2)} $symbol', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
               ),
-              // Action lock button
               FilledButton.icon(
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -530,7 +801,6 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: AppColors.tertiary, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
                 onPressed: () {
-                  // Trigger release success animation
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Verification processed. Payout broadcasted to Cardano ledger.')),
                   );
@@ -544,7 +814,90 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget _buildRealEscrowCard(Escrow escrow) {
+    return BentoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('ACTIVE ESCROW: ${escrow.id}', style: const TextStyle(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: (escrow.status == 'Locked' || escrow.status == 'Active')
+                      ? AppColors.tertiary.withOpacity(0.08)
+                      : Colors.orange.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  escrow.status.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: (escrow.status == 'Locked' || escrow.status == 'Active')
+                        ? AppColors.tertiary
+                        : Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            escrow.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Total Value: \$${escrow.totalValue.toStringAsFixed(2)} ${escrow.assetSymbol}',
+            style: const TextStyle(fontSize: 11, color: AppColors.outline),
+          ),
+          if (escrow.milestones.isNotEmpty) ...[
+            const Divider(height: 20),
+            const Text('MILESTONES', style: TextStyle(fontSize: 9, color: AppColors.outline, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            ...escrow.milestones.map((m) {
+              Color col = AppColors.outline;
+              if (m.status == 'Released' || m.status == 'Completed') col = AppColors.tertiary;
+              if (m.status == 'In Progress' || m.status == 'Active') col = AppColors.primary;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          (m.status == 'Released' || m.status == 'Completed')
+                              ? Icons.check_circle
+                              : (m.status == 'In Progress' || m.status == 'Active')
+                                  ? Icons.pending
+                                  : Icons.radio_button_unchecked,
+                          size: 14,
+                          color: col,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(m.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                    Text(
+                      '\$${m.amount.toStringAsFixed(2)} ${escrow.assetSymbol}',
+                      style: TextStyle(fontSize: 11, color: col, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInput(Escrow? activeEscrow) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -556,7 +909,6 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
           IconButton(
             icon: const Icon(Icons.attach_file, color: AppColors.outline),
             onPressed: () {
-              // Direct route to evidence upload
               context.push('/court/evidence-upload');
             },
           ),
@@ -571,6 +923,11 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               ),
+              onSubmitted: (_) {
+                if (_msgController.text.isNotEmpty) {
+                  _sendMessage(_msgController.text, activeEscrow);
+                }
+              },
             ),
           ),
           const SizedBox(width: 8),
@@ -578,16 +935,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             icon: const Icon(Icons.send, color: AppColors.primary),
             onPressed: () {
               if (_msgController.text.isNotEmpty) {
-                setState(() {
-                  _messages.add(ChatMessage(
-                    id: 'custom_msg_${DateTime.now().millisecondsSinceEpoch}',
-                    text: _msgController.text,
-                    timestamp: DateTime.now(),
-                    sender: 'user',
-                    isAIHelper: false,
-                  ));
-                });
-                _msgController.clear();
+                _sendMessage(_msgController.text, activeEscrow);
               }
             },
           ),
@@ -596,7 +944,6 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
     );
   }
 
-  // Task 11: Escrow Locked Animation Overlay
   void _triggerFundLockAnimation() {
     setState(() => _showLockAnimation = true);
     _lockAnimationController.reset();
@@ -604,7 +951,6 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
       Future.delayed(const Duration(seconds: 1)).then((_) {
         if (mounted) {
           setState(() => _showLockAnimation = false);
-          // Show Success dialog or SnackBar
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Escrow Funded successfully. 3000.00 USDC locked.')),
           );
@@ -634,7 +980,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                 Icon(Icons.lock, size: 72, color: AppColors.primary),
                 SizedBox(height: 16),
                 Text(
-                  'Funds Locked Locked',
+                  'Funds Locked',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 SizedBox(height: 6),

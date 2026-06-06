@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../api/network_health_monitor.dart';
+import '../api/version_manager.dart';
 
 class RealtimeEvent {
   final String type; // 'escrow_update', 'price_feed', 'dispute_shift', 'new_chat'
@@ -31,7 +32,9 @@ class RealtimeService {
     if (_isConnected) return;
 
     try {
-      const String wsUrl = 'wss://ws.zeropay.network/v1';
+      final String wsUrl = kDebugMode
+          ? ApiVersionManager.domain.replaceFirst('http', 'ws')
+          : 'wss://ws.zeropay.network/v1';
 
       _socket = io.io(wsUrl, io.OptionBuilder()
         .setTransports(['websocket'])

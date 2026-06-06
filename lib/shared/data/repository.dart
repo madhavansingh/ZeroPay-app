@@ -34,6 +34,11 @@ abstract class ZeroPayRepository {
   // AI & Analytics
   Future<List<AIRecommendation>> getAIRecommendations();
   Future<List<ChatMessage>> getNegotiationChat();
+  Future<List<Milestone>> generateMilestones(String description, double totalAmount, String assetSymbol);
+  Future<void> sendChatMessage(String roomId, String invoiceId, String message);
+  Future<List<Map<String, dynamic>>> getChatRooms();
+  Future<Map<String, dynamic>> getChatRoomDetails(String roomId);
+  Future<Map<String, dynamic>> createChatRoom(String merchantStringId);
   Future<List<LedgerEntry>> getLedgerHistory();
   Future<List<WebhookDelivery>> getWebhookHistory();
 
@@ -62,6 +67,15 @@ abstract class ZeroPayRepository {
   // Dashboard & Invoices
   Future<Map<String, dynamic>> getMerchantDashboard();
   Future<Map<String, dynamic>> getInvoicesList({int page, int limit, String? status});
+
+  // AI Project Planning
+  Future<ProjectPlan> generateProjectPlan({required String requirements, required int totalAmountPaise, String? customerId});
+  Future<ProjectPlan> getLatestProjectPlan(String planId);
+  Future<List<ProjectPlan>> getProjectPlanVersions(String planId);
+  Future<ProjectPlan> getProjectPlanVersion(String planId, int version);
+  Future<ProjectPlan> updateProjectPlan(String planId, Map<String, dynamic> data);
+  Future<ProjectPlan> regenerateProjectPlan(String planId, {String? requirements, int? totalAmountPaise, String? customerId});
+  Future<Map<String, dynamic>> approveProjectPlan(String planId, {String? network});
 }
 
 // Mock Implementation
@@ -76,6 +90,7 @@ class MockZeroPayRepository implements ZeroPayRepository {
   late List<WebhookDelivery> _webhookHistory;
   late List<AIRecommendation> _aiRecommendations;
   late DisputeCase _disputeCase;
+  final Map<String, List<ProjectPlan>> _mockProjectPlans = {};
 
   MockZeroPayRepository(this.dataset) {
     _initializeData();
@@ -1071,6 +1086,45 @@ class MockZeroPayRepository implements ZeroPayRepository {
   }
 
   @override
+  Future<List<Milestone>> generateMilestones(String description, double totalAmount, String assetSymbol) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    return [
+      Milestone(id: 'ms_mock_1', title: 'Milestone 1', description: 'Initial draft and setup', amount: totalAmount * 0.3, status: 'Pending'),
+      Milestone(id: 'ms_mock_2', title: 'Milestone 2', description: 'Core functional implementation', amount: totalAmount * 0.5, status: 'Pending'),
+      Milestone(id: 'ms_mock_3', title: 'Milestone 3', description: 'Integration and final sign-off', amount: totalAmount * 0.2, status: 'Pending'),
+    ];
+  }
+
+  @override
+  Future<void> sendChatMessage(String roomId, String invoiceId, String message) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    _chatMessages.add(
+      ChatMessage(
+        id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
+        text: message,
+        timestamp: DateTime.now(),
+        sender: 'user',
+        isAIHelper: false,
+      ),
+    );
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getChatRooms() async {
+    return [];
+  }
+
+  @override
+  Future<Map<String, dynamic>> getChatRoomDetails(String roomId) async {
+    return {};
+  }
+
+  @override
+  Future<Map<String, dynamic>> createChatRoom(String merchantStringId) async {
+    return {};
+  }
+
+  @override
   Future<List<LedgerEntry>> getLedgerHistory() async {
     return _ledgerHistory;
   }
@@ -1127,6 +1181,378 @@ class MockZeroPayRepository implements ZeroPayRepository {
 
   @override
   Future<Map<String, dynamic>> getInvoicesList({int page = 1, int limit = 20, String? status}) async => {};
+
+  ProjectPlan _createMockPlan({
+    String? planId,
+    int? version,
+    required String requirements,
+    required int totalAmountPaise,
+    String? customerId,
+  }) {
+    final activePlanId = planId ?? 'PLAN-20260606-${(100000 + DateTime.now().millisecondsSinceEpoch % 900000)}';
+    final activeVersion = version ?? 1;
+    final m1Id = 'MS-20260606-000001';
+    final m2Id = 'MS-20260606-000002';
+    final m3Id = 'MS-20260606-000003';
+    final t1Id = 'TSK-20260606-000001';
+    final t2Id = 'TSK-20260606-000002';
+    final t3Id = 'TSK-20260606-000003';
+
+    return ProjectPlan(
+      planId: activePlanId,
+      version: activeVersion,
+      merchantId: 'mer_mock_123',
+      customerId: customerId ?? 'usr_active_customer_123',
+      requirements: requirements,
+      projectSummary: 'Fintech Dashboard Implementation with secure escrows and automated auditing.',
+      scope: 'Implement frontend UI, backend services, authentication integration, role-based access controls, push/email notifications, and CI/CD deployment pipelines.',
+      milestones: [
+        ProjectPlanMilestone(
+          milestoneId: m1Id,
+          title: 'Database & Auth Setup',
+          description: 'Deploy PostgreSQL, set up user schemas, and integrate JWT auth.',
+          amountPaise: totalAmountPaise * 30 ~/ 100,
+          status: 'pending',
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['server/src/models/User.ts', 'server/src/middleware/auth.ts'],
+            requiredFeatures: ['JWT generation', 'Password hashing'],
+            requiredTests: ['auth.test.ts'],
+            requiredDocumentation: ['API_AUTH.md'],
+          ),
+        ),
+        ProjectPlanMilestone(
+          milestoneId: m2Id,
+          title: 'Core Dashboard & Analytics',
+          description: 'Build analytics engine, transaction tables, and chart widgets.',
+          amountPaise: totalAmountPaise * 50 ~/ 100,
+          status: 'pending',
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['lib/features/dashboard/presentation/dashboard_screen.dart'],
+            requiredFeatures: ['Transaction tables', 'Volume charts'],
+            requiredTests: ['dashboard_controller_test.dart'],
+            requiredDocumentation: ['ANALYTICS_DOC.md'],
+          ),
+        ),
+        ProjectPlanMilestone(
+          milestoneId: m3Id,
+          title: 'Role-Based Access & Deploy',
+          description: 'Implement permission checking, notification triggers, and deploy to staging.',
+          amountPaise: totalAmountPaise * 20 ~/ 100,
+          status: 'pending',
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['server/src/middleware/roleCheck.ts', 'Dockerfile'],
+            requiredFeatures: ['Staging deployment pipeline'],
+            requiredTests: ['permissions.test.ts'],
+            requiredDocumentation: ['DEPLOYMENT.md'],
+          ),
+        ),
+      ],
+      tasks: [
+        ProjectTask(
+          taskId: t1Id,
+          title: 'Initialize Express Boilerplate',
+          description: 'Set up TypeScript, ts-node, ESLint, and basic folder layout.',
+          estimatedHours: 8,
+          priority: 'high',
+          acceptanceCriteria: ['Boilerplate builds', 'Linting passes'],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['package.json', 'tsconfig.json'],
+            requiredFeatures: ['Boilerplate config'],
+            requiredTests: [],
+            requiredDocumentation: ['README.md'],
+          ),
+        ),
+        ProjectTask(
+          taskId: t2Id,
+          title: 'Define User Mongoose Models',
+          description: 'Create user database tables with secure fields.',
+          estimatedHours: 6,
+          priority: 'high',
+          acceptanceCriteria: ['Models validate correctly', 'Mongoose connects'],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['server/src/models/User.ts'],
+            requiredFeatures: ['User model structure'],
+            requiredTests: ['user.test.ts'],
+            requiredDocumentation: ['models/README.md'],
+          ),
+        ),
+        ProjectTask(
+          taskId: t3Id,
+          title: 'Implement Staging pipeline',
+          description: 'Write docker file and config files.',
+          estimatedHours: 12,
+          priority: 'medium',
+          acceptanceCriteria: ['Docker builds successfully'],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['Dockerfile'],
+            requiredFeatures: ['Docker deployment support'],
+            requiredTests: [],
+            requiredDocumentation: ['DEPLOYMENT.md'],
+          ),
+        ),
+      ],
+      requirementsBreakdown: [
+        RequirementTrace(
+          requirement: 'authentication',
+          linkedMilestones: [m1Id],
+          linkedTasks: [t1Id, t2Id],
+        ),
+        RequirementTrace(
+          requirement: 'analytics dashboard',
+          linkedMilestones: [m2Id],
+          linkedTasks: [],
+        ),
+        RequirementTrace(
+          requirement: 'role-based access',
+          linkedMilestones: [m3Id],
+          linkedTasks: [],
+        ),
+      ],
+      requirementTrace: [
+        RequirementTraceability(
+          requirementId: 'REQ-001',
+          requirement: 'authentication',
+          milestoneIds: [m1Id],
+          taskIds: [t1Id, t2Id],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: ['package.json', 'tsconfig.json', 'server/src/models/User.ts'],
+            requiredFeatures: ['Boilerplate config', 'User model structure'],
+            requiredTests: ['user.test.ts'],
+            requiredDocumentation: ['README.md', 'models/README.md'],
+          ),
+        ),
+        RequirementTraceability(
+          requirementId: 'REQ-002',
+          requirement: 'analytics dashboard',
+          milestoneIds: [m2Id],
+          taskIds: [],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: [],
+            requiredFeatures: [],
+            requiredTests: [],
+            requiredDocumentation: [],
+          ),
+        ),
+        RequirementTraceability(
+          requirementId: 'REQ-003',
+          requirement: 'role-based access',
+          milestoneIds: [m3Id],
+          taskIds: [],
+          githubAuditRequirements: GithubAuditReqs(
+            requiredFiles: [],
+            requiredFeatures: [],
+            requiredTests: [],
+            requiredDocumentation: [],
+          ),
+        ),
+      ],
+      optimisticDays: 10,
+      realisticDays: 14,
+      conservativeDays: 20,
+      timelineSummary: 'The project requires 2 weeks of developer resource based on tasks complexity.',
+      acceptanceCriteria: ['All tests pass on GitHub', 'All deliverables deployed to staging', 'Final user acceptance signed off'],
+      riskFactors: ['Potential rate limit delays', 'Third-party notification API failures'],
+      planningConfidence: 92,
+      assumptions: ['Developer has access to credentials', 'Server runs 24/7 during test run'],
+      unknowns: ['Downstream API status during webhook test'],
+      budgetAllocation: [
+        BudgetCategory(category: 'Development', percentage: 70, amountPaise: totalAmountPaise * 70 ~/ 100),
+        BudgetCategory(category: 'QA & Operations', percentage: 20, amountPaise: totalAmountPaise * 20 ~/ 100),
+        BudgetCategory(category: 'Auditing & Gas Fees', percentage: 10, amountPaise: totalAmountPaise * 10 ~/ 100),
+      ],
+      escrowStructure: 'Linear Milestones',
+      escrowRationale: 'Standard linear releases balance cashflow and incentivize timely deliveries.',
+      status: 'AI Generated',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  @override
+  Future<ProjectPlan> generateProjectPlan({
+    required String requirements,
+    required int totalAmountPaise,
+    String? customerId,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    final plan = _createMockPlan(
+      requirements: requirements,
+      totalAmountPaise: totalAmountPaise,
+      customerId: customerId,
+    );
+    _mockProjectPlans[plan.planId] = [plan];
+    return plan;
+  }
+
+  @override
+  Future<ProjectPlan> getLatestProjectPlan(String planId) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      throw Exception('Project plan $planId not found');
+    }
+    return versions.last;
+  }
+
+  @override
+  Future<List<ProjectPlan>> getProjectPlanVersions(String planId) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      return [];
+    }
+    return versions.reversed.toList();
+  }
+
+  @override
+  Future<ProjectPlan> getProjectPlanVersion(String planId, int version) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      throw Exception('Project plan $planId not found');
+    }
+    final match = versions.where((e) => e.version == version);
+    if (match.isEmpty) {
+      throw Exception('Version $version not found for plan $planId');
+    }
+    return match.first;
+  }
+
+  @override
+  Future<ProjectPlan> updateProjectPlan(String planId, Map<String, dynamic> data) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      throw Exception('Project plan $planId not found');
+    }
+    final latest = versions.last;
+    
+    final updatedMilestones = data['milestones'] != null
+        ? (data['milestones'] as List)
+            .map((e) => ProjectPlanMilestone.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : latest.milestones;
+
+    final updated = ProjectPlan(
+      planId: latest.planId,
+      version: latest.version,
+      merchantId: latest.merchantId,
+      customerId: latest.customerId,
+      invoiceId: latest.invoiceId,
+      requirements: latest.requirements,
+      projectSummary: data['projectSummary'] as String? ?? latest.projectSummary,
+      scope: data['scope'] as String? ?? latest.scope,
+      milestones: updatedMilestones,
+      tasks: latest.tasks,
+      requirementsBreakdown: latest.requirementsBreakdown,
+      requirementTrace: latest.requirementTrace,
+      optimisticDays: latest.optimisticDays,
+      realisticDays: latest.realisticDays,
+      conservativeDays: latest.conservativeDays,
+      timelineSummary: latest.timelineSummary,
+      acceptanceCriteria: latest.acceptanceCriteria,
+      riskFactors: latest.riskFactors,
+      planningConfidence: latest.planningConfidence,
+      assumptions: latest.assumptions,
+      unknowns: latest.unknowns,
+      budgetAllocation: latest.budgetAllocation,
+      escrowStructure: latest.escrowStructure,
+      escrowRationale: latest.escrowRationale,
+      status: 'User Edited',
+      createdAt: latest.createdAt,
+      updatedAt: DateTime.now(),
+    );
+
+    versions.removeLast();
+    versions.add(updated);
+    _mockProjectPlans[planId] = versions;
+    return updated;
+  }
+
+  @override
+  Future<ProjectPlan> regenerateProjectPlan(
+    String planId, {
+    String? requirements,
+    int? totalAmountPaise,
+    String? customerId,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      throw Exception('Project plan $planId not found');
+    }
+    final latest = versions.last;
+    final int totalAmount = totalAmountPaise ?? latest.milestones.fold<int>(0, (sum, m) => sum + m.amountPaise);
+    
+    final newPlan = _createMockPlan(
+      planId: planId,
+      version: latest.version + 1,
+      requirements: requirements ?? latest.requirements,
+      totalAmountPaise: totalAmount,
+      customerId: customerId ?? latest.customerId,
+    );
+    
+    versions.add(newPlan);
+    _mockProjectPlans[planId] = versions;
+    return newPlan;
+  }
+
+  @override
+  Future<Map<String, dynamic>> approveProjectPlan(String planId, {String? network}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final versions = _mockProjectPlans[planId];
+    if (versions == null || versions.isEmpty) {
+      throw Exception('Project plan $planId not found');
+    }
+    final latest = versions.last;
+    
+    final approved = ProjectPlan(
+      planId: latest.planId,
+      version: latest.version,
+      merchantId: latest.merchantId,
+      customerId: latest.customerId,
+      invoiceId: 'INV-${(100000 + DateTime.now().millisecondsSinceEpoch % 900000)}',
+      requirements: latest.requirements,
+      projectSummary: latest.projectSummary,
+      scope: latest.scope,
+      milestones: latest.milestones,
+      tasks: latest.tasks,
+      requirementsBreakdown: latest.requirementsBreakdown,
+      requirementTrace: latest.requirementTrace,
+      optimisticDays: latest.optimisticDays,
+      realisticDays: latest.realisticDays,
+      conservativeDays: latest.conservativeDays,
+      timelineSummary: latest.timelineSummary,
+      acceptanceCriteria: latest.acceptanceCriteria,
+      riskFactors: latest.riskFactors,
+      planningConfidence: latest.planningConfidence,
+      assumptions: latest.assumptions,
+      unknowns: latest.unknowns,
+      budgetAllocation: latest.budgetAllocation,
+      escrowStructure: latest.escrowStructure,
+      escrowRationale: latest.escrowRationale,
+      status: 'Invoice Created',
+      createdAt: latest.createdAt,
+      updatedAt: DateTime.now(),
+    );
+
+    versions.removeLast();
+    versions.add(approved);
+    _mockProjectPlans[planId] = versions;
+
+    return {
+      'projectPlan': approved,
+      'invoice': {
+        'invoiceId': approved.invoiceId,
+        'amountPaise': approved.milestones.fold<int>(0, (sum, m) => sum + m.amountPaise),
+        'amountLovelace': approved.milestones.fold<int>(0, (sum, m) => sum + m.amountPaise) * 25000,
+        'status': 'Pending',
+        'expiresAt': DateTime.now().add(const Duration(hours: 24)).toIso8601String(),
+        'paymentAddress': 'addr1_mock_payment_address_for_invoice_${approved.invoiceId}',
+        'network': network ?? 'cardano',
+      },
+    };
+  }
 }
 
 // Riverpod Providers for Cache and Queue
@@ -1142,6 +1568,7 @@ final zeroPayRepositoryProvider = Provider<ZeroPayRepository>((ref) {
     walletService: ref.read(walletApiServiceProvider),
     escrowService: ref.read(escrowApiServiceProvider),
     aiService: ref.read(aiApiServiceProvider),
+    projectService: ref.read(projectApiServiceProvider),
     courtService: ref.read(courtApiServiceProvider),
     telemetryService: ref.read(telemetryApiServiceProvider),
     merchantService: ref.read(merchantApiServiceProvider),

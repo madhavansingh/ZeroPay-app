@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../core/api/api_services.dart';
 import '../../core/api/api_client.dart';
 import '../../core/security/secure_cache.dart';
@@ -5,13 +6,13 @@ import '../../core/offline/offline_manager.dart';
 import '../../core/offline/conflict_resolver.dart';
 import '../domain/models.dart';
 import 'repository.dart';
-import 'mock_data.dart';
 
 class RealZeroPayRepository implements ZeroPayRepository {
   final AuthApiService authService;
   final WalletApiService walletService;
   final EscrowApiService escrowService;
   final AiApiService aiService;
+  final ProjectApiService projectService;
   final CourtApiService courtService;
   final TelemetryApiService telemetryService;
   final MerchantApiService merchantService;
@@ -24,6 +25,7 @@ class RealZeroPayRepository implements ZeroPayRepository {
     required this.walletService,
     required this.escrowService,
     required this.aiService,
+    required this.projectService,
     required this.courtService,
     required this.telemetryService,
     required this.merchantService,
@@ -140,12 +142,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheList('wallet_assets', serverAssets.map((e) => e.toJson()).toList());
       return serverAssets;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('wallet_assets');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Asset.fromJson(e)).toList();
       }
-      return [];
+      rethrow;
     }
   }
 
@@ -173,12 +175,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheList('wallet_transactions', txs.map((e) => e.toJson()).toList());
       return txs;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('wallet_transactions');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Transaction.fromJson(e)).toList();
       }
-      return [];
+      rethrow;
     }
   }
 
@@ -232,38 +234,46 @@ class RealZeroPayRepository implements ZeroPayRepository {
   @override
   Future<List<Escrow>> getEscrowContracts(String role) async {
     try {
-      final response = await escrowService.listContracts();
-      final dataList = (response.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final response = await escrowService.listContracts(role);
+      final rawItems = response.data['data']['items'] as List;
+      final dataList = rawItems.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
       final serverEscrows = dataList.map((json) {
-        final isAda = json['assetSymbol'] == 'ADA';
-        final totalValueInt = json['total_value_units'] as int? ?? 0;
+        final isAda = json['amountLovelace'] != null;
+        final totalValueInt = (isAda ? json['amountLovelace'] : json['amountPaise']) as int? ?? 0;
         final totalValue = isAda ? _fromLovelace(totalValueInt) : _fromPaise(totalValueInt);
 
-        final milestonesList = (json['milestones'] as List).map((m) {
-          final mJson = Map<String, dynamic>.from(m as Map);
-          final mVal = isAda ? _fromLovelace(mJson['amount_units'] as int) : _fromPaise(mJson['amount_units'] as int);
-          return Milestone(
-            id: mJson['id'] as String,
-            title: mJson['title'] as String,
-            description: mJson['description'] as String? ?? '',
-            amount: mVal,
-            status: mJson['status'] as String,
-          );
-        }).toList();
+        final milestonesList = <Milestone>[];
+        if (json['milestones'] != null) {
+          final mList = json['milestones'] as List;
+          milestonesList.addAll(mList.map((m) {
+            final mJson = Map<String, dynamic>.from(m as Map);
+            final mVal = isAda ? _fromLovelace(mJson['amountLovelace'] as int) : _fromPaise(mJson['amountPaise'] as int);
+            return Milestone(
+              id: mJson['_id'] as String? ?? mJson['id'] as String? ?? 'ms_${mJson['title']}',
+              title: mJson['title'] as String,
+              description: mJson['description'] as String? ?? '',
+              amount: mVal,
+              status: mJson['status'] as String,
+            );
+          }));
+        }
 
         return Escrow(
-          id: json['id'] as String,
-          title: json['title'] as String,
-          counterpartyAddress: json['counterpartyAddress'] as String,
-          counterpartyName: json['counterpartyName'] as String? ?? 'Unknown',
+          id: json['invoiceId'] as String,
+          title: json['description'] as String? ?? 'Invoice ${json['invoiceId']}',
+          counterpartyAddress: json['paymentAddress'] as String? ?? '',
+          counterpartyName: role == 'merchant' ? 'Customer' : 'Merchant',
           totalValue: totalValue,
-          assetSymbol: json['assetSymbol'] as String,
-          status: json['status'] as String,
+          assetSymbol: isAda ? 'ADA' : 'INR',
+          status: json['escrowState'] as String? ?? json['status'] as String? ?? 'None',
           milestones: milestonesList,
-          contractAddress: json['contractAddress'] as String,
-          chainName: json['chainName'] as String? ?? 'Cardano',
-          createdAt: DateTime.parse(json['createdAt'] as String),
+          contractAddress: json['paymentAddress'] as String? ?? '',
+          chainName: json['network'] as String? ?? 'Cardano',
+          createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+          chatRoomId: json['chatRoomId'] as String?,
+          merchantStringId: json['merchantStringId'] as String?,
+          projectPlanId: json['projectPlanId'] as String?,
         );
       }).toList();
 
@@ -282,64 +292,69 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheList('escrows_$role', mergedEscrows.map((e) => e.toJson()).toList());
       return mergedEscrows;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('escrows_$role');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Escrow.fromJson(e)).toList();
       }
-      final defaultEscrows = role == 'customer' 
-          ? List<Escrow>.from(MockData.customerEscrows) 
-          : List<Escrow>.from(MockData.merchantEscrows);
-      await cache.cacheList('escrows_$role', defaultEscrows.map((e) => e.toJson()).toList());
-      return defaultEscrows;
+      rethrow;
     }
   }
 
   @override
   Future<void> createEscrow(Escrow escrow) async {
     final isAda = escrow.assetSymbol == 'ADA';
+
+    // Backend expects integer amountPaise (INR) regardless of display currency.
+    // For ADA escrows we store a paise equivalent for the invoice record.
+    double rate = 40.0;
+    if (isAda) {
+      try {
+        final rateResponse = await walletService.fetchAdaInrRate();
+        rate = (rateResponse.data['data'] as num).toDouble();
+      } catch (_) {}
+    }
+    final amountPaise = isAda
+        ? (escrow.totalValue * rate * 100).round()
+        : _toPaise(escrow.totalValue);
+
+    // Backend /invoices/create schema: { amountPaise, description, milestones[] }
     final payload = {
-      'id': escrow.id,
-      'title': escrow.title,
-      'counterpartyAddress': escrow.counterpartyAddress,
-      'counterpartyName': escrow.counterpartyName,
-      'total_value_units': isAda ? _toLovelace(escrow.totalValue) : _toPaise(escrow.totalValue),
-      'assetSymbol': escrow.assetSymbol,
-      'status': escrow.status,
-      'milestones': escrow.milestones.map((m) => {
-        'id': m.id,
-        'title': m.title,
-        'description': m.description,
-        'amount_units': isAda ? _toLovelace(m.amount) : _toPaise(m.amount),
-        'status': m.status,
+      'amountPaise': amountPaise,
+      'description': escrow.title,
+      'milestones': escrow.milestones.map((m) {
+        final mPaise = isAda
+            ? (m.amount * rate * 100).round()
+            : _toPaise(m.amount);
+        return {
+          'title': m.title,
+          'amountPaise': mPaise,
+        };
       }).toList(),
-      'contractAddress': escrow.contractAddress,
-      'chainName': escrow.chainName,
-      'createdAt': escrow.createdAt.toIso8601String(),
     };
 
     try {
       await escrowService.createEscrowContract(payload);
     } catch (e) {
-      await queue.enqueueAction('/escrow/contracts', 'POST', payload);
+      debugPrint('[RealRepo] createEscrow backend error: $e');
+      // Queue offline — will replay when connectivity is restored
+      await queue.enqueueAction('/invoices/create', 'POST', payload);
     }
 
-    // Save individual escrow details to cache
+    // Cache locally for immediate UI feedback
     await cache.cacheData('escrow_${escrow.id}', escrow.toJson());
 
-    // Save to customer cache (buyer workspace)
     final customerCached = await cache.getCachedList('escrows_customer');
-    final customerList = customerCached != null 
-        ? customerCached.map((e) => Escrow.fromJson(e)).toList() 
-        : List<Escrow>.from(MockData.customerEscrows);
+    final customerList = customerCached != null
+        ? customerCached.map((e) => Escrow.fromJson(e)).toList()
+        : <Escrow>[];
     customerList.add(escrow);
     await cache.cacheList('escrows_customer', customerList.map((e) => e.toJson()).toList());
 
-    // Save to merchant cache (merchant workspace)
     final merchantCached = await cache.getCachedList('escrows_merchant');
-    final merchantList = merchantCached != null 
-        ? merchantCached.map((e) => Escrow.fromJson(e)).toList() 
-        : List<Escrow>.from(MockData.merchantEscrows);
+    final merchantList = merchantCached != null
+        ? merchantCached.map((e) => Escrow.fromJson(e)).toList()
+        : <Escrow>[];
     merchantList.add(escrow);
     await cache.cacheList('escrows_merchant', merchantList.map((e) => e.toJson()).toList());
   }
@@ -348,43 +363,49 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<Escrow> getEscrowDetails(String id) async {
     try {
       // Re-route to standard endpoints mapping single escrow lookup details
-      final response = await escrowService.listContracts();
-      final dataList = (response.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      final json = dataList.firstWhere((e) => e['id'] == id);
+      final response = await escrowService.getEscrowDetails(id);
+      final json = Map<String, dynamic>.from(response.data['data'] as Map);
 
-      final isAda = json['assetSymbol'] == 'ADA';
-      final totalValueInt = json['total_value_units'] as int? ?? 0;
+      final isAda = json['amountLovelace'] != null;
+      final totalValueInt = (isAda ? json['amountLovelace'] : json['amountPaise']) as int? ?? 0;
       final totalValue = isAda ? _fromLovelace(totalValueInt) : _fromPaise(totalValueInt);
 
-      final milestonesList = (json['milestones'] as List).map((m) {
-        final mJson = Map<String, dynamic>.from(m as Map);
-        final mVal = isAda ? _fromLovelace(mJson['amount_units'] as int) : _fromPaise(mJson['amount_units'] as int);
-        return Milestone(
-          id: mJson['id'] as String,
-          title: mJson['title'] as String,
-          description: mJson['description'] as String? ?? '',
-          amount: mVal,
-          status: mJson['status'] as String,
-        );
-      }).toList();
+      final milestonesList = <Milestone>[];
+      if (json['milestones'] != null) {
+        final mList = json['milestones'] as List;
+        milestonesList.addAll(mList.map((m) {
+          final mJson = Map<String, dynamic>.from(m as Map);
+          final mVal = isAda ? _fromLovelace(mJson['amountLovelace'] as int) : _fromPaise(mJson['amountPaise'] as int);
+          return Milestone(
+            id: mJson['_id'] as String? ?? mJson['id'] as String? ?? 'ms_${mJson['title']}',
+            title: mJson['title'] as String,
+            description: mJson['description'] as String? ?? '',
+            amount: mVal,
+            status: mJson['status'] as String,
+          );
+        }));
+      }
 
       final escrow = Escrow(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        counterpartyAddress: json['counterpartyAddress'] as String,
-        counterpartyName: json['counterpartyName'] as String? ?? 'Unknown',
+        id: json['invoiceId'] as String,
+        title: json['description'] as String? ?? 'Invoice ${json['invoiceId']}',
+        counterpartyAddress: json['paymentAddress'] as String? ?? '',
+        counterpartyName: 'Counterparty',
         totalValue: totalValue,
-        assetSymbol: json['assetSymbol'] as String,
-        status: json['status'] as String,
+        assetSymbol: isAda ? 'ADA' : 'INR',
+        status: json['escrowState'] as String? ?? json['status'] as String? ?? 'None',
         milestones: milestonesList,
-        contractAddress: json['contractAddress'] as String,
-        chainName: json['chainName'] as String? ?? 'Cardano',
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        contractAddress: json['paymentAddress'] as String? ?? '',
+        chainName: json['network'] as String? ?? 'Cardano',
+        createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
+        chatRoomId: json['chatRoomId'] as String?,
+        merchantStringId: json['merchantStringId'] as String?,
+        projectPlanId: json['projectPlanId'] as String?,
       );
 
       await cache.cacheData('escrow_$id', escrow.toJson());
       return escrow;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedData('escrow_$id');
       if (cached != null) return Escrow.fromJson(cached);
 
@@ -402,11 +423,6 @@ class RealZeroPayRepository implements ZeroPayRepository {
         final match = list.where((e) => e.id == id);
         if (match.isNotEmpty) return match.first;
       }
-
-      // Fallback: look inside default mock lists
-      final allMock = [...MockData.customerEscrows, ...MockData.merchantEscrows];
-      final matchMock = allMock.where((e) => e.id == id);
-      if (matchMock.isNotEmpty) return matchMock.first;
 
       rethrow;
     }
@@ -522,23 +538,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheData('dispute_$caseId', disputeCase.toJson());
       return disputeCase;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedData('dispute_$caseId');
       if (cached != null) return DisputeCase.fromJson(cached);
-      
-      // Safe default dispute fallback on offline connection checks
-      return DisputeCase(
-        caseId: caseId,
-        title: 'Hardware Delivery Deliberation',
-        disputedAmount: 1500.0,
-        assetSymbol: 'USDC',
-        plaintiffName: 'Alex Chen',
-        defendantName: 'BlockMasons Inc.',
-        status: 'Deliberation',
-        filingDate: DateTime.now().subtract(const Duration(days: 4)),
-        consensusLeaningCustomer: 65.0,
-        jurors: [],
-      );
+      rethrow;
     }
   }
 
@@ -593,40 +596,129 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheList('ai_recs', recs.map((e) => e.toJson()).toList());
       return recs;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('ai_recs');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => AIRecommendation.fromJson(e)).toList();
       }
-      return [];
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Milestone>> generateMilestones(String description, double totalAmount, String assetSymbol) async {
+    try {
+      int amountPaise;
+      double rate = 40.0;
+      if (assetSymbol == 'ADA') {
+        try {
+          final rateResponse = await walletService.fetchAdaInrRate();
+          rate = (rateResponse.data['data'] as num).toDouble();
+        } catch (_) {}
+        amountPaise = (totalAmount * rate * 100).round();
+      } else {
+        amountPaise = (totalAmount * 100).round();
+      }
+
+      final response = await aiService.generateMilestones(description, amountPaise);
+      final rawItems = response.data['data'] as List;
+      final dataList = rawItems.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+      final isAda = assetSymbol == 'ADA';
+      return dataList.map((json) {
+        final amountPaiseVal = json['amountPaise'] as int;
+        final amountVal = isAda ? (amountPaiseVal / (rate * 100)) : (amountPaiseVal / 100.0);
+        return Milestone(
+          id: 'ms_${json['title']}_${DateTime.now().millisecondsSinceEpoch}',
+          title: json['title'] as String,
+          description: '',
+          amount: amountVal,
+          status: 'Pending',
+        );
+      }).toList();
+    } catch (e) {
+      rethrow;
     }
   }
 
   @override
   Future<List<ChatMessage>> getNegotiationChat() async {
-    // Fetches live room histories via AI mediators
+    // NOTE: The chat system uses room IDs tied to invoice IDs.
+    // Without a specific roomId context here, return cached messages.
+    // Real-time chat is handled per-screen via sendChatMessage.
     try {
-      final response = await aiService.sendChatMessage('fetch_history', 'negotiation_room_1');
-      final dataList = (response.data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-
-      final msgs = dataList.map((json) {
-        return ChatMessage(
-          id: json['id'] as String,
-          text: json['text'] as String,
-          timestamp: DateTime.parse(json['timestamp'] as String),
-          sender: json['sender'] as String,
-          isAIHelper: json['isAIHelper'] as bool? ?? false,
-        );
-      }).toList();
-
-      await cache.cacheList('negotiation_chats', msgs.map((e) => e.toJson()).toList());
-      return msgs;
-    } catch (_) {
       final cached = await cache.getCachedList('negotiation_chats');
       if (cached != null) {
         return cached.map((e) => ChatMessage.fromJson(e)).toList();
       }
       return [];
+    } catch (e) {
+      debugPrint('[RealRepo] getNegotiationChat error: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> sendChatMessage(String roomId, String invoiceId, String message) async {
+    try {
+      await aiService.sendChatMessage(roomId, invoiceId, message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getChatRooms() async {
+    try {
+      final response = await aiService.getChatRooms();
+      final roomsData = response.data['data']['rooms'] as List?;
+      if (roomsData != null) {
+        final list = roomsData.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        await cache.cacheList('chat_rooms', list);
+        return list;
+      }
+      return [];
+    } catch (e) {
+      final cached = await cache.getCachedList('chat_rooms');
+      if (cached != null && cached.isNotEmpty) {
+        return cached.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getChatRoomDetails(String roomId) async {
+    try {
+      final response = await aiService.getChatRoomDetails(roomId);
+      final data = response.data['data'] as Map?;
+      if (data != null) {
+        final map = Map<String, dynamic>.from(data);
+        await cache.cacheData('chat_room_details_$roomId', map);
+        return map;
+      }
+      return {};
+    } catch (e) {
+      final cached = await cache.getCachedData('chat_room_details_$roomId');
+      if (cached != null) {
+        return Map<String, dynamic>.from(cached);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> createChatRoom(String merchantStringId) async {
+    try {
+      final response = await aiService.createChatRoom(merchantStringId);
+      final data = response.data['data'] as Map?;
+      if (data != null) {
+        return Map<String, dynamic>.from(data);
+      }
+      return {};
+    } catch (e) {
+      debugPrint('[RealRepo] createChatRoom error: $e');
+      rethrow;
     }
   }
 
@@ -654,12 +746,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
 
       await cache.cacheList('ledger_history', entries.map((e) => e.toJson()).toList());
       return entries;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('ledger_history');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => LedgerEntry.fromJson(e)).toList();
       }
-      return [];
+      rethrow;
     }
   }
 
@@ -679,8 +771,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
         ),
       ];
       return list;
-    } catch (_) {
-      return [];
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -688,40 +780,13 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<Map<String, dynamic>> getMerchantAnalyticsSummary(int windowDays) async {
     try {
       final response = await merchantService.fetchRevenueSummary();
+      // Backend wraps payload: { success: true, data: { ... } }
+      final data = response.data['data'];
+      if (data != null) return Map<String, dynamic>.from(data as Map);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      final customerCached = await cache.getCachedList('escrows_customer');
-      final customerList = customerCached != null 
-          ? customerCached.map((e) => Escrow.fromJson(e)).toList() 
-          : List<Escrow>.from(MockData.customerEscrows);
-      
-      final merchantCached = await cache.getCachedList('escrows_merchant');
-      final merchantList = merchantCached != null 
-          ? merchantCached.map((e) => Escrow.fromJson(e)).toList() 
-          : List<Escrow>.from(MockData.merchantEscrows);
-
-      final allEscrows = <String, Escrow>{};
-      for (final e in customerList) { allEscrows[e.id] = e; }
-      for (final e in merchantList) { allEscrows[e.id] = e; }
-
-      double totalAda = 0.0;
-      double totalUsdc = 0.0;
-
-      for (final e in allEscrows.values) {
-        if (e.assetSymbol == 'ADA') {
-          totalAda += e.totalValue;
-        } else {
-          totalUsdc += e.totalValue;
-        }
-      }
-
-      return {
-        'totalVolumePaise': totalUsdc * 100,
-        'totalVolumeLovelace': totalAda * 1000000,
-        'averageSettlementTime': 1.8,
-        'retentionRate': 92.5,
-        'conversionRate': 4.1,
-      };
+    } catch (e) {
+      debugPrint('[RealRepo] getMerchantAnalyticsSummary error: $e');
+      rethrow;
     }
   }
 
@@ -729,19 +794,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<Map<String, dynamic>> getMerchantRevenueTimeline(int windowDays) async {
     try {
       final response = await merchantService.fetchRevenueTimeline();
+      final data = response.data['data'];
+      if (data != null) return Map<String, dynamic>.from(data as Map);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {
-        'timeline': {
-          '2026-05-24': {'paise': 24000, 'lovelace': 0},
-          '2026-05-25': {'paise': 45000, 'lovelace': 0},
-          '2026-05-26': {'paise': 15000, 'lovelace': 0},
-          '2026-05-27': {'paise': 80000, 'lovelace': 0},
-          '2026-05-28': {'paise': 35000, 'lovelace': 0},
-          '2026-05-29': {'paise': 62000, 'lovelace': 0},
-          '2026-05-30': {'paise': 110000, 'lovelace': 0},
-        }
-      };
+    } catch (e) {
+      debugPrint('[RealRepo] getMerchantRevenueTimeline error: $e');
+      rethrow;
     }
   }
 
@@ -749,15 +807,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<Map<String, dynamic>> getMerchantInsights(int windowDays) async {
     try {
       final response = await merchantService.fetchMerchantInsights();
+      final data = response.data['data'];
+      if (data != null) return Map<String, dynamic>.from(data as Map);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {
-        'insights': [
-          'Weekly revenue has increased by 14.8% due to higher volume of USDC smart contracts.',
-          'Escrow resolution speeds have improved to an average of 1.8 days.',
-          'Lumina Web3 Marketplace shows rising customer demand in professional services.'
-        ]
-      };
+    } catch (e) {
+      debugPrint('[RealRepo] getMerchantInsights error: $e');
+      rethrow;
     }
   }
 
@@ -766,8 +821,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await telemetryService.fetchQueuesHealth();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'queues': []};
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -776,8 +831,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await telemetryService.fetchGeneralHealth();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'status': 'healthy'};
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -786,8 +841,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await telemetryService.fetchRedisHealth();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'status': 'healthy'};
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -796,8 +851,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await telemetryService.fetchBlockchainHealth();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'status': 'healthy'};
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -806,19 +861,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.getMerchantStorefront(slug);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {
-        'id': 'mer_cryptobrews_789',
-        'name': 'CryptoBrews Coffee',
-        'slug': 'cryptobrews-coffee',
-        'tier': 'Platinum',
-        'trustScore': 99.8,
-        'description': 'Premium artisanal coffee accepting web3 payments.',
-        'email': 'hello@cryptobrews.eth',
-        'address': '124 Satoshi St, Block 4',
-        'logoUrl': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdfAeOMz-hFgPjpiSRxpTx0AAlPyn8qa-XK6UpF-3R3lWc2cTNz15gXwvfYDGcLnRJ0aSQxr9fQuTxZUMEUge2NAeynKx2UZ_pSvK8m8mbdydskZuUmqCAWgD53bCs0cxzYSlzrKHjgJBNMN-muTLZGUwCRojxEU-hL11_FqT-oqAxscm6P6nTZKsEIV8CZvw54mcerz09JqJ1iZb4rURhHwTr6oMA1f0oUdsq1XD2oKu-VXBXR_XwFZMlXIDQ8w6vdyYRzrXbxoxt',
-        'bannerUrl': 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&q=80&w=1000',
-      };
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -830,42 +874,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final mapped = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
       await cache.cacheList('storefront_catalog_$slug', mapped);
       return mapped;
-    } catch (_) {
+    } catch (e) {
       final cached = await cache.getCachedList('storefront_catalog_$slug');
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         return cached;
       }
-      final defaultCatalog = [
-        {
-          'id': 'prod_beans_1',
-          'title': 'Premium Espresso Blend',
-          'price': 15.0,
-          'symbol': 'USDC',
-          'description': 'Rich dark roast coffee beans with chocolate notes.',
-          'isAvailable': true,
-          'salesCount': 84,
-        },
-        {
-          'id': 'prod_mug_2',
-          'title': 'Lumina Ceramic Travel Mug',
-          'price': 25.0,
-          'symbol': 'USDC',
-          'description': 'Matte-finish double-walled insulated ceramic mug.',
-          'isAvailable': true,
-          'salesCount': 42,
-        },
-        {
-          'id': 'prod_cold_3',
-          'title': 'Nitro Cold Brew Pack',
-          'price': 18.0,
-          'symbol': 'USDC',
-          'description': '4-pack of nitrogen-infused smooth cold brew cans.',
-          'isAvailable': true,
-          'salesCount': 29,
-        },
-      ];
-      await cache.cacheList('storefront_catalog_$slug', defaultCatalog);
-      return defaultCatalog;
+      rethrow;
     }
   }
 
@@ -874,15 +888,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.setupStorefront(setupData);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      final dashboard = {
-        'merchant': setupData,
-        'sales_count': 124,
-        'active_listings': 5,
-        'rating': 4.9,
-      };
-      await cache.cacheData('merchant_dashboard', dashboard);
-      return setupData;
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -891,13 +898,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.updateStorefront(updateData);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      final cached = await cache.getCachedData('merchant_dashboard') ?? {};
-      final merchant = Map<String, dynamic>.from(cached['merchant'] ?? {});
-      merchant.addAll(updateData);
-      cached['merchant'] = merchant;
-      await cache.cacheData('merchant_dashboard', cached);
-      return merchant;
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -906,18 +908,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.createProduct(productData);
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      final slug = 'cryptobrews-coffee';
-      final cached = await cache.getCachedList('storefront_catalog_$slug') ?? [];
-      final newProd = Map<String, dynamic>.from(productData);
-      if (newProd['id'] == null) {
-        newProd['id'] = 'prod_custom_${DateTime.now().millisecondsSinceEpoch}';
-      }
-      newProd['salesCount'] = 0;
-      newProd['isAvailable'] = true;
-      cached.add(newProd);
-      await cache.cacheList('storefront_catalog_$slug', cached);
-      return newProd;
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -925,13 +917,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
   Future<void> deleteCatalogProduct(String id) async {
     try {
       await merchantService.deleteProduct(id);
-    } catch (_) {
-      final slug = 'cryptobrews-coffee';
-      final cached = await cache.getCachedList('storefront_catalog_$slug');
-      if (cached != null) {
-        cached.removeWhere((e) => e['id'] == id);
-        await cache.cacheList('storefront_catalog_$slug', cached);
-      }
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -940,8 +927,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.fetchMarketplaceFeed();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'feed': []};
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -950,50 +937,12 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.getMerchantDashboard();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      final customerCached = await cache.getCachedList('escrows_customer');
-      final customerList = customerCached != null 
-          ? customerCached.map((e) => Escrow.fromJson(e)).toList() 
-          : List<Escrow>.from(MockData.customerEscrows);
-      
-      final merchantCached = await cache.getCachedList('escrows_merchant');
-      final merchantList = merchantCached != null 
-          ? merchantCached.map((e) => Escrow.fromJson(e)).toList() 
-          : List<Escrow>.from(MockData.merchantEscrows);
-
-      final allEscrows = <String, Escrow>{};
-      for (final e in customerList) { allEscrows[e.id] = e; }
-      for (final e in merchantList) { allEscrows[e.id] = e; }
-
-      final recentInvoices = allEscrows.values.map((e) {
-        final isAda = e.assetSymbol == 'ADA';
-        return {
-          'id': e.id,
-          'title': e.title,
-          'status': e.status == 'Locked' ? 'confirmed' : 'completed',
-          'amountPaise': isAda ? 0 : e.totalValue * 100,
-          'amountLovelace': isAda ? e.totalValue * 1000000 : 0,
-        };
-      }).toList();
-
-      return {
-        'merchant': {
-          'id': 'mer_cryptobrews_789',
-          'name': 'CryptoBrews Coffee',
-          'slug': 'cryptobrews-coffee',
-          'tier': 'Platinum',
-          'trustScore': 99.8,
-          'description': 'Premium artisanal coffee accepting web3 payments.',
-          'email': 'hello@cryptobrews.eth',
-          'address': '124 Satoshi St, Block 4',
-          'logoUrl': 'https://lh3.googleusercontent.com/aida-public/AB6AXuCdfAeOMz-hFgPjpiSRxpTx0AAlPyn8qa-XK6UpF-3R3lWc2cTNz15gXwvfYDGcLnRJ0aSQxr9fQuTxZUMEUge2NAeynKx2UZ_pSvK8m8mbdydskZuUmqCAWgD53bCs0cxzYSlzrKHjgJBNMN-muTLZGUwCRojxEU-hL11_FqT-oqAxscm6P6nTZKsEIV8CZvw54mcerz09JqJ1iZb4rURhHwTr6oMA1f0oUdsq1XD2oKu-VXBXR_XwFZMlXIDQ8w6vdyYRzrXbxoxt',
-          'bannerUrl': 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&q=80&w=1000',
-        },
-        'sales_count': 120 + allEscrows.length,
-        'active_listings': 3,
-        'rating': 4.9,
-        'recentInvoices': recentInvoices,
-      };
+    } catch (e) {
+      final cached = await cache.getCachedData('merchant_dashboard');
+      if (cached != null) {
+        return Map<String, dynamic>.from(cached);
+      }
+      rethrow;
     }
   }
 
@@ -1002,8 +951,116 @@ class RealZeroPayRepository implements ZeroPayRepository {
     try {
       final response = await merchantService.fetchInvoicesList();
       return Map<String, dynamic>.from(response.data as Map);
-    } catch (_) {
-      return {'invoices': []};
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // AI Project Planning
+  @override
+  Future<ProjectPlan> generateProjectPlan({
+    required String requirements,
+    required int totalAmountPaise,
+    String? customerId,
+  }) async {
+    try {
+      final response = await projectService.generateProjectPlan(
+        requirements: requirements,
+        totalAmountPaise: totalAmountPaise,
+        customerId: customerId,
+      );
+      final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
+      await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
+      return plan;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectPlan> getLatestProjectPlan(String planId) async {
+    try {
+      final response = await projectService.getLatestPlan(planId);
+      final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
+      await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
+      return plan;
+    } catch (e) {
+      final cached = await cache.getCachedData('project_plan_$planId');
+      if (cached != null) return ProjectPlan.fromJson(cached);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<ProjectPlan>> getProjectPlanVersions(String planId) async {
+    try {
+      final response = await projectService.getPlanVersions(planId);
+      final list = response.data['data'] as List;
+      final plans = list.map((e) => ProjectPlan.fromJson(e as Map<String, dynamic>)).toList();
+      return plans;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectPlan> getProjectPlanVersion(String planId, int version) async {
+    try {
+      final response = await projectService.getPlanVersion(planId, version);
+      final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
+      return plan;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectPlan> updateProjectPlan(String planId, Map<String, dynamic> data) async {
+    try {
+      final response = await projectService.updatePlan(planId, data);
+      final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
+      await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
+      return plan;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectPlan> regenerateProjectPlan(
+    String planId, {
+    String? requirements,
+    int? totalAmountPaise,
+    String? customerId,
+  }) async {
+    try {
+      final response = await projectService.regeneratePlan(
+        planId,
+        requirements: requirements,
+        totalAmountPaise: totalAmountPaise,
+        customerId: customerId,
+      );
+      final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
+      await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
+      return plan;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> approveProjectPlan(String planId, {String? network}) async {
+    try {
+      final response = await projectService.approvePlan(planId, network: network);
+      final data = response.data['data'] as Map<String, dynamic>;
+      final plan = ProjectPlan.fromJson(data['projectPlan'] as Map<String, dynamic>);
+      await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
+      return {
+        'projectPlan': plan,
+        'invoice': data['invoice'] as Map<String, dynamic>,
+      };
+    } catch (e) {
+      rethrow;
     }
   }
 }
