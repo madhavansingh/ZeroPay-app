@@ -81,11 +81,18 @@ export async function requireAuth(
         res.status(401).json({ success: false, error: 'Developer authentication bypass is disabled in production' });
         return;
       }
-      const role = token.slice(10); // 'customer' or 'merchant' or 'both'
+      const role = token.slice(10); // 'customer' or 'merchant' or 'both' or with suffix like 'customer_9876543210'
+      let phone = '+919999999999';
+      let cleanRole = role;
+      if (role.includes('_')) {
+        const parts = role.split('_');
+        cleanRole = parts[0];
+        phone = '+' + parts[1];
+      }
       decoded = {
         uid: `dev_uid_${role}`,
-        phone_number: '+919999999999',
-        name: `Dev User ${role.toUpperCase()}`,
+        phone_number: phone,
+        name: `Dev User ${cleanRole.toUpperCase()}`,
       };
     } else {
       decoded = await getFirebaseAuth().verifyIdToken(token, true);
@@ -97,7 +104,11 @@ export async function requireAuth(
     let user = await User.findOne({ firebaseUid: decoded.uid });
     if (!user && token.startsWith('dev_token_')) {
       const role = token.slice(10);
-      const userRole = role === 'both' ? 'both' : (role === 'merchant' ? 'merchant' : 'customer');
+      let cleanRole = role;
+      if (role.includes('_')) {
+        cleanRole = role.split('_')[0];
+      }
+      const userRole = cleanRole === 'both' ? 'both' : (cleanRole === 'merchant' ? 'merchant' : 'customer');
       user = await User.create({
         firebaseUid: decoded.uid,
         phone: decoded.phone_number,

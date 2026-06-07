@@ -110,10 +110,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       domain.User? user;
       if (isAuthenticated) {
         // Ensure the stored dev token is present so the API interceptor can attach it
-        final storedToken = await storage.read(key: 'auth_jwt_token');
+        var storedToken = await storage.read(key: 'auth_jwt_token');
         if (storedToken == null) {
-          final devToken = 'dev_token_$currentRole';
-          await storage.write(key: 'auth_jwt_token', value: devToken);
+          const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+          if (mockAuthEnabled) {
+            final phone = await storage.read(key: 'auth_phone_number');
+            final digits = phone?.replaceAll(RegExp(r'\D'), '') ?? '9999999999';
+            storedToken = 'dev_token_${currentRole}_$digits';
+          } else {
+            storedToken = 'dev_token_$currentRole';
+          }
+          await storage.write(key: 'auth_jwt_token', value: storedToken);
         }
 
         final repo = _ref.read(zeroPayRepositoryProvider);
@@ -186,16 +193,46 @@ class AuthNotifier extends StateNotifier<AuthState> {
         const storage = FlutterSecureStorage();
 
         // Write the dev token so the Dio interceptor attaches it as Bearer
-        const devToken = 'dev_token_customer';
+        const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+        String devToken;
+        final rawPhone = state.phoneNumber ?? '+919999999999';
+        if (mockAuthEnabled) {
+          final digits = rawPhone.replaceAll(RegExp(r'\D'), '');
+          final suffix = digits.isNotEmpty ? digits : '9999999999';
+          devToken = 'dev_token_customer_$suffix';
+        } else {
+          devToken = 'dev_token_customer';
+        }
+
+        await storage.write(key: 'auth_phone_number', value: rawPhone);
         await storage.write(key: 'auth_jwt_token', value: devToken);
 
-        // Provision / sync user record on the real backend
-        final authService = _ref.read(authApiServiceProvider);
-        await authService.syncFirebaseSession(devToken);
+        domain.User user;
+        try {
+          // Provision / sync user record on the real backend
+          final authService = _ref.read(authApiServiceProvider);
+          await authService.syncFirebaseSession(devToken).timeout(const Duration(seconds: 4));
 
-        // Fetch the canonical user profile from the backend
-        final repo = _ref.read(zeroPayRepositoryProvider);
-        final user = await repo.getCurrentUser();
+          // Fetch the canonical user profile from the backend
+          final repo = _ref.read(zeroPayRepositoryProvider);
+          user = await repo.getCurrentUser().timeout(const Duration(seconds: 4));
+        } catch (backendError) {
+          debugPrint('[AuthNotifier] verifyOTP backend sync failed: $backendError');
+          if (mockAuthEnabled) {
+            final digits = rawPhone.replaceAll(RegExp(r'\D'), '');
+            final suffix = digits.isNotEmpty ? digits : '9999999999';
+            user = domain.User(
+              uid: 'dev_uid_customer_$suffix',
+              email: 'customer.$suffix@zeropay.io',
+              name: 'Mock Customer ($suffix)',
+              currentRole: 'customer',
+              biometricsEnabled: true,
+              createdAt: DateTime.now(),
+            );
+          } else {
+            rethrow;
+          }
+        }
 
         await storage.write(key: 'is_authenticated', value: 'true');
         await storage.write(key: 'onboarding_completed', value: 'true');
@@ -232,16 +269,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       const storage = FlutterSecureStorage();
 
-      // Write the dev token so the Dio interceptor attaches it as Bearer
-      const devToken = 'dev_token_customer';
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      String devToken;
+      if (mockAuthEnabled) {
+        devToken = 'dev_token_customer_seed';
+      } else {
+        devToken = 'dev_token_customer';
+      }
       await storage.write(key: 'auth_jwt_token', value: devToken);
 
-      // Provision / sync user on the real backend
-      final authService = _ref.read(authApiServiceProvider);
-      await authService.syncFirebaseSession(devToken);
+      domain.User user;
+      try {
+        // Provision / sync user on the real backend
+        final authService = _ref.read(authApiServiceProvider);
+        await authService.syncFirebaseSession(devToken).timeout(const Duration(seconds: 4));
 
-      final repo = _ref.read(zeroPayRepositoryProvider);
-      final user = await repo.getCurrentUser();
+        final repo = _ref.read(zeroPayRepositoryProvider);
+        user = await repo.getCurrentUser().timeout(const Duration(seconds: 4));
+      } catch (backendError) {
+        debugPrint('[AuthNotifier] signInWithSeedPhrase backend sync failed: $backendError');
+        if (mockAuthEnabled) {
+          user = domain.User(
+            uid: 'dev_uid_customer_seed',
+            email: 'customer.seed@zeropay.io',
+            name: 'Mock Customer (Seed)',
+            currentRole: 'customer',
+            biometricsEnabled: true,
+            createdAt: DateTime.now(),
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       await storage.write(key: 'is_authenticated', value: 'true');
       await storage.write(key: 'onboarding_completed', value: 'true');
@@ -267,15 +326,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Write the dev token so the Dio interceptor attaches it as Bearer
       final currentRole = state.currentRole;
-      final devToken = 'dev_token_$currentRole';
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      String devToken;
+      final phone = await storage.read(key: 'auth_phone_number');
+      final digits = phone?.replaceAll(RegExp(r'\D'), '') ?? '9999999999';
+      if (mockAuthEnabled) {
+        devToken = 'dev_token_${currentRole}_$digits';
+      } else {
+        devToken = 'dev_token_$currentRole';
+      }
       await storage.write(key: 'auth_jwt_token', value: devToken);
 
-      // Provision / sync user on the real backend
-      final authService = _ref.read(authApiServiceProvider);
-      await authService.syncFirebaseSession(devToken);
+      domain.User user;
+      try {
+        // Provision / sync user on the real backend
+        final authService = _ref.read(authApiServiceProvider);
+        await authService.syncFirebaseSession(devToken).timeout(const Duration(seconds: 4));
 
-      final repo = _ref.read(zeroPayRepositoryProvider);
-      final user = await repo.getCurrentUser();
+        final repo = _ref.read(zeroPayRepositoryProvider);
+        user = await repo.getCurrentUser().timeout(const Duration(seconds: 4));
+      } catch (backendError) {
+        debugPrint('[AuthNotifier] signInBiometrically backend sync failed: $backendError');
+        if (mockAuthEnabled) {
+          user = domain.User(
+            uid: 'dev_uid_${currentRole}_$digits',
+            email: '$currentRole.$digits@zeropay.io',
+            name: 'Mock ${currentRole[0].toUpperCase()}${currentRole.substring(1)} ($digits)',
+            currentRole: currentRole,
+            biometricsEnabled: true,
+            createdAt: DateTime.now(),
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       await storage.write(key: 'is_authenticated', value: 'true');
       await storage.write(key: 'onboarding_completed', value: 'true');

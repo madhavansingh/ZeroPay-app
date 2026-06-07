@@ -10,7 +10,7 @@ class ApiVersionManager {
           ? 'http://10.0.2.2:4000'
           : 'http://localhost:4000';
     }
-    return 'https://api.zeropay.network';
+    return 'https://zeropay-app-production.up.railway.app';
   }
   static String _activeVersion = 'v1';
 

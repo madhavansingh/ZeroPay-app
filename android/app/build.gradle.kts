@@ -7,11 +7,17 @@ plugins {
 android {
     namespace = "network.zeropay.zeropay_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "26.3.11579264"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            pickFirsts.add("**/libsentry.so")
+        }
     }
 
     defaultConfig {

@@ -54,10 +54,17 @@ router.post(
           return;
         }
         const role = token.slice(10);
+        let phone = '+919999999999';
+        let cleanRole = role;
+        if (role.includes('_')) {
+          const parts = role.split('_');
+          cleanRole = parts[0];
+          phone = '+' + parts[1];
+        }
         decoded = {
           uid: `dev_uid_${role}`,
-          phone_number: '+919999999999',
-          name: `Dev User ${role.toUpperCase()}`,
+          phone_number: phone,
+          name: `Dev User ${cleanRole.toUpperCase()}`,
         };
       } else {
         decoded = await getFirebaseAuth().verifyIdToken(token, true);
@@ -69,7 +76,12 @@ router.post(
 
       if (!user) {
         // Auto-detect role for dev user
-        const defaultRole = token.startsWith('dev_token_') ? (token.slice(10) === 'merchant' ? 'merchant' : 'customer') : 'customer';
+        let cleanRole = 'customer';
+        if (token.startsWith('dev_token_')) {
+          const role = token.slice(10);
+          cleanRole = role.includes('_') ? role.split('_')[0] : role;
+        }
+        const defaultRole = cleanRole === 'both' ? 'both' : (cleanRole === 'merchant' ? 'merchant' : 'customer');
         user = await User.create({
           firebaseUid: decoded.uid,
           phone: decoded.phone_number ?? body.data?.phone,
