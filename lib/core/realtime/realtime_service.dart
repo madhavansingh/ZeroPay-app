@@ -39,7 +39,7 @@ class RealtimeService {
       _socket = io.io(wsUrl, io.OptionBuilder()
         .setTransports(['websocket'])
         .enableAutoConnect()
-        .build());
+        .build(),);
 
       _socket!.onConnect((_) {
         _isConnected = true;
@@ -60,21 +60,21 @@ class RealtimeService {
         _eventController.add(RealtimeEvent(
           type: 'escrow_update',
           data: Map<String, dynamic>.from(data as Map),
-        ));
+        ),);
       });
 
       _socket!.on('payment:received', (data) {
         _eventController.add(RealtimeEvent(
           type: 'price_feed',
           data: Map<String, dynamic>.from(data as Map),
-        ));
+        ),);
       });
 
       _socket!.on('dispute:raised', (data) {
         _eventController.add(RealtimeEvent(
           type: 'dispute_shift',
           data: Map<String, dynamic>.from(data as Map),
-        ));
+        ),);
       });
 
     } catch (e) {
@@ -85,7 +85,7 @@ class RealtimeService {
       _eventController.add(RealtimeEvent(
         type: 'price_feed',
         data: {'symbol': 'ADA', 'price': 0.41, 'change24h': 1.5},
-      ));
+      ),);
     }
   }
 
@@ -101,7 +101,7 @@ class RealtimeService {
           _eventController.add(RealtimeEvent(
             type: 'new_chat',
             data: Map<String, dynamic>.from(data),
-          ));
+          ),);
         }
       });
     } catch (e) {

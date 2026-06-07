@@ -134,12 +134,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.08),
+        color: Colors.orange.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.wifi_off_outlined, color: Colors.orange),
           SizedBox(width: 12),
           Expanded(
@@ -206,7 +206,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -261,12 +261,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.tertiary.withOpacity(0.08),
+                      color: AppColors.tertiary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.arrow_upward, size: 12, color: AppColors.tertiary),
                         SizedBox(width: 4),
                         Text(
@@ -310,10 +310,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: Icon(icon, color: AppColors.onPrimary, size: 22),
@@ -432,8 +432,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: asset.changePercent24h >= 0
-                                        ? AppColors.tertiary.withOpacity(0.1)
-                                        : AppColors.error.withOpacity(0.1),
+                                        ? AppColors.tertiary.withValues(alpha: 0.1)
+                                        : AppColors.error.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -546,7 +546,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   ),
                 ],
               );
-            }),
+            },),
           ),
         ),
         const SizedBox(width: 12),
@@ -587,10 +587,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         boxShadow: isPulse && active
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.5),
+                  color: AppColors.primary.withValues(alpha: 0.5),
                   blurRadius: 4,
                   spreadRadius: 2,
-                )
+                ),
               ]
             : null,
       ),
@@ -627,8 +627,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
+        const Row(
+          children: [
             Icon(Icons.auto_awesome, color: AppColors.secondary, size: 18),
             SizedBox(width: 8),
             Text(

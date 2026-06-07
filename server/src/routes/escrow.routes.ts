@@ -32,6 +32,7 @@ import { updateMerchantReputation } from '../services/reputation.service';
 import { logger } from '../config/logger';
 import { enqueueNotification, enqueueTxConfirmation } from '../queues/queue.definitions';
 import { Merchant } from '../models/Merchant';
+import { GitHubAudit } from '../models/GitHubAudit';
 import { injectChatMessage, mirrorEscrowToFirebase } from '../services/invoice.service';
 
 import { chainAdapterRegistry } from '../adapters/chain';
@@ -70,10 +71,52 @@ function badRequest(res: Response, message: string): void {
   res.status(400).json({ success: false, error: message });
 }
 
+async function verifyEscrowAudit(invoice: any, res: Response): Promise<boolean> {
+  if (invoice.auditRequired) {
+    if (!invoice.projectPlanId) {
+      res.status(403).json({
+        success: false,
+        error: 'Milestone release blocked. GitHub audit requirements not satisfied (missing projectPlanId).',
+      });
+      return false;
+    }
+    const milestone = invoice.milestones[invoice.milestoneIndex];
+    if (!milestone) {
+      res.status(404).json({ success: false, error: 'Milestone not found' });
+      return false;
+    }
+    const milestoneId = milestone.milestoneId;
+
+    const latestAudit = await GitHubAudit.findOne({
+      projectPlanId: invoice.projectPlanId,
+      milestoneId,
+      invoiceId: invoice.invoiceId,
+    }).sort({ createdAt: -1 });
+
+    if (!latestAudit) {
+      res.status(403).json({
+        success: false,
+        error: 'Milestone release blocked. GitHub audit requirements not satisfied.',
+      });
+      return false;
+    }
+
+    if (latestAudit.auditStatus !== 'PASSED' || latestAudit.releaseConfidenceScore < 70) {
+      res.status(403).json({
+        success: false,
+        error: 'Milestone release blocked. GitHub audit requirements not satisfied.',
+      });
+      return false;
+    }
+  }
+  return true;
+}
+
 // ─── GET /escrow/:invoiceId/status ────────────────────────────────────────────
 
 router.get(
   '/:invoiceId/status',
+  requireAuth,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!validateInvoiceId(req.params.invoiceId)) {
@@ -85,6 +128,15 @@ router.get(
         res.status(404).json({ success: false, error: 'Invoice not found' });
         return;
       }
+
+      const merchant = await Merchant.findById(invoice.merchantId);
+      const isMerchant = merchant && merchant.userId?.toString() === req.user._id.toString();
+      const isCustomer = invoice.customerId && invoice.customerId.toString() === req.user._id.toString();
+      if (!isMerchant && !isCustomer) {
+        res.status(403).json({ success: false, error: 'Access denied: Unauthorized access to this invoice.' });
+        return;
+      }
+
       res.json({
         success: true,
         data: {
@@ -112,6 +164,7 @@ router.get(
 
 router.post(
   '/:invoiceId/lock',
+  requireAuth,
   riskMiddleware,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -120,6 +173,12 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      if (invoice.customerId && invoice.customerId.toString() !== req.user._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this invoice.' });
+        return;
+      }
+
       const network = invoice.network ?? 'cardano';
 
       if (!validateAddr(customerAddress, network)) { badRequest(res, 'Invalid customerAddress'); return; }
@@ -149,6 +208,12 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      if (invoice.customerId && invoice.customerId.toString() !== req.user._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this invoice.' });
+        return;
+      }
+
       const network = invoice.network ?? 'cardano';
 
       if (!validateTxHash(txHash, network)) { badRequest(res, 'Invalid txHash'); return; }
@@ -257,6 +322,7 @@ router.post(
 
 router.post(
   '/:invoiceId/release',
+  requireAuth,
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { customerAddress, scriptUtxoTxHash, scriptUtxoIndex, payoutLovelace } =
@@ -266,6 +332,16 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      if (!invoice.customerId || invoice.customerId.toString() !== req.user._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: Only the customer who owns this escrow can release funds.' });
+        return;
+      }
+
+      // Enforce GitHub AI audit requirements check
+      const auditOk = await verifyEscrowAudit(invoice, res);
+      if (!auditOk) return;
+
       const network = invoice.network ?? 'cardano';
 
       if (!validateAddr(customerAddress, network)) { badRequest(res, 'Invalid customerAddress'); return; }
@@ -313,6 +389,16 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      if (!invoice.customerId || invoice.customerId.toString() !== req.user._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: Only the customer who owns this escrow can release funds.' });
+        return;
+      }
+
+      // Enforce GitHub AI audit requirements check
+      const auditOk = await verifyEscrowAudit(invoice, res);
+      if (!auditOk) return;
+
       const network = invoice.network ?? 'cardano';
 
       if (!validateTxHash(txHash, network)) { badRequest(res, 'Invalid txHash'); return; }
@@ -403,6 +489,14 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      const merchant = await Merchant.findById(invoice.merchantId);
+      const isMerchant = merchant && merchant.userId?.toString() === req.user._id.toString();
+      const isCustomer = invoice.customerId && invoice.customerId.toString() === req.user._id.toString();
+      if (!isMerchant && !isCustomer) {
+        res.status(403).json({ success: false, error: 'Access denied: You are not a party to this invoice.' });
+        return;
+      }
       const network = invoice.network ?? 'cardano';
 
       if (!validateAddr(signerAddress, network)) { badRequest(res, 'Invalid signerAddress'); return; }
@@ -445,6 +539,14 @@ router.post(
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
+
+      const merchant = await Merchant.findById(invoice.merchantId);
+      const isMerchant = merchant && merchant.userId?.toString() === req.user._id.toString();
+      const isCustomer = invoice.customerId && invoice.customerId.toString() === req.user._id.toString();
+      if (!isMerchant && !isCustomer) {
+        res.status(403).json({ success: false, error: 'Access denied: You are not a party to this invoice.' });
+        return;
+      }
       const network = invoice.network ?? 'cardano';
 
       if (txHash !== undefined && !validateTxHash(txHash, network)) { badRequest(res, 'Invalid txHash'); return; }
@@ -493,6 +595,11 @@ router.post(
         req.body as Record<string, unknown>;
 
       if (!validateInvoiceId(req.params.invoiceId)) { badRequest(res, 'Invalid invoiceId'); return; }
+
+      if (req.user.role !== 'admin') {
+        res.status(403).json({ success: false, error: 'Access denied: Admin role required.' });
+        return;
+      }
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }
@@ -548,6 +655,11 @@ router.post(
     try {
       const { txHash } = req.body as Record<string, unknown>;
       if (!validateInvoiceId(req.params.invoiceId)) { badRequest(res, 'Invalid invoiceId'); return; }
+
+      if (req.user.role !== 'admin') {
+        res.status(403).json({ success: false, error: 'Access denied: Admin role required.' });
+        return;
+      }
 
       const invoice = await Invoice.findOne({ invoiceId: req.params.invoiceId });
       if (!invoice) { res.status(404).json({ success: false, error: 'Invoice not found' }); return; }

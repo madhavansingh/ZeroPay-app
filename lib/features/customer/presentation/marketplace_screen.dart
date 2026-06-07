@@ -134,7 +134,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -163,7 +163,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16.0),
               ),
               child: const Icon(Icons.tune, color: AppColors.primary),
@@ -192,7 +192,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                   });
                 }
               },
-              selectedColor: AppColors.primary.withOpacity(0.1),
+              selectedColor: AppColors.primary.withValues(alpha: 0.1),
               labelStyle: TextStyle(
                 color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -267,7 +267,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.tertiary.withOpacity(0.08),
+                        color: AppColors.tertiary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -427,7 +427,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.outlineVariant.withOpacity(0.4),
+                    color: AppColors.outlineVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

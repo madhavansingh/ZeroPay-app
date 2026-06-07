@@ -62,8 +62,8 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
 
   // Loading skeleton state
   Widget _buildLoadingState() {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         LoadingSkeleton(height: 180, radius: 24),
         SizedBox(height: 16),
         LoadingSkeleton(height: 100, radius: 16),
@@ -85,7 +85,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh.withOpacity(0.5),
+              color: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -167,12 +167,12 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.08),
+        color: Colors.orange.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.cloud_off, color: Colors.orange, size: 20),
           SizedBox(width: 12),
           Expanded(
@@ -321,7 +321,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
           // Custom Sparkline Chart
           Text(
             'Earnings Trend (Last 6h)',
-            style: TextStyle(fontSize: 10, color: AppColors.onSurfaceVariant.withOpacity(0.7), fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 10, color: AppColors.onSurfaceVariant.withValues(alpha: 0.7), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -354,7 +354,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.08),
+                color: color.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 22),
@@ -499,7 +499,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: escrow.status == 'Disputed' ? Colors.red.withOpacity(0.1) : AppColors.primary.withOpacity(0.08),
+                          color: escrow.status == 'Disputed' ? Colors.red.withValues(alpha: 0.1) : AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -604,8 +604,8 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
+        const Row(
+          children: [
             Icon(Icons.auto_awesome, color: AppColors.secondary, size: 18),
             SizedBox(width: 8),
             Text(
@@ -652,7 +652,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.secondary.withOpacity(0.08),
+                                      color: AppColors.secondary.withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -726,7 +726,7 @@ class SparklinePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [color.withOpacity(0.2), color.withOpacity(0.0)],
+        colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.0)],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 

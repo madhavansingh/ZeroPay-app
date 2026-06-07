@@ -220,7 +220,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             timestamp: timestamp,
             sender: sender,
             isAIHelper: sender == 'ai',
-          ));
+          ),);
         }
       }
 
@@ -443,7 +443,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.primary.withOpacity(0.08),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                   child: Text(
                     shopName.isNotEmpty ? shopName[0].toUpperCase() : 'C',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -477,7 +477,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.06), borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(6)),
                             child: Text(
                               'Contract: $contractReference',
                               style: const TextStyle(fontSize: 8, color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -486,7 +486,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: AppColors.tertiary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(color: AppColors.tertiary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                             child: Text(
                               status.toUpperCase(),
                               style: const TextStyle(fontSize: 8, color: AppColors.tertiary, fontWeight: FontWeight.bold),
@@ -580,7 +580,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        border: Border(bottom: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3))),
+        border: Border(bottom: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -626,7 +626,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
           color: isMe
               ? AppColors.primary
               : isAI
-                  ? AppColors.secondary.withOpacity(0.06)
+                  ? AppColors.secondary.withValues(alpha: 0.06)
                   : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
@@ -635,17 +635,17 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
             bottomRight: isMe ? Radius.zero : const Radius.circular(16),
           ),
           border: isAI
-              ? Border.all(color: AppColors.secondary.withOpacity(0.2))
+              ? Border.all(color: AppColors.secondary.withValues(alpha: 0.2))
               : isMe
                   ? null
-                  : Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                  : Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isAI) ...[
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.auto_awesome, size: 12, color: AppColors.secondary),
                   SizedBox(width: 6),
                   Text('ZeroPay AI Assistant Prompt', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary)),
@@ -678,7 +678,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
               const Text('INCOMING INVOICE REQUEST', style: TextStyle(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.bold)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                 child: const Text('Pending funding', style: TextStyle(fontSize: 8, color: Colors.orange, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -755,13 +755,13 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
 
   Widget _buildAiSuggestionPanel(String text) {
     return BentoCard(
-      border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
-      color: AppColors.secondary.withOpacity(0.04),
+      border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+      color: AppColors.secondary.withValues(alpha: 0.04),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.auto_awesome, color: AppColors.secondary, size: 14),
               SizedBox(width: 6),
               Text('ZeroPay AI Assistant Suggestion', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondary)),
@@ -785,7 +785,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
               const Text('COURIER SHIPMENT TRACKING', style: TextStyle(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.bold)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: AppColors.tertiary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(color: AppColors.tertiary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                 child: const Text('DELIVERED', style: TextStyle(fontSize: 8, color: AppColors.tertiary, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -827,8 +827,8 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: (escrow.status == 'Locked' || escrow.status == 'Active')
-                      ? AppColors.tertiary.withOpacity(0.08)
-                      : Colors.orange.withOpacity(0.08),
+                      ? AppColors.tertiary.withValues(alpha: 0.08)
+                      : Colors.orange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -890,7 +890,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ],
       ),
@@ -902,7 +902,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3))),
+        border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: Row(
         children: [
@@ -961,7 +961,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
 
   Widget _buildLockAnimationOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.5),
+      color: Colors.black.withValues(alpha: 0.5),
       child: Center(
         child: ScaleTransition(
           scale: _lockScaleAnimation,
@@ -974,9 +974,9 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                 BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10)),
               ],
             ),
-            child: Column(
+            child: const Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.lock, size: 72, color: AppColors.primary),
                 SizedBox(height: 16),
                 Text(

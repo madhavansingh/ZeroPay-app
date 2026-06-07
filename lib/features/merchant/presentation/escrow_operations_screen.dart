@@ -6,6 +6,7 @@ import '../../../shared/domain/models.dart';
 import '../../../shared/presentation/widgets.dart';
 import '../../../shared/data/repository.dart';
 import '../../../shared/providers/global_providers.dart';
+import '../../trust/presentation/audit_release_gate.dart';
 
 class EscrowOperationsScreen extends ConsumerStatefulWidget {
   const EscrowOperationsScreen({super.key});
@@ -187,7 +188,11 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
 
         // GitHub AI Audit Panel
         if (escrow.projectPlanId != null) ...[
-          _buildMerchantAuditStatusCard(escrow),
+          AuditReleaseGate(
+            audit: _githubAudits.isNotEmpty ? Map<String, dynamic>.from(_githubAudits.first) : null,
+            isLoading: _isLoadingAudits,
+            projectPlanId: escrow.projectPlanId,
+          ),
           const SizedBox(height: 20),
         ],
 
@@ -206,17 +211,17 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isReleased
-                      ? AppColors.tertiary.withOpacity(0.04)
+                      ? AppColors.tertiary.withValues(alpha: 0.04)
                       : isInProgress
-                          ? AppColors.primary.withOpacity(0.04)
+                          ? AppColors.primary.withValues(alpha: 0.04)
                           : AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isReleased
-                        ? AppColors.tertiary.withOpacity(0.2)
+                        ? AppColors.tertiary.withValues(alpha: 0.2)
                         : isInProgress
-                            ? AppColors.primary.withOpacity(0.2)
-                            : AppColors.outlineVariant.withOpacity(0.3),
+                            ? AppColors.primary.withValues(alpha: 0.2)
+                            : AppColors.outlineVariant.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -296,7 +301,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
                                   },
                                   child: const Text('Request Release', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary)),
                                 );
-                              }
+                              },
                             ),
                         ]
                         else
@@ -312,7 +317,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
         const SizedBox(height: 20),
 
         // Dispute Monitoring Section (Visible when status is 'Disputed')
-        if (escrow.status == 'Disputed') _buildDisputeArbitrationPanel(repository),
+        if (escrow.status == 'Disputed') _buildDisputeArbitrationPanel(repository, escrow),
 
         // General Refund Action
         if (escrow.status != 'Released' && escrow.status != 'Completed' && escrow.status != 'Refunded') ...[
@@ -332,9 +337,9 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
     );
   }
 
-  Widget _buildDisputeArbitrationPanel(ZeroPayRepository repository) {
+  Widget _buildDisputeArbitrationPanel(ZeroPayRepository repository, Escrow escrow) {
     return FutureBuilder<DisputeCase>(
-      future: repository.getDisputeCase('DS-9281'),
+      future: repository.getDisputeCase(escrow.id),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox();
@@ -348,7 +353,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
             Text('Active Dispute Case & Court Jury Status', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             BentoCard(
-              border: Border.all(color: AppColors.error.withOpacity(0.3)),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -383,7 +388,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: dispute.consensusLeaningCustomer / 100,
-                      backgroundColor: Colors.amber.withOpacity(0.2),
+                      backgroundColor: Colors.amber.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                       minHeight: 8,
                     ),
@@ -467,7 +472,7 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -510,78 +515,4 @@ class _EscrowOperationsScreenState extends ConsumerState<EscrowOperationsScreen>
     );
   }
 
-  Widget _buildMerchantAuditStatusCard(Escrow escrow) {
-    if (_isLoadingAudits) {
-      return const BentoCard(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-    }
-
-    if (_githubAudits.isEmpty) {
-      return BentoCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('GitHub Code Audit', style: TextStyle(fontWeight: FontWeight.bold)),
-                GestureDetector(
-                  onTap: () {
-                    context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
-                  },
-                  child: const Text('View Dashboard →', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'No audits have been executed yet. Payout release requests are locked until the code repository is connected and audited.',
-              style: TextStyle(fontSize: 12, color: AppColors.error),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final latestAudit = _githubAudits.first;
-    final score = (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0;
-    final status = latestAudit['auditStatus'] as String? ?? 'FAILED';
-    final isPassed = status == 'PASSED' && score >= 70.0;
-
-    return BentoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'GitHub Audit: ${isPassed ? "PASSED" : "FAILED"}',
-                style: TextStyle(fontWeight: FontWeight.bold, color: isPassed ? AppColors.tertiary : AppColors.error),
-              ),
-              GestureDetector(
-                onTap: () {
-                  context.push('/trust/github-audit?auditId=${latestAudit['auditId']}&projectPlanId=${escrow.projectPlanId}');
-                },
-                child: const Text('View Findings →', style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isPassed
-                ? 'Your code has passed verification (Release Score: ${score.toInt()}%). You may now request milestone release.'
-                : 'Your code does not meet verification thresholds (Release Score: ${score.toInt()}%). Request release is currently locked. Please check the findings and resolve errors.',
-            style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
 }

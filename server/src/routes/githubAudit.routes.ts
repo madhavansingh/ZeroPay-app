@@ -6,6 +6,7 @@ import { githubAuditService } from '../services/githubAudit.service';
 import { GitHubAudit } from '../models/GitHubAudit';
 import { GitHubAuditSnapshot } from '../models/GitHubAuditSnapshot';
 import { ProjectPlan } from '../models/ProjectPlan';
+import { Merchant } from '../models/Merchant';
 import { logger } from '../config/logger';
 
 const router = Router();
@@ -29,6 +30,17 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { projectPlanId, repositoryUrl, branch } = req.body;
+      const plan = await ProjectPlan.findOne({ planId: projectPlanId });
+      if (!plan) {
+        res.status(404).json({ success: false, error: 'Project plan not found' });
+        return;
+      }
+      const merchant = await Merchant.findOne({ userId: req.user._id });
+      if (!merchant || plan.merchantId.toString() !== merchant._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this project plan.' });
+        return;
+      }
+
       const result = await githubAuditService.connectRepository(projectPlanId, repositoryUrl, branch);
       res.status(200).json({ success: true, data: result });
     } catch (err: any) {
@@ -45,6 +57,17 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { projectPlanId, milestoneId } = req.body;
+      const plan = await ProjectPlan.findOne({ planId: projectPlanId });
+      if (!plan) {
+        res.status(404).json({ success: false, error: 'Project plan not found' });
+        return;
+      }
+      const merchant = await Merchant.findOne({ userId: req.user._id });
+      if (!merchant || plan.merchantId.toString() !== merchant._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this project plan.' });
+        return;
+      }
+
       const result = await githubAuditService.runMilestoneAudit(
         projectPlanId,
         milestoneId,
@@ -103,6 +126,17 @@ router.post(
         return;
       }
 
+      const plan = await ProjectPlan.findOne({ planId: audit.projectPlanId });
+      if (!plan) {
+        res.status(404).json({ success: false, error: 'Project plan not found' });
+        return;
+      }
+      const merchant = await Merchant.findOne({ userId: req.user._id });
+      if (!merchant || plan.merchantId.toString() !== merchant._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this project plan.' });
+        return;
+      }
+
       const result = await githubAuditService.runMilestoneAudit(
         audit.projectPlanId,
         audit.milestoneId,
@@ -126,6 +160,17 @@ router.post(
       const audit = await GitHubAudit.findOne({ auditId: req.params.auditId });
       if (!audit) {
         res.status(404).json({ success: false, error: 'Audit log not found' });
+        return;
+      }
+
+      const plan = await ProjectPlan.findOne({ planId: audit.projectPlanId });
+      if (!plan) {
+        res.status(404).json({ success: false, error: 'Project plan not found' });
+        return;
+      }
+      const merchant = await Merchant.findOne({ userId: req.user._id });
+      if (!merchant || plan.merchantId.toString() !== merchant._id.toString()) {
+        res.status(403).json({ success: false, error: 'Access denied: You do not own this project plan.' });
         return;
       }
 

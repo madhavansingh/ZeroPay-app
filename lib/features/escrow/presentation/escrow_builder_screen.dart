@@ -161,7 +161,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: GlassPanel(
           radius: 24,
-          backgroundColor: AppColors.surfaceContainerLowest.withOpacity(0.98),
+          backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.98),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -174,7 +174,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.outlineVariant.withOpacity(0.4),
+                      color: AppColors.outlineVariant.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -488,7 +488,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         description: m.description,
         amount: m.amountPaise / 100.0,
         status: 'Pending',
-      )));
+      ),),);
       _currentStep = 1;
     });
   }
@@ -507,7 +507,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: GlassPanel(
           radius: 24,
-          backgroundColor: AppColors.surfaceContainerLowest.withOpacity(0.98),
+          backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.98),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -520,7 +520,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.outlineVariant.withOpacity(0.4),
+                      color: AppColors.outlineVariant.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -684,7 +684,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor: color.withOpacity(0.08),
+          backgroundColor: color.withValues(alpha: 0.08),
           child: Icon(
             isCompleted ? Icons.check : icon,
             size: 14,
@@ -710,7 +710,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       child: Container(
         height: 2,
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        color: isCompleted ? AppColors.tertiary : AppColors.outlineVariant.withOpacity(0.3),
+        color: isCompleted ? AppColors.tertiary : AppColors.outlineVariant.withValues(alpha: 0.3),
       ),
     );
   }
@@ -841,8 +841,8 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: const [
+        const Row(
+          children: [
             Text(
               '✨',
               style: TextStyle(fontSize: 20),
@@ -1012,7 +1012,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _projectType,
+                initialValue: _projectType,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1147,7 +1147,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                                           color: AppColors.primary,
                                         ),
                                       ),
-                                    ))
+                                    ),)
                                 .toList(),
                             onChanged: (val) {
                               if (val != null) {
@@ -1171,13 +1171,13 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
             children: [
               ReleaseConfidenceGauge(score: confidence, size: 80),
               const SizedBox(width: 20),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Lumina Planning Score', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    const SizedBox(height: 4),
-                    const Text(
+                    Text('Lumina Planning Score', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    SizedBox(height: 4),
+                    Text(
                       'AI confidence based on semantic clarity, dependency mapping, and historical code templates.',
                       style: TextStyle(fontSize: 11, color: AppColors.outline, height: 1.3),
                     ),
@@ -1303,7 +1303,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                       Expanded(child: Text(r, style: const TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant))),
                     ],
                   ),
-                ))
+                ),)
               else
                 const Text('No significant risks identified.', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
             ],
@@ -1317,8 +1317,8 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.lightbulb_outline, color: Colors.blue, size: 18),
                   SizedBox(width: 8),
                   Text('AI Architectural Recommendations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue)),
@@ -1449,8 +1449,8 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: const [
+                          const Row(
+                            children: [
                               Icon(Icons.checklist, size: 14, color: AppColors.outline),
                               SizedBox(width: 6),
                               Text('Deliverables & Audit Info', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.outline)),
@@ -1906,7 +1906,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline, size: 14, color: AppColors.tertiary),
+          const Icon(Icons.check_circle_outline, size: 14, color: AppColors.tertiary),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -2023,7 +2023,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _selectedChain,
+                  initialValue: _selectedChain,
                   decoration: InputDecoration(
                     labelText: 'Blockchain Network',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -2037,7 +2037,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _selectedAsset,
+                  initialValue: _selectedAsset,
                   decoration: InputDecoration(
                     labelText: 'Collateral Asset',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -2064,9 +2064,9 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
+            const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Milestone Breakdown',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -2092,16 +2092,16 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         const SizedBox(height: 20),
 
         if (_milestones.isEmpty)
-          Center(
+          const Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40.0),
+              padding: EdgeInsets.symmetric(vertical: 40.0),
               child: Column(
                 children: [
                   Icon(Icons.playlist_add, size: 48, color: AppColors.outlineVariant),
-                  const SizedBox(height: 12),
-                  const Text('No milestones added yet', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.outline)),
-                  const SizedBox(height: 4),
-                  const Text('Add at least one milestone to deploy escrow.', style: TextStyle(color: AppColors.outline, fontSize: 11)),
+                  SizedBox(height: 12),
+                  Text('No milestones added yet', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.outline)),
+                  SizedBox(height: 4),
+                  Text('Add at least one milestone to deploy escrow.', style: TextStyle(color: AppColors.outline, fontSize: 11)),
                 ],
               ),
             ),
@@ -2122,7 +2122,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.08),
+                          color: AppColors.primary.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -2180,8 +2180,8 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
           ),
           const SizedBox(height: 16),
           BentoCard(
-            color: AppColors.primary.withOpacity(0.03),
-            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            color: AppColors.primary.withValues(alpha: 0.03),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -2196,7 +2196,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
               ],
             ),
           ),
-        ]
+        ],
       ],
     );
   }
@@ -2218,13 +2218,13 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
 
         // AI Audit Status Panel
         BentoCard(
-          border: Border.all(color: AppColors.tertiary.withOpacity(0.3)),
-          color: AppColors.tertiary.withOpacity(0.04),
-          child: Column(
+          border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.3)),
+          color: AppColors.tertiary.withValues(alpha: 0.04),
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
+                children: [
                   Icon(Icons.verified_user_outlined, color: AppColors.tertiary, size: 16),
                   SizedBox(width: 8),
                   Text(
@@ -2233,8 +2233,8 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              const Text(
+              SizedBox(height: 10),
+              Text(
                 'Lumina AI has cross-checked settlement parameters against past verified escrow layouts. Settlement address matches authorized DevCo credentials. No variable logic exploits detected. Automated payout routes validated.',
                 style: TextStyle(fontSize: 11, height: 1.3, color: AppColors.onSurfaceVariant),
               ),
@@ -2256,9 +2256,9 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
               _buildReviewRow('Milestones', '${_milestones.length} milestones defined'),
               _buildReviewRow('Token Lock', '$_totalEscrowValue $_selectedAsset'),
               const Divider(height: 20),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('Estimated Gas Fee', style: TextStyle(fontSize: 11, color: AppColors.outline)),
                   Text('~0.12 ADA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                 ],
@@ -2274,9 +2274,9 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('CONTRACT BYTECODE PREVIEW (PLUTUS V2)', style: TextStyle(fontSize: 9, color: AppColors.outlineVariant, fontFamily: 'monospace')),
                   Icon(Icons.code, size: 12, color: AppColors.outlineVariant),
                 ],
@@ -2485,7 +2485,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         : _simulatedTxHash;
 
     return Container(
-      color: Colors.black.withOpacity(0.8),
+      color: Colors.black.withValues(alpha: 0.8),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -2526,7 +2526,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -2574,7 +2574,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(

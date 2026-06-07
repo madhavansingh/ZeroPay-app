@@ -127,7 +127,7 @@ class MerchantProfileScreen extends ConsumerWidget {
                           border: Border.all(color: AppColors.surfaceContainerLowest, width: 4),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withValues(alpha: 0.06),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -184,7 +184,7 @@ class MerchantProfileScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -234,8 +234,8 @@ class MerchantProfileScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.auto_awesome, color: AppColors.secondary, size: 18),
                   SizedBox(width: 6),
                   Text('ZeroPay AI Trust Analytics', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -244,7 +244,7 @@ class MerchantProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.tertiary.withOpacity(0.08),
+                  color: AppColors.tertiary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -308,7 +308,7 @@ class MerchantProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildVerticalDivider() {
-    return Container(width: 1, height: 28, color: AppColors.outlineVariant.withOpacity(0.4));
+    return Container(width: 1, height: 28, color: AppColors.outlineVariant.withValues(alpha: 0.4));
   }
 
   Widget _buildStoreInfo(BuildContext context, ProfileDetail detail) {
@@ -322,8 +322,8 @@ class MerchantProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.schedule, size: 16, color: AppColors.primary),
                     SizedBox(width: 6),
                     Text('Hours', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
@@ -347,8 +347,8 @@ class MerchantProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.contact_support_outlined, size: 16, color: AppColors.primary),
                     SizedBox(width: 6),
                     Text('Contact', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
@@ -357,13 +357,13 @@ class MerchantProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Email',
-                  style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant.withOpacity(0.7)),
+                  style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant.withValues(alpha: 0.7)),
                 ),
                 Text(detail.email, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(
                   'Address',
-                  style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant.withOpacity(0.7)),
+                  style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant.withValues(alpha: 0.7)),
                 ),
                 Text(detail.address, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               ],
@@ -411,7 +411,7 @@ class MerchantProfileScreen extends ConsumerWidget {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh.withOpacity(0.5),
+                        color: AppColors.surfaceContainerHigh.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
@@ -467,7 +467,7 @@ class MerchantProfileScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.outlineVariant.withOpacity(0.2)),
+                border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

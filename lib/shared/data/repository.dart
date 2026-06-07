@@ -1202,12 +1202,12 @@ class MockZeroPayRepository implements ZeroPayRepository {
   }) {
     final activePlanId = planId ?? 'PLAN-20260606-${(100000 + DateTime.now().millisecondsSinceEpoch % 900000)}';
     final activeVersion = version ?? 1;
-    final m1Id = 'MS-20260606-000001';
-    final m2Id = 'MS-20260606-000002';
-    final m3Id = 'MS-20260606-000003';
-    final t1Id = 'TSK-20260606-000001';
-    final t2Id = 'TSK-20260606-000002';
-    final t3Id = 'TSK-20260606-000003';
+    const m1Id = 'MS-20260606-000001';
+    const m2Id = 'MS-20260606-000002';
+    const m3Id = 'MS-20260606-000003';
+    const t1Id = 'TSK-20260606-000001';
+    const t2Id = 'TSK-20260606-000002';
+    const t3Id = 'TSK-20260606-000003';
 
     return ProjectPlan(
       planId: activePlanId,
@@ -1592,9 +1592,9 @@ class MockZeroPayRepository implements ZeroPayRepository {
           'whyVerdictAssigned': 'Mock explain',
           'evidenceUsed': 'Mock evidence',
           'missingImplementation': 'None',
-          'suggestedFixes': 'None'
-        }
-      }
+          'suggestedFixes': 'None',
+        },
+      },
     };
   }
 
@@ -1619,16 +1619,16 @@ class MockZeroPayRepository implements ZeroPayRepository {
             'whyVerdictAssigned': 'Mock explanation',
             'evidenceUsed': 'Mock evidence',
             'missingImplementation': 'None',
-            'suggestedFixes': 'None'
-          }
+            'suggestedFixes': 'None',
+          },
         },
         'snapshot': {
           'snapshotId': 'SNAP-MOCK-123',
           'repositoryTree': <String>['src/main.ts'],
           'commitHashes': <String>['c8f391a2bb28384818cc65fa28a8a65bb919a3b2'],
-          'sha256Hash': 'mocksha256hash'
-        }
-      }
+          'sha256Hash': 'mocksha256hash',
+        },
+      },
     };
   }
 
@@ -1643,7 +1643,7 @@ class MockZeroPayRepository implements ZeroPayRepository {
         'releaseRecommendation': 'RECOMMEND_RELEASE',
         'confidenceScore': 95,
         'releaseConfidenceScore': 90,
-        'createdAt': DateTime.now().toIso8601String()
+        'createdAt': DateTime.now().toIso8601String(),
       }
     ];
   }
@@ -1665,8 +1665,8 @@ class MockZeroPayRepository implements ZeroPayRepository {
       'data': {
         'auditId': auditId,
         'releaseRecommendation': 'RECOMMEND_RELEASE',
-        'releaseConfidenceScore': 90
-      }
+        'releaseConfidenceScore': 90,
+      },
     };
   }
 }

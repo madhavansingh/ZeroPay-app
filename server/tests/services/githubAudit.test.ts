@@ -5,6 +5,7 @@ vi.mock('../../src/config/env', () => ({
   env: {
     NODE_ENV: 'test',
     GEMINI_API_KEY: 'mock-gemini-key',
+    NVIDIA_API_KEY: 'mock-nvidia-key',
   },
 }));
 
@@ -64,9 +65,9 @@ vi.mock('../../src/services/githubMcp.service', () => ({
   },
 }));
 
-// Mock ai.service
-vi.mock('../../src/services/ai.service', () => ({
-  auditMilestoneCompletion: vi.fn().mockResolvedValue({
+// Mock nemotronAudit.service
+vi.mock('../../src/services/nemotronAudit.service', () => ({
+  auditMilestoneCompletionWithNemotron: vi.fn().mockResolvedValue({
     auditStatus: 'PASSED',
     releaseRecommendation: 'RECOMMEND_RELEASE',
     confidenceScore: 92,

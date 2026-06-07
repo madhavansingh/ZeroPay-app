@@ -87,6 +87,14 @@ router.get('/:invoiceId', requireAuth, async (req: Request, res: Response): Prom
       return;
     }
 
+    const merchant = await Merchant.findById(invoice.merchantId);
+    const isMerchant = merchant && merchant.userId?.toString() === req.user._id.toString();
+    const isCustomer = invoice.customerId && invoice.customerId.toString() === req.user._id.toString();
+    if (!isMerchant && !isCustomer) {
+      res.status(403).json({ success: false, error: 'Access denied: You do not have permission to view this invoice.' });
+      return;
+    }
+
     res.json({
       success: true,
       data: {

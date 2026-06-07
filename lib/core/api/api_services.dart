@@ -312,7 +312,7 @@ class AiApiService {
   Future<Response> createChatRoom(String merchantStringId) async {
     return await _client.post('/chat/rooms/create', data: {
       'merchantStringId': merchantStringId,
-    });
+    },);
   }
 
   Future<Response> generateMilestones(String description, int totalAmountPaise) async {

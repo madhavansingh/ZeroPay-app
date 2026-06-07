@@ -34,7 +34,7 @@ class NotificationCenterSheet extends ConsumerWidget {
       builder: (context, scrollController) {
         return GlassPanel(
           radius: 24,
-          backgroundColor: AppColors.surfaceContainerLowest.withOpacity(0.95),
+          backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.95),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Column(
@@ -102,18 +102,18 @@ class NotificationCenterSheet extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: alert.isRead
                                     ? Colors.transparent
-                                    : AppColors.primary.withOpacity(0.04),
+                                    : AppColors.primary.withValues(alpha: 0.04),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
                                   color: alert.isRead
-                                      ? AppColors.outlineVariant.withOpacity(0.2)
-                                      : AppColors.primary.withOpacity(0.15),
+                                      ? AppColors.outlineVariant.withValues(alpha: 0.2)
+                                      : AppColors.primary.withValues(alpha: 0.15),
                                 ),
                               ),
                               child: ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 leading: CircleAvatar(
-                                  backgroundColor: iconColor.withOpacity(0.1),
+                                  backgroundColor: iconColor.withValues(alpha: 0.1),
                                   child: Icon(icon, color: iconColor),
                                 ),
                                 title: Text(
@@ -248,13 +248,13 @@ class CustomerShellLayout extends ConsumerWidget {
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
+            border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3), width: 1.0)),
           ),
           child: NavigationBar(
             selectedIndex: currentIndex,
             elevation: 0,
             backgroundColor: AppColors.surfaceContainerLowest,
-            indicatorColor: AppColors.primary.withOpacity(0.08),
+            indicatorColor: AppColors.primary.withValues(alpha: 0.08),
             onDestinationSelected: (index) {
               switch (index) {
                 case 0:
@@ -347,13 +347,13 @@ class MerchantShellLayout extends ConsumerWidget {
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
+            border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3), width: 1.0)),
           ),
           child: NavigationBar(
             selectedIndex: currentIndex,
             elevation: 0,
             backgroundColor: AppColors.surfaceContainerLowest,
-            indicatorColor: AppColors.secondary.withOpacity(0.08),
+            indicatorColor: AppColors.secondary.withValues(alpha: 0.08),
             onDestinationSelected: (index) {
               switch (index) {
                 case 0:
@@ -528,7 +528,7 @@ final authStateProvider = Provider<AuthState>((ref) => ref.watch(authProvider));
 Widget _buildOfflineBanner(BuildContext context, WidgetRef ref, OfflineState state) {
   return Container(
     decoration: BoxDecoration(
-      color: AppColors.error.withOpacity(0.08),
+      color: AppColors.error.withValues(alpha: 0.08),
       border: const Border(bottom: BorderSide(color: AppColors.error, width: 0.5)),
     ),
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

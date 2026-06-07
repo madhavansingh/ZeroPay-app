@@ -233,7 +233,7 @@ router.post(
       const isAssigned = verdict.assignedJurors?.some((id) => id.toString() === activeUserId.toString());
 
       if (!isAssigned) {
-        if (env.NODE_ENV !== 'production' && env.DEV_AUTH_ENABLED === true) {
+        if (process.env.NODE_ENV !== 'production' && env.NODE_ENV !== 'production' && env.DEV_AUTH_ENABLED === true) {
           // Dev Mode: Auto-assign user as a juror
           verdict.assignedJurors = verdict.assignedJurors || [];
           verdict.assignedJurors.push(activeUserId);

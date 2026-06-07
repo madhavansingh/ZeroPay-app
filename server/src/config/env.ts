@@ -50,6 +50,16 @@ const envSchema = z.object({
   // Gemini API
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
 
+  // NVIDIA API
+  NVIDIA_API_KEY: z.string().min(1, 'NVIDIA_API_KEY is required'),
+  PLANNER_MODEL: z.string().default('nvidia/llama-3.3-nemotron-super-49b-v1'),
+
+  // Repository Audit Limits
+  AUDIT_MAX_COMMITS: z.string().default('100').transform(Number),
+  AUDIT_MAX_PULL_REQUESTS: z.string().default('50').transform(Number),
+  AUDIT_MAX_FILES: z.string().default('1000').transform(Number),
+  AUDIT_MAX_WORKFLOW_RUNS: z.string().default('25').transform(Number),
+
   // Escrow configuration
   ESCROW_ADMIN_ADDRESS: z.string().regex(/^addr(_test)?1[a-z0-9]+$/).default('addr_test1vqg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygxrcya6'),
   ESCROW_TREASURY_ADDRESS: z.string().regex(/^addr(_test)?1[a-z0-9]+$/).default('addr_test1vq3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygswahgq5'),
@@ -65,12 +75,20 @@ const envSchema = z.object({
   GITHUB_TOKEN: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === 'production') {
-    const isPlaceholder = /placeholder|your_|your-|todo|changeme|mock-gemini|test-key/i.test(data.GEMINI_API_KEY) || data.GEMINI_API_KEY.trim() === '';
-    if (isPlaceholder) {
+    const isPlaceholderGemini = /placeholder|your_|your-|todo|changeme|mock-gemini|test-key/i.test(data.GEMINI_API_KEY) || data.GEMINI_API_KEY.trim() === '';
+    if (isPlaceholderGemini) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'GEMINI_API_KEY cannot be a placeholder, mock, or test key in production mode',
         path: ['GEMINI_API_KEY'],
+      });
+    }
+    const isPlaceholderNvidia = /placeholder|your_|your-|todo|changeme|mock-nvidia|test-key/i.test(data.NVIDIA_API_KEY) || data.NVIDIA_API_KEY.trim() === '';
+    if (isPlaceholderNvidia) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'NVIDIA_API_KEY cannot be a placeholder, mock, or test key in production mode',
+        path: ['NVIDIA_API_KEY'],
       });
     }
   }

@@ -49,7 +49,7 @@ class AppTheme {
       // Card Theme
       cardTheme: CardThemeData(
         color: AppColors.surfaceContainerLowest,
-        shadowColor: AppColors.primary.withOpacity(0.08),
+        shadowColor: AppColors.primary.withValues(alpha: 0.08),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
@@ -73,7 +73,7 @@ class AppTheme {
       // Navigation Bar Theme
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceContainerLowest,
-        indicatorColor: AppColors.primaryContainer.withOpacity(0.1),
+        indicatorColor: AppColors.primaryContainer.withValues(alpha: 0.1),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         height: 80,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {

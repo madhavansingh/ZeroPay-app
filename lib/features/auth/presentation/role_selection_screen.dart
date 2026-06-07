@@ -120,12 +120,12 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                         });
                       },
                       color: isSelected
-                          ? role.color.withOpacity(0.04)
+                          ? role.color.withValues(alpha: 0.04)
                           : AppColors.surfaceContainerLowest,
                       border: Border.all(
                         color: isSelected
                             ? role.color
-                            : AppColors.outlineVariant.withOpacity(0.3),
+                            : AppColors.outlineVariant.withValues(alpha: 0.3),
                         width: isSelected ? 2.0 : 1.0,
                       ),
                       child: Column(
@@ -139,8 +139,8 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                                 height: 44,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? role.color.withOpacity(0.12)
-                                      : AppColors.surfaceContainerHigh.withOpacity(0.4),
+                                      ? role.color.withValues(alpha: 0.12)
+                                      : AppColors.surfaceContainerHigh.withValues(alpha: 0.4),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -165,7 +165,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                                     Text(
                                       role.subtitle,
                                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                            color: AppColors.onSurfaceVariant.withOpacity(0.8),
+                                            color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
                                           ),
                                     ),
                                   ],

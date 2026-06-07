@@ -218,11 +218,11 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Text(
             'Chain of Custody Protection',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary),
@@ -246,7 +246,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
       },
       child: Column(
         children: [
-          Icon(Icons.upload_file_outlined, size: 48, color: AppColors.primary.withOpacity(0.8)),
+          Icon(Icons.upload_file_outlined, size: 48, color: AppColors.primary.withValues(alpha: 0.8)),
           const SizedBox(height: 14),
           const Text(
             'Select Dispute Evidence Files',
@@ -262,7 +262,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
@@ -281,7 +281,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => GlassPanel(
         radius: 24,
-        backgroundColor: AppColors.surfaceContainerLowest.withOpacity(0.98),
+        backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.98),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -294,7 +294,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.outlineVariant.withOpacity(0.4),
+                    color: AppColors.outlineVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -389,11 +389,11 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 color: AppColors.surfaceContainerLow,
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Expanded(flex: 3, child: Text('DOCUMENT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.outline))),
                     Expanded(flex: 2, child: Text('IPFS / BLOCK', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.outline))),
-                    Expanded(flex: 2, child: Text('TIMESTAMP', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.outline), textAlign: TextAlign.right)),
+                    Expanded(flex: 2, child: Text('TIMESTAMP', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.outline), textAlign: TextAlign.right)),
                   ],
                 ),
               ),
@@ -412,7 +412,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.2))),
+                        border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.2))),
                       ),
                       child: Row(
                         children: [
@@ -434,7 +434,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
                               children: [
                                 Text(file.blockNumber, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.tertiary)),
                                 const SizedBox(height: 2),
-                                Text(file.ipfsCid.substring(7, 18) + '...', style: const TextStyle(fontSize: 8, color: AppColors.outline, fontFamily: 'monospace')),
+                                Text('${file.ipfsCid.substring(7, 18)}...', style: const TextStyle(fontSize: 8, color: AppColors.outline, fontFamily: 'monospace')),
                               ],
                             ),
                           ),
@@ -461,7 +461,7 @@ class _EvidenceUploadScreenState extends ConsumerState<EvidenceUploadScreen> {
 
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.6),
+      color: Colors.black.withValues(alpha: 0.6),
       child: Center(
         child: BentoCard(
           radius: 20,

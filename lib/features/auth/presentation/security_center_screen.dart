@@ -101,8 +101,8 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.security, color: AppColors.error, size: 22),
             SizedBox(width: 8),
             Text('Confirm Sensitive Action', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -188,16 +188,16 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
 
   Widget _buildSystemLockAlert() {
     return BentoCard(
-      border: Border.all(color: AppColors.tertiary.withOpacity(0.3)),
-      color: AppColors.tertiary.withOpacity(0.04),
-      child: Row(
+      border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.3)),
+      color: AppColors.tertiary.withValues(alpha: 0.04),
+      child: const Row(
         children: [
-          const Icon(Icons.verified_user, color: AppColors.tertiary, size: 28),
-          const SizedBox(width: 14),
+          Icon(Icons.verified_user, color: AppColors.tertiary, size: 28),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   'Local Security Enclave Status: Locked & Cryptographed',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: AppColors.tertiary),
@@ -267,7 +267,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
             title: const Text('FaceID / TouchID Biometrics', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500)),
             subtitle: const Text('Unlock credentials using biometric checks.', style: TextStyle(fontSize: 10, color: AppColors.outline)),
             value: _biometricsEnabled,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             contentPadding: EdgeInsets.zero,
             onChanged: (val) async {
               setState(() => _biometricsEnabled = val);
@@ -290,7 +290,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
             title: const Text('Require PIN Passcode Lock', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500)),
             subtitle: const Text('Fallback authentication if biometrics fails.', style: TextStyle(fontSize: 10, color: AppColors.outline)),
             value: _passcodeEnabled,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             contentPadding: EdgeInsets.zero,
             onChanged: (val) {
               if (val) {
@@ -305,7 +305,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
             title: const Text('Require Confirmations for Payouts', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500)),
             subtitle: const Text('Prompt auth overlays for sensitive milestone releases.', style: TextStyle(fontSize: 10, color: AppColors.outline)),
             value: _requireConfirmations,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             contentPadding: EdgeInsets.zero,
             onChanged: (val) {
               setState(() => _requireConfirmations = val);
@@ -346,7 +346,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isActive ? AppColors.tertiary.withOpacity(0.08) : AppColors.surfaceContainerLow,
+                      color: isActive ? AppColors.tertiary.withValues(alpha: 0.08) : AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -391,7 +391,7 @@ class _SecurityCenterScreenState extends ConsumerState<SecurityCenterScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isBlocked ? AppColors.error.withOpacity(0.08) : AppColors.tertiary.withOpacity(0.08),
+                      color: isBlocked ? AppColors.error.withValues(alpha: 0.08) : AppColors.tertiary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

@@ -104,7 +104,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -117,7 +117,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
               height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.secondary.withOpacity(0.12),
+                color: AppColors.secondary.withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -144,7 +144,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                         borderRadius: BorderRadius.circular(32),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             offset: const Offset(0, 16),
                             blurRadius: 32,
                           ),
@@ -158,7 +158,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(32),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.15),
+                                  color: Colors.white.withValues(alpha: 0.15),
                                   width: 2.0,
                                 ),
                               ),
@@ -204,7 +204,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                       Text(
                         'The Blockchain Commerce OS',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.onSurfaceVariant.withOpacity(0.8),
+                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
                               letterSpacing: 0.5,
                             ),
                       ),
@@ -229,7 +229,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                     height: 4,
                     width: 140,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh.withOpacity(0.3),
+                      color: AppColors.surfaceContainerHigh.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                     child: Align(
@@ -242,7 +242,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                             borderRadius: BorderRadius.circular(2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.5),
+                                color: AppColors.primary.withValues(alpha: 0.5),
                                 blurRadius: 4,
                                 spreadRadius: 1,
                               ),
@@ -261,7 +261,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                       _statusText,
                       key: ValueKey<String>(_statusText),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                            color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w500,
                           ),
                     ),

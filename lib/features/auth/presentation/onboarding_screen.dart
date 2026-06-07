@@ -181,7 +181,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   color: AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(24.0),
                   border: Border.all(
-                    color: AppColors.outlineVariant.withOpacity(0.4),
+                    color: AppColors.outlineVariant.withValues(alpha: 0.4),
                     width: 1.0,
                   ),
                 ),
@@ -199,10 +199,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
+                                      color: Colors.black.withValues(alpha: 0.04),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
-                                    )
+                                    ),
                                   ]
                                 : null,
                           ),
@@ -252,14 +252,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               height: 130,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.surfaceContainerHigh.withOpacity(0.4),
+                                color: AppColors.surfaceContainerHigh.withValues(alpha: 0.4),
                                 border: Border.all(
-                                  color: AppColors.outlineVariant.withOpacity(0.3),
+                                  color: AppColors.outlineVariant.withValues(alpha: 0.3),
                                   width: 1.0,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.03),
+                                    color: Colors.black.withValues(alpha: 0.03),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -279,7 +279,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
                               decoration: BoxDecoration(
-                                color: slide.color.withOpacity(0.1),
+                                color: slide.color.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
                               child: Row(
@@ -389,7 +389,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       child: Text(
                         'Skip Onboarding',
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                              color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w600,
                             ),
                       ),

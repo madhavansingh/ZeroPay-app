@@ -24,6 +24,7 @@ export interface CreateInvoiceInput {
   milestones?: Array<{ milestoneId?: string; title: string; description?: string; amountPaise: number }>;
   network?: 'cardano' | 'base';
   projectPlanId?: string;
+  auditRequired?: boolean;
 }
 
 export async function createInvoice(input: CreateInvoiceInput): Promise<IInvoice> {
@@ -92,6 +93,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<IInvoice
     milestoneIndex: 0,
     isDisputed: false,
     network: input.network ?? 'cardano',
+    auditRequired: input.auditRequired ?? false,
   });
 
   // Mirror status to Firebase RTDB for real-time frontend updates

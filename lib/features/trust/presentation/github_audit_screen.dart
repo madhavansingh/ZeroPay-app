@@ -487,7 +487,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
         actions: _getViewActions(),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Divider(color: AppColors.outlineVariant.withOpacity(0.3), height: 1.0),
+          child: Divider(color: AppColors.outlineVariant.withValues(alpha: 0.3), height: 1.0),
         ),
       ),
       body: Stack(
@@ -509,7 +509,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
           ),
           if (_isActionLoading)
             Container(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
             ),
         ],
@@ -525,8 +525,8 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.all_inclusive, color: AppColors.primary, size: 24),
               SizedBox(width: 8),
               Text(
@@ -571,8 +571,8 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                   border: Border.all(color: AppColors.primary),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.swap_horiz, size: 10, color: AppColors.primary),
                     SizedBox(width: 4),
                     Text(
@@ -597,7 +597,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   Widget _buildBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0)),
+        border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3), width: 1.0)),
       ),
       child: BottomNavigationBar(
         currentIndex: 1, // Escrow active index
@@ -773,7 +773,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.onSurface.withOpacity(0.06),
+                            color: AppColors.onSurface.withValues(alpha: 0.06),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.code, color: AppColors.onSurface, size: 24),
@@ -797,7 +797,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.tertiary.withOpacity(0.1),
+                        color: AppColors.tertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -820,9 +820,9 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                         Text(branchName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
                       ],
                     ),
-                    Column(
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
-                      children: const [
+                      children: [
                         Text('Last Synced', style: TextStyle(fontSize: 11, color: AppColors.outline)),
                         Text('2 mins ago', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                       ],
@@ -870,7 +870,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Milestones Linked: ${_projectAudits.length > 0 ? _projectAudits.length : 3}',
+                      'Milestones Linked: ${_projectAudits.isNotEmpty ? _projectAudits.length : 3}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(height: 2),
@@ -953,7 +953,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       return const Center(child: Text('No repository connected.'));
     }
 
-    final projectName = 'Ai Escrow DApp Development';
+    const projectName = 'Ai Escrow DApp Development';
     final repoUrl = audit['repositoryUrl'] ?? 'github.com/zeropay/escrow-dapp';
     final repoName = repoUrl.toString().replaceAll('https://github.com/', '').replaceAll('github.com/', '');
     final coverage = (audit['releaseConfidenceScore'] as num?)?.toDouble() ?? 82.0;
@@ -971,18 +971,18 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Project Plan', style: TextStyle(fontSize: 11, color: AppColors.outline)),
-                        const SizedBox(height: 2),
-                        Text(projectName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Project Plan', style: TextStyle(fontSize: 11, color: AppColors.outline)),
+                        SizedBox(height: 2),
+                        Text(projectName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
-                    const Icon(Icons.chevron_right, color: AppColors.outline, size: 18),
+                    Icon(Icons.chevron_right, color: AppColors.outline, size: 18),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -1129,7 +1129,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+          border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -1171,9 +1171,9 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(
         label,
@@ -1217,7 +1217,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.08),
+                  color: statusColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1239,7 +1239,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
             const SizedBox(height: 8),
             LinearProgressIndicator(
               value: coverage / 100,
-              backgroundColor: AppColors.outlineVariant.withOpacity(0.2),
+              backgroundColor: AppColors.outlineVariant.withValues(alpha: 0.2),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
               borderRadius: BorderRadius.circular(4),
               minHeight: 4,
@@ -1283,7 +1283,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.08),
+                        color: statusColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1310,7 +1310,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
                   value: coverage / 100,
-                  backgroundColor: AppColors.outlineVariant.withOpacity(0.2),
+                  backgroundColor: AppColors.outlineVariant.withValues(alpha: 0.2),
                   valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   borderRadius: BorderRadius.circular(4),
                   minHeight: 6,
@@ -1418,7 +1418,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
             color: AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isExpanded ? AppColors.primary.withOpacity(0.3) : AppColors.outlineVariant.withOpacity(0.3),
+              color: isExpanded ? AppColors.primary.withValues(alpha: 0.3) : AppColors.outlineVariant.withValues(alpha: 0.3),
               width: isExpanded ? 1.5 : 1,
             ),
           ),
@@ -1437,7 +1437,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                 dense: true,
                 leading: CircleAvatar(
                   radius: 12,
-                  backgroundColor: rowStatusColor.withOpacity(0.1),
+                  backgroundColor: rowStatusColor.withValues(alpha: 0.1),
                   child: Icon(statusIcon, color: rowStatusColor, size: 14),
                 ),
                 title: Text(
@@ -1581,10 +1581,10 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                         const Text('Verified', style: TextStyle(color: AppColors.tertiary, fontSize: 11, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                  )),
+                  ),),
               ],
             ),
-          )
+          ),
         ],
       );
     } else if (_activeMatrixTab == 2) {
@@ -1605,7 +1605,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                 _buildPRRow('#12', 'Dispute handling flow implementation', 'Under Review', Colors.orange),
               ],
             ),
-          )
+          ),
         ],
       );
     } else {
@@ -1631,10 +1631,10 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                         Text(f, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
                       ],
                     ),
-                  )),
+                  ),),
               ],
             ),
-          )
+          ),
         ],
       );
     }
@@ -1661,7 +1661,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        border: Border(top: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3))),
+        border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: SizedBox(
         width: double.infinity,
@@ -1702,9 +1702,9 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
           Container(
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.04),
+              color: Colors.orange.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.orange.withOpacity(0.2), width: 1),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.2), width: 1),
             ),
             child: Row(
               children: [
@@ -1888,8 +1888,8 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         BentoCard(
-          color: color.withOpacity(0.04),
-          border: Border.all(color: color.withOpacity(0.2), width: 1),
+          color: color.withValues(alpha: 0.04),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2012,7 +2012,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
             'evidenceCommits': ['a1b2c3d'],
             'evidencePRs': ['#1'],
           }
-        ]
+        ],
       };
     } else if (milestoneId == 'MS-3') {
       return {
@@ -2029,7 +2029,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
           'missingImplementation': 'React widgets, state integration, backend synchronization hooks.',
           'recommendedFixes': 'Initialize UI integration branch, mount webhooks, and push initial repository files.',
         },
-        'requirementTraceMatrix': []
+        'requirementTraceMatrix': [],
       };
     } else {
       // MS-2 Default
@@ -2128,7 +2128,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
             'evidenceCommits': [],
             'evidencePRs': [],
           },
-        ]
+        ],
       };
     }
   }
@@ -2161,7 +2161,7 @@ class CoverageRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: coverage / 100,
               strokeWidth: strokeWidth,
-              backgroundColor: AppColors.outlineVariant.withOpacity(0.2),
+              backgroundColor: AppColors.outlineVariant.withValues(alpha: 0.2),
               color: AppColors.primary,
             ),
           ),
@@ -2221,7 +2221,7 @@ class ReleaseConfidenceGauge extends StatelessWidget {
           CircularProgressIndicator(
             value: score / 100,
             strokeWidth: 5,
-            backgroundColor: AppColors.outlineVariant.withOpacity(0.15),
+            backgroundColor: AppColors.outlineVariant.withValues(alpha: 0.15),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
           Text(

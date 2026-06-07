@@ -64,7 +64,7 @@ class _ReceiveTokensScreenState extends ConsumerState<ReceiveTokensScreen> {
                           });
                         }
                       },
-                      selectedColor: AppColors.primary.withOpacity(0.1),
+                      selectedColor: AppColors.primary.withValues(alpha: 0.1),
                       labelStyle: TextStyle(
                         color: isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -88,7 +88,7 @@ class _ReceiveTokensScreenState extends ConsumerState<ReceiveTokensScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.outlineVariant.withOpacity(0.5)),
+                        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
                       ),
                       child: Stack(
                         alignment: Alignment.center,

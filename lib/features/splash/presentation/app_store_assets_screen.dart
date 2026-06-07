@@ -20,8 +20,8 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.face, size: 24, color: AppColors.primary),
             SizedBox(width: 8),
             Text('Allow "ZeroPay" to use Face ID?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
@@ -57,8 +57,8 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.notifications_active_outlined, size: 24, color: AppColors.primary),
             SizedBox(width: 8),
             Text('Allow "ZeroPay" to send Notifications?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
@@ -142,7 +142,7 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
                   gradient: const LinearGradient(colors: AppColors.aiGradient),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(color: AppColors.primary.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
                   ],
                 ),
                 child: const Center(
@@ -150,10 +150,10 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text('ZeroPay App Icon (Standard Store iOS/Android)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                     SizedBox(height: 4),
                     Text('Scale: 1024x1024 px. Design features Lumina AI continuous glow sweep over vector geometry lines.', style: TextStyle(fontSize: 10, color: AppColors.outline, height: 1.3)),
@@ -272,10 +272,10 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
           ] else ...[
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.tertiary.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
-              child: Row(
+              decoration: BoxDecoration(color: AppColors.tertiary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.check_circle, color: AppColors.tertiary, size: 16),
                   SizedBox(width: 8),
                   Text('All core permissions completed.', style: TextStyle(color: AppColors.tertiary, fontWeight: FontWeight.bold, fontSize: 11)),
@@ -302,12 +302,12 @@ class _AppStoreAssetsScreenState extends ConsumerState<AppStoreAssetsScreen> {
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+              border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
             ),
-            child: SingleChildScrollView(
+            child: const SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text('ZEROPAY COMMERCE PROTOCOL TERMS OF SERVICE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9.5)),
                   SizedBox(height: 6),
                   Text(

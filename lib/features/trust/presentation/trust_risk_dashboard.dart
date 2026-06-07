@@ -167,7 +167,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withValues(alpha: 0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -228,7 +228,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: col.withOpacity(0.08),
+            backgroundColor: col.withValues(alpha: 0.08),
             child: Icon(icon, size: 14, color: col),
           ),
           const SizedBox(width: 8),
@@ -276,7 +276,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
     return Container(
       width: 1,
       height: 36,
-      color: AppColors.outlineVariant.withOpacity(0.3),
+      color: AppColors.outlineVariant.withValues(alpha: 0.3),
     );
   }
 
@@ -324,7 +324,7 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: score,
-              backgroundColor: AppColors.outlineVariant.withOpacity(0.2),
+              backgroundColor: AppColors.outlineVariant.withValues(alpha: 0.2),
               color: AppColors.primary,
               minHeight: 6,
             ),
@@ -336,20 +336,20 @@ class _TrustRiskDashboardState extends ConsumerState<TrustRiskDashboard> {
 
   Widget _buildReputationAuditCard() {
     return BentoCard(
-      border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
-      color: AppColors.secondary.withOpacity(0.04),
-      child: Column(
+      border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+      color: AppColors.secondary.withValues(alpha: 0.04),
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(Icons.auto_awesome, color: AppColors.secondary, size: 14),
               SizedBox(width: 6),
               Text('ZeroPay AI Assistant Audit Advice', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondary)),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'To achieve a perfect 100/100 peer reputation score, deploy at least one additional multi-milestone contract using Cardano ADA pre-funded locks. Prompt consensus resolutions quickly to maximize your promptness score.',
             style: TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant, height: 1.3),
           ),

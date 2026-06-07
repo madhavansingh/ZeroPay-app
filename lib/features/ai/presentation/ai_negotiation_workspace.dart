@@ -112,13 +112,13 @@ class _AiNegotiationWorkspaceState extends ConsumerState<AiNegotiationWorkspace>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Min Offer: \$200', style: TextStyle(fontSize: 9, color: AppColors.outline.withOpacity(0.7))),
+                    Text('Min Offer: \$200', style: TextStyle(fontSize: 9, color: AppColors.outline.withValues(alpha: 0.7))),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
-                      child: Text('AI Sweet Range: \$270 - \$285', style: const TextStyle(fontSize: 9, color: AppColors.secondary, fontWeight: FontWeight.bold)),
+                      decoration: BoxDecoration(color: AppColors.secondary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+                      child: const Text('AI Sweet Range: \$270 - \$285', style: TextStyle(fontSize: 9, color: AppColors.secondary, fontWeight: FontWeight.bold)),
                     ),
-                    Text('Max Offer: \$350', style: TextStyle(fontSize: 9, color: AppColors.outline.withOpacity(0.7))),
+                    Text('Max Offer: \$350', style: TextStyle(fontSize: 9, color: AppColors.outline.withValues(alpha: 0.7))),
                   ],
                 ),
               ],
@@ -221,7 +221,7 @@ class _AiNegotiationWorkspaceState extends ConsumerState<AiNegotiationWorkspace>
               ],
             ),
           ),
-          Container(height: 90, width: 1, color: AppColors.outlineVariant.withOpacity(0.4)),
+          Container(height: 90, width: 1, color: AppColors.outlineVariant.withValues(alpha: 0.4)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 16.0),
@@ -269,7 +269,7 @@ class NegotiationGaugePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = 8.0;
+    const strokeWidth = 8.0;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 

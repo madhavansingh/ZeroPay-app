@@ -55,6 +55,7 @@ export interface IInvoice extends Document {
   disputeTxHash?: string;         // TX hash of the dispute transaction
   resolutionTxHash?: string;      // TX hash of the admin resolution TX
   network?: 'cardano' | 'base';
+  auditRequired?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -191,6 +192,11 @@ const invoiceSchema = new Schema<IInvoice>(
       type: String,
       enum: ['cardano', 'base'],
       default: 'cardano',
+      index: true,
+    },
+    auditRequired: {
+      type: Boolean,
+      default: false,
       index: true,
     },
   },

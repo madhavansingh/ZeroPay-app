@@ -98,8 +98,8 @@ class _AiBusinessIntelScreenState extends ConsumerState<AiBusinessIntelScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               // Demand Forecasting Title
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.trending_up, color: AppColors.secondary),
                   SizedBox(width: 8),
                   Text('30-Day Demand Forecasting (Sales Volume)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -119,9 +119,9 @@ class _AiBusinessIntelScreenState extends ConsumerState<AiBusinessIntelScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text('Today (Actual)', style: TextStyle(fontSize: 9, color: AppColors.outline)),
                         Text('+15 Days (Projected)', style: TextStyle(fontSize: 9, color: AppColors.outline)),
                         Text('+30 Days (Projected)', style: TextStyle(fontSize: 9, color: AppColors.secondary, fontWeight: FontWeight.bold)),
@@ -146,7 +146,7 @@ class _AiBusinessIntelScreenState extends ConsumerState<AiBusinessIntelScreen> {
                         Text(pricingTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: AppColors.secondary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                           child: Text('${(confidenceScore * 100).toInt()}% Confidence', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondary)),
                         ),
                       ],
@@ -309,7 +309,7 @@ class DemandForecastingCurvePainter extends CustomPainter {
 
     // Draw dashed path for projection (simple dotted dash)
     final forecastPaint = Paint()
-      ..color = curveColor.withOpacity(0.5)
+      ..color = curveColor.withValues(alpha: 0.5)
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 

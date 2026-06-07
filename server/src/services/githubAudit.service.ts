@@ -2,7 +2,7 @@ import { ProjectPlan } from '../models/ProjectPlan';
 import { GitHubAudit } from '../models/GitHubAudit';
 import { GitHubAuditSnapshot } from '../models/GitHubAuditSnapshot';
 import { githubMcpService } from './githubMcp.service';
-import { auditMilestoneCompletion } from './ai.service';
+import { auditMilestoneCompletionWithNemotron } from './nemotronAudit.service';
 import { logger } from '../config/logger';
 
 function generateUniqueId(prefix: string): string {
@@ -84,7 +84,7 @@ export const githubAuditService = {
     const snapshot = await githubMcpService.normalizeSnapshot(owner, name, branch);
 
     // 3. Call AI Evaluation Layer
-    const aiResponse = await auditMilestoneCompletion(
+    const aiResponse = await auditMilestoneCompletionWithNemotron(
       snapshot,
       plan,
       milestoneId,

@@ -103,12 +103,12 @@ class CustomerProfileScreen extends ConsumerWidget {
                    child: Container(
                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                      decoration: BoxDecoration(
-                       color: AppColors.tertiary.withOpacity(0.08),
+                       color: AppColors.tertiary.withValues(alpha: 0.08),
                        borderRadius: BorderRadius.circular(12),
                      ),
-                     child: Row(
+                     child: const Row(
                        mainAxisSize: MainAxisSize.min,
-                       children: const [
+                       children: [
                          Icon(Icons.shield_outlined, size: 12, color: AppColors.tertiary),
                          SizedBox(width: 4),
                          Text(
@@ -189,7 +189,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             subtitle: const Text('Unlock wallet and confirm escrows using FaceID', style: TextStyle(fontSize: 11)),
             contentPadding: EdgeInsets.zero,
             value: authState.user?.biometricsEnabled ?? true,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             onChanged: (val) {
               ref.read(authProvider.notifier).setBiometricsEnabled(val);
             },
@@ -200,7 +200,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             subtitle: const Text('Notify when sellers request milestone releases', style: TextStyle(fontSize: 11)),
             contentPadding: EdgeInsets.zero,
             value: true,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             onChanged: (val) {},
           ),
         ],
@@ -240,7 +240,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             title: const Text('Offline Resilience Mode', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
             subtitle: const Text('Operate using secure local cache, offline transaction signing, and automatic synchronization.', style: TextStyle(fontSize: 10)),
             value: offlineState.isOffline,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             onChanged: (val) {
               ref.read(offlineProvider.notifier).toggleConnection();
               if (val) {

@@ -176,20 +176,20 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
     final slug = merchant['slug'] as String? ?? '';
     final merchantAddress = merchant['walletAddress'] ?? merchant['address'] ?? 'addr1q8a72b100641de406d824855a782b13fa92c3ff';
     if (slug.isEmpty) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.storefront, size: 64, color: AppColors.outline),
-              const SizedBox(height: 16),
-              const Text(
+              Icon(Icons.storefront, size: 64, color: AppColors.outline),
+              SizedBox(height: 16),
+              Text(
                 'Storefront Not Setup',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Create your storefront settings by clicking the settings gear in the top right to start listing products on the marketplace.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.outline, fontSize: 13),
@@ -270,7 +270,7 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
                     const SizedBox(height: 4),
                     Switch(
                       value: item.isAvailable,
-                      activeColor: AppColors.secondary,
+                      activeThumbColor: AppColors.secondary,
                       onChanged: (val) async {
                         if (!val) {
                           // Deactivate product on backend
@@ -311,7 +311,7 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
           'user': 'Cardano Buyer',
           'rating': '1.0',
           'comment': 'Dispute raised regarding invoice #${item['invoiceId']?.toString().substring(0, 8)}. Handled via escrow consensus.',
-          'date': 'Recent'
+          'date': 'Recent',
         });
       }
     }
@@ -320,13 +320,13 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
         'user': 'Verified Buyer',
         'rating': '5.0',
         'comment': 'Excellent quality. Payment released instantly once milestones were verified.',
-        'date': '2 days ago'
+        'date': '2 days ago',
       });
       reviews.add({
         'user': 'Cardano Whale',
         'rating': '5.0',
         'comment': 'Protected micro-escrows on Cardano ledger. Zero dispute actions recorded. Safe payment flow.',
-        'date': '1 week ago'
+        'date': '1 week ago',
       });
     }
 
@@ -360,9 +360,9 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      color: tierColor.withOpacity(0.12),
+                      color: tierColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: tierColor.withOpacity(0.4)),
+                      border: Border.all(color: tierColor.withValues(alpha: 0.4)),
                     ),
                     child: Column(
                       children: [
@@ -378,8 +378,8 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
                 ],
               ),
               const Divider(height: 24),
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.verified_user, color: AppColors.tertiary, size: 16),
                   SizedBox(width: 8),
                   Text('Lumina OS Verified Merchant', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.tertiary)),
@@ -467,16 +467,16 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
           children: [
             buildMetric('Milestones Releases', '$salesCount', Icons.lock_open, AppColors.secondary),
             const SizedBox(width: 12),
-            Expanded(
+            const Expanded(
               child: BentoCard(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Icon(Icons.verified, color: Colors.teal, size: 20),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text('Verification Status', style: TextStyle(fontSize: 11, color: AppColors.outline)),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text('100% Passed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
                   ],
                 ),
@@ -553,7 +553,7 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 items: ['digital', 'physical', 'service'].map((c) {
                   return DropdownMenuItem(value: c, child: Text(c.toUpperCase()));
                 }).toList(),
@@ -752,7 +752,7 @@ class _StorefrontManagementScreenState extends ConsumerState<StorefrontManagemen
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                   ),
                   child: Stack(
                     alignment: Alignment.center,

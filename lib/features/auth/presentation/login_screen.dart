@@ -288,7 +288,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ? AppColors.error
                               : _isPhoneFocused
                                   ? AppColors.primary
-                                  : AppColors.outlineVariant.withOpacity(0.5),
+                                  : AppColors.outlineVariant.withValues(alpha: 0.5),
                           width: _isPhoneFocused || _phoneError != null ? 2.0 : 1.0,
                         ),
                       ),
@@ -460,7 +460,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? AppColors.error
                         : isFocused
                             ? AppColors.primary
-                            : AppColors.outlineVariant.withOpacity(0.5),
+                            : AppColors.outlineVariant.withValues(alpha: 0.5),
                     width: isFocused || hasError ? 2.0 : 1.0,
                   ),
                 ),
@@ -517,9 +517,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.error.withOpacity(0.2)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -553,10 +553,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: AppColors.tertiary.withOpacity(0.06),
+        color: AppColors.tertiary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: AppColors.tertiary.withOpacity(0.15),
+          color: AppColors.tertiary.withValues(alpha: 0.15),
           width: 1.0,
         ),
       ),
@@ -579,7 +579,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Revolut-style custom numeric keypad
   Widget _buildCustomKeypad() {
-    final double buttonSize = 64;
+    const double buttonSize = 64;
 
     Widget buildButton(String label, {VoidCallback? onTap, IconData? icon}) {
       return Container(

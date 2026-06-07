@@ -125,7 +125,7 @@ class BaseApiClient {
           queryParameters: queryParameters,
           options: options,
           cancelToken: cancelToken,
-        ));
+        ),);
     _inFlightRequests[dedupKey] = future;
 
     try {
@@ -155,7 +155,7 @@ class BaseApiClient {
           queryParameters: queryParameters,
           options: options,
           cancelToken: cancelToken,
-        ));
+        ),);
     _inFlightRequests[dedupKey] = future;
 
     try {
@@ -185,7 +185,7 @@ class BaseApiClient {
           queryParameters: queryParameters,
           options: options,
           cancelToken: cancelToken,
-        ));
+        ),);
     _inFlightRequests[dedupKey] = future;
 
     try {
@@ -215,7 +215,7 @@ class BaseApiClient {
           queryParameters: queryParameters,
           options: options,
           cancelToken: cancelToken,
-        ));
+        ),);
     _inFlightRequests[dedupKey] = future;
 
     try {

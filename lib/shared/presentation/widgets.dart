@@ -76,7 +76,7 @@ class _BentoCardState extends State<BentoCard> with SingleTickerProviderStateMix
       decoration: BoxDecoration(
         color: widget.color ?? AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(widget.radius ?? dsExt.cardRadius),
-        border: widget.border ?? Border.all(color: AppColors.outlineVariant.withOpacity(0.3), width: 1.0),
+        border: widget.border ?? Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3), width: 1.0),
         boxShadow: [dsExt.premiumShadow],
       ),
       child: content,
@@ -124,10 +124,10 @@ class GradientButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(dsExt.buttonRadius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             offset: const Offset(0, 4),
             blurRadius: 15,
-          )
+          ),
         ],
       ),
       child: Material(
@@ -197,7 +197,7 @@ class GlassPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.0),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.0),
           ),
           child: child,
         ),
@@ -244,7 +244,7 @@ class _CommandPaletteSheetState extends State<CommandPaletteSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: GlassPanel(
         radius: 24,
-        backgroundColor: AppColors.surfaceContainerLowest.withOpacity(0.95),
+        backgroundColor: AppColors.surfaceContainerLowest.withValues(alpha: 0.95),
         child: Container(
           height: 320,
           padding: const EdgeInsets.all(16.0),
@@ -257,7 +257,7 @@ class _CommandPaletteSheetState extends State<CommandPaletteSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.outlineVariant.withOpacity(0.4),
+                    color: AppColors.outlineVariant.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -430,7 +430,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton> with SingleTickerProv
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHigh.withOpacity(_animation.value),
+            color: AppColors.surfaceContainerHigh.withValues(alpha: _animation.value),
             borderRadius: BorderRadius.circular(widget.radius),
           ),
         );
@@ -468,10 +468,10 @@ class EmptyStateView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh.withOpacity(0.4),
+                color: AppColors.surfaceContainerHigh.withValues(alpha: 0.4),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.outlineVariant.withOpacity(0.2),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.2),
                   width: 1.0,
                 ),
               ),
@@ -585,10 +585,10 @@ class ErrorStateView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.error.withOpacity(0.2),
+                  color: AppColors.error.withValues(alpha: 0.2),
                   width: 1.0,
                 ),
               ),
@@ -651,11 +651,11 @@ class LoadingStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
+    return const Padding(
+      padding: EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           LoadingSkeleton(height: 120, radius: 24),
           SizedBox(height: 16),
           LoadingSkeleton(height: 60, radius: 16),

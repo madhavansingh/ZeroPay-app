@@ -373,7 +373,7 @@ class _OperationalTelemetryScreenState extends ConsumerState<OperationalTelemetr
             ),
             Switch(
               value: !value, // Switch ON means NORMAL (not tripped)
-              activeColor: AppColors.tertiary,
+              activeThumbColor: AppColors.tertiary,
               inactiveThumbColor: AppColors.error,
               inactiveTrackColor: AppColors.errorContainer,
               onChanged: (normalVal) {

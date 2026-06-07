@@ -54,7 +54,7 @@ export interface IProjectPlanBudgetItem {
   amountPaise: number;
 }
 
-export interface IProjectPlan extends Document {
+export interface IProjectPlan extends Omit<Document, 'model'> {
   planId: string;
   version: number;
   merchantId: mongoose.Types.ObjectId;
@@ -88,6 +88,11 @@ export interface IProjectPlan extends Document {
   repositoryName?: string;
   branch?: string;
   workflowMetadata?: Record<string, any>;
+  provider?: string;
+  model?: string;
+  rawAiOutput?: any;
+  planningMetadata?: Record<string, any>;
+  generatedAt?: Date;
   status: 'Draft' | 'AI Generated' | 'User Edited' | 'Approved' | 'Invoice Created' | 'Escrow Created';
   createdAt: Date;
   updatedAt: Date;
@@ -182,6 +187,11 @@ const projectPlanSchema = new Schema<IProjectPlan>(
     repositoryName: { type: String },
     branch: { type: String },
     workflowMetadata: { type: Schema.Types.Mixed },
+    provider: { type: String, default: 'gemini' },
+    model: { type: String },
+    rawAiOutput: { type: Schema.Types.Mixed },
+    planningMetadata: { type: Schema.Types.Mixed },
+    generatedAt: { type: Date },
     status: {
       type: String,
       enum: ['Draft', 'AI Generated', 'User Edited', 'Approved', 'Invoice Created', 'Escrow Created'],

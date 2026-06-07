@@ -155,7 +155,7 @@ class _PayoutCenterScreenState extends ConsumerState<PayoutCenterScreen> {
                           onSelected: (val) {
                             if (val) setState(() => _selectedSchedule = sched);
                           },
-                          selectedColor: AppColors.secondary.withOpacity(0.12),
+                          selectedColor: AppColors.secondary.withValues(alpha: 0.12),
                           labelStyle: TextStyle(
                             color: isSelected ? AppColors.secondary : AppColors.onSurfaceVariant,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -239,7 +239,7 @@ class _PayoutCenterScreenState extends ConsumerState<PayoutCenterScreen> {
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: AppColors.tertiary.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                              decoration: BoxDecoration(color: AppColors.tertiary.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                               child: Text(
                                 hist['status']!.toUpperCase(),
                                 style: const TextStyle(fontSize: 8, color: AppColors.tertiary, fontWeight: FontWeight.bold),
@@ -278,7 +278,7 @@ class _PayoutCenterScreenState extends ConsumerState<PayoutCenterScreen> {
               ],
             ),
           ),
-          Container(height: 50, width: 1, color: AppColors.outlineVariant.withOpacity(0.4)),
+          Container(height: 50, width: 1, color: AppColors.outlineVariant.withValues(alpha: 0.4)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 16.0),

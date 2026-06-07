@@ -284,7 +284,7 @@ class RealZeroPayRepository implements ZeroPayRepository {
               amount: mVal,
               status: mJson['status'] as String,
             );
-          }));
+          }),);
         }
 
         return Escrow(
@@ -459,7 +459,7 @@ class RealZeroPayRepository implements ZeroPayRepository {
             amount: mVal,
             status: mJson['status'] as String,
           );
-        }));
+        }),);
       }
 
       final escrow = Escrow(

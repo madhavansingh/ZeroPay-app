@@ -7,6 +7,7 @@ import '../../../shared/domain/models.dart';
 import '../../../shared/presentation/widgets.dart';
 import '../../../shared/presentation/layout_shells.dart';
 import '../../../shared/data/repository.dart';
+import '../../trust/presentation/audit_release_gate.dart';
 
 class EscrowDetailsScreen extends ConsumerStatefulWidget {
   final String escrowId;
@@ -74,7 +75,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
       // Show Success Dialog
       showDialog(
         context: context,
-        builder: (context) => SuccessDialog(
+        builder: (context) => const SuccessDialog(
           title: 'Milestone Released',
           description: 'Funds have been cryptographically unlocked and transferred to the seller address.',
         ),
@@ -160,7 +161,11 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
               const SizedBox(height: 24),
 
               // GitHub AI Audit Card
-              _buildGitHubAuditCard(escrow),
+              AuditReleaseGate(
+                audit: _githubAudits.isNotEmpty ? Map<String, dynamic>.from(_githubAudits.first) : null,
+                isLoading: false,
+                projectPlanId: escrow.projectPlanId,
+              ),
               if (escrow.projectPlanId != null) const SizedBox(height: 24),
 
               // Milestones Vertical Timeline Stepper
@@ -182,7 +187,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
           ),
           if (_isLoading)
             Container(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
@@ -196,9 +201,9 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: _getStatusColor(escrow.status).withOpacity(0.08),
+            color: _getStatusColor(escrow.status).withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _getStatusColor(escrow.status).withOpacity(0.3)),
+            border: Border.all(color: _getStatusColor(escrow.status).withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -247,6 +252,12 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
               final isReleased = m.status == 'Released';
               final isInProgress = m.status == 'In Progress';
 
+              final latestAudit = _githubAudits.isNotEmpty ? _githubAudits.first : null;
+              final score = latestAudit != null ? (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0 : 0.0;
+              final status = latestAudit != null ? latestAudit['auditStatus'] as String? ?? 'FAILED' : 'FAILED';
+              final isPassed = status == 'PASSED' && score >= 70.0;
+              final canRelease = escrow.projectPlanId == null || isPassed;
+
               return IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -276,7 +287,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
                                         width: 8,
                                         height: 8,
                                         decoration: const BoxDecoration(
-                                            color: AppColors.primary, shape: BoxShape.circle),
+                                            color: AppColors.primary, shape: BoxShape.circle,),
                                       ),
                                     )
                                   : null,
@@ -311,7 +322,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: _getMilestoneColor(m.status).withOpacity(0.08),
+                                    color: _getMilestoneColor(m.status).withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -343,19 +354,19 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.secondary.withOpacity(0.05),
+                                  color: AppColors.secondary.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.secondary.withOpacity(0.1)),
+                                  border: Border.all(color: AppColors.secondary.withValues(alpha: 0.1)),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: const [
+                                    const Row(
+                                      children: [
                                         Icon(Icons.auto_awesome, color: AppColors.secondary, size: 14),
                                         SizedBox(width: 6),
                                         Text('ZeroPay AI Assistant',
-                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),),
                                       ],
                                     ),
                                     const SizedBox(height: 4),
@@ -364,16 +375,36 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
                                       style: TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant),
                                     ),
                                     const SizedBox(height: 8),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                                        minimumSize: const Size(0, 28),
-                                        backgroundColor: AppColors.primary,
+                                    if (canRelease)
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                          minimumSize: const Size(0, 28),
+                                          backgroundColor: AppColors.primary,
+                                        ),
+                                        onPressed: () => _handleReleaseMilestone(m.id),
+                                        child: const Text('Release Milestone',
+                                            style: TextStyle(fontSize: 11, color: Colors.white),),
+                                      )
+                                    else
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.lock, size: 12, color: AppColors.error),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Release Locked (Score: ${score.toInt()}%)',
+                                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      onPressed: () => _handleReleaseMilestone(m.id),
-                                      child: const Text('Release Milestone',
-                                          style: TextStyle(fontSize: 11, color: Colors.white)),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -449,12 +480,12 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.tertiary.withOpacity(0.06),
+        color: AppColors.tertiary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tertiary.withOpacity(0.15)),
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.15)),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.shield, color: AppColors.tertiary),
           SizedBox(width: 12),
           Expanded(
@@ -478,7 +509,7 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppColors.outlineVariant.withOpacity(0.6)),
+                side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.6)),
               ),
             ),
              onPressed: () {
@@ -505,180 +536,6 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
         ),
       ],
     );
-  }
-
-  Widget _buildGitHubAuditCard(Escrow escrow) {
-    if (escrow.projectPlanId == null) return const SizedBox.shrink();
-
-    if (_githubAudits.isEmpty) {
-      return BentoCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'GitHub Code Verification',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
-                  },
-                  child: Row(
-                    children: const [
-                      Text(
-                        'Audit Dashboard',
-                        style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.primary),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'No audits have been executed yet for this project plan.',
-              style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () {
-                context.push('/trust/github-audit?projectPlanId=${escrow.projectPlanId}');
-              },
-              icon: const Icon(Icons.link, size: 16),
-              label: const Text('Connect Repository & Run Audit', style: TextStyle(fontSize: 12)),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final latestAudit = _githubAudits.first;
-    final score = (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0;
-    final recommendation = latestAudit['releaseRecommendation'] as String? ?? 'UNKNOWN';
-    final status = latestAudit['auditStatus'] as String? ?? 'UNKNOWN';
-    
-    Color statusColor = Colors.orange;
-    IconData statusIcon = Icons.warning;
-    if (status == 'PASSED') {
-      statusColor = AppColors.tertiary;
-      statusIcon = Icons.check_circle;
-    } else if (status == 'FAILED') {
-      statusColor = AppColors.error;
-      statusIcon = Icons.cancel;
-    }
-
-    return BentoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'GitHub AI Audit Status',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              GestureDetector(
-                onTap: () {
-                  context.push('/trust/github-audit?auditId=${latestAudit['auditId']}&projectPlanId=${escrow.projectPlanId}');
-                },
-                child: Row(
-                  children: const [
-                    Text(
-                      'View Audit Report',
-                      style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.primary),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 70,
-                    height: 70,
-                    child: CircularProgressIndicator(
-                      value: score / 100,
-                      strokeWidth: 8,
-                      backgroundColor: AppColors.surfaceContainerHigh,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        score >= 80
-                            ? AppColors.tertiary
-                            : score >= 60
-                                ? Colors.orange
-                                : AppColors.error,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${score.toInt()}%',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(statusIcon, color: statusColor, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Verdict: $status',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _getRecommendationText(recommendation),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Verified via GitHub MCP Audit Agent',
-                      style: TextStyle(fontSize: 10, color: AppColors.outline),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getRecommendationText(String rec) {
-    switch (rec) {
-      case 'RECOMMEND_RELEASE':
-        return 'Safe to release funds. High implementation coverage.';
-      case 'RECOMMEND_MINOR_FIXES':
-        return 'Minor fixes suggested, release at your discretion.';
-      case 'RECOMMEND_MAJOR_REWORK':
-        return 'Rework recommended. Crucial components are missing.';
-      case 'RECOMMEND_DISPUTE_REVIEW':
-        return 'Dispute review requested. Mismatch of requirements.';
-      default:
-        return 'Verification pending.';
-    }
   }
 
   Color _getStatusColor(String status) {

@@ -139,9 +139,9 @@ class _RevenueAnalyticsScreenState extends ConsumerState<RevenueAnalyticsScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: const [
+                      children: [
                         Text('Mon', style: TextStyle(fontSize: 10, color: AppColors.outline)),
                         Text('Tue', style: TextStyle(fontSize: 10, color: AppColors.outline)),
                         Text('Wed', style: TextStyle(fontSize: 10, color: AppColors.outline)),
@@ -171,9 +171,9 @@ class _RevenueAnalyticsScreenState extends ConsumerState<RevenueAnalyticsScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text('6 Weeks Ago', style: TextStyle(fontSize: 10, color: AppColors.outline)),
                         Text('Current Block', style: TextStyle(fontSize: 10, color: AppColors.tertiary, fontWeight: FontWeight.bold)),
                       ],
@@ -348,8 +348,8 @@ class WeeklyRevenueBarChartPainter extends CustomPainter {
     final double maxVal = values.reduce((c, n) => c > n ? c : n);
     final double range = maxVal == 0 ? 1.0 : maxVal;
 
-    final double paddingX = 12.0;
-    final double spacing = 12.0;
+    const double paddingX = 12.0;
+    const double spacing = 12.0;
     final int count = values.length;
     final double widthAvailable = size.width - (paddingX * 2) - (spacing * (count - 1));
     final double barWidth = widthAvailable / count;
@@ -359,7 +359,7 @@ class WeeklyRevenueBarChartPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final bgPaint = Paint()
-      ..color = AppColors.surfaceContainerHigh.withOpacity(0.3)
+      ..color = AppColors.surfaceContainerHigh.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     for (int i = 0; i < count; i++) {
@@ -462,7 +462,7 @@ class CustomerRetentionDonutPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double strokeWidth = 10.0;
+    const double strokeWidth = 10.0;
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 

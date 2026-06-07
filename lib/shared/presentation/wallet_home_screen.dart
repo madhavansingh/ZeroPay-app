@@ -95,7 +95,7 @@ class WalletHomeScreen extends ConsumerWidget {
           return const BentoCard(
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                padding: EdgeInsets.symmetric(vertical: 20.0),
                 child: Text('No assets in wallet.', style: TextStyle(color: AppColors.outline, fontSize: 12)),
               ),
             ),
@@ -130,7 +130,7 @@ class WalletHomeScreen extends ConsumerWidget {
                         child: CircularProgressIndicator(
                           value: 0.7, // Simulated USDC + ADA + ETH split
                           strokeWidth: 10,
-                          backgroundColor: Colors.purple.withOpacity(0.2),
+                          backgroundColor: Colors.purple.withValues(alpha: 0.2),
                           color: AppColors.primary,
                         ),
                       ),
@@ -322,7 +322,7 @@ class WalletHomeScreen extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: isSend ? AppColors.error.withOpacity(0.08) : AppColors.tertiary.withOpacity(0.08),
+                      backgroundColor: isSend ? AppColors.error.withValues(alpha: 0.08) : AppColors.tertiary.withValues(alpha: 0.08),
                       child: Icon(
                         isSend ? Icons.arrow_outward : Icons.call_received,
                         size: 16,

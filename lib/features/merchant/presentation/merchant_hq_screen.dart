@@ -99,7 +99,7 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
                   );
                   },
                 );
-              }),
+              },),
             ),
           ],
         ),
@@ -120,11 +120,11 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
             fillColor: AppColors.surfaceContainerLowest,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.0),
-              borderSide: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3)),
+              borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.0),
-              borderSide: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3)),
+              borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
             ),
           ),
         ),
@@ -146,7 +146,7 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
                         onSelected: (val) {
                           if (val) setState(() => _selectedStatusFilter = status);
                         },
-                        selectedColor: AppColors.secondary.withOpacity(0.12),
+                        selectedColor: AppColors.secondary.withValues(alpha: 0.12),
                         labelStyle: TextStyle(
                           color: isSel ? AppColors.secondary : AppColors.onSurfaceVariant,
                           fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
@@ -186,9 +186,9 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withOpacity(0.08),
+        color: AppColors.secondary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -290,7 +290,7 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.08),
+                    color: statusColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -389,9 +389,9 @@ class _MerchantHqScreenState extends ConsumerState<MerchantHqScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.06),
+                        color: Colors.red.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.red.withOpacity(0.2)),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [

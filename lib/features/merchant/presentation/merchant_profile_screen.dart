@@ -123,12 +123,12 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.tertiary.withOpacity(0.08),
+                      color: AppColors.tertiary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Icon(Icons.shield_outlined, size: 12, color: AppColors.tertiary),
                         SizedBox(width: 4),
                         Text(
@@ -200,7 +200,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
               const Text('Webhook Integration', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               Switch(
                 value: _webhookActive,
-                activeColor: AppColors.secondary,
+                activeThumbColor: AppColors.secondary,
                 onChanged: (val) => setState(() => _webhookActive = val),
               ),
             ],
@@ -249,7 +249,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                           ? AppColors.error
                           : _isWebhookFocused
                               ? AppColors.secondary
-                              : AppColors.outlineVariant.withOpacity(0.5),
+                              : AppColors.outlineVariant.withValues(alpha: 0.5),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -300,7 +300,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
             subtitle: const Text('Unlock wallet and confirm payout releases using FaceID', style: TextStyle(fontSize: 11)),
             contentPadding: EdgeInsets.zero,
             value: authState.user?.biometricsEnabled ?? true,
-            activeColor: AppColors.secondary,
+            activeThumbColor: AppColors.secondary,
             onChanged: (val) {
               ref.read(authProvider.notifier).setBiometricsEnabled(val);
             },
@@ -311,7 +311,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
             subtitle: const Text('Notify instantly if client delays milestones or files active dispute', style: TextStyle(fontSize: 11)),
             contentPadding: EdgeInsets.zero,
             value: true,
-            activeColor: AppColors.secondary,
+            activeThumbColor: AppColors.secondary,
             onChanged: (val) {},
           ),
         ],
@@ -351,7 +351,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
             title: const Text('Offline Resilience Mode', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
             subtitle: const Text('Operate using secure local cache, offline transaction signing, and automatic synchronization.', style: TextStyle(fontSize: 10)),
             value: offlineState.isOffline,
-            activeColor: AppColors.secondary,
+            activeThumbColor: AppColors.secondary,
             onChanged: (val) {
               ref.read(offlineProvider.notifier).toggleConnection();
               if (val) {

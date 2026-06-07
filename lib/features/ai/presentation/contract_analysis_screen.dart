@@ -87,13 +87,13 @@ class ContractAnalysisScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           BentoCard(
             padding: const EdgeInsets.all(16),
-            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-            color: AppColors.primary.withOpacity(0.04),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            color: AppColors.primary.withValues(alpha: 0.04),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
                     SizedBox(width: 8),
                     Text('ZeroPay AI Analysis Overview', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
@@ -128,7 +128,7 @@ class ContractAnalysisScreen extends ConsumerWidget {
                         Text(c['title']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: riskCol.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                          decoration: BoxDecoration(color: riskCol.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
                           child: Text('${c['risk']} Risk', style: TextStyle(fontSize: 8, color: riskCol, fontWeight: FontWeight.bold)),
                         ),
                       ],
@@ -187,7 +187,7 @@ class ContractAnalysisScreen extends ConsumerWidget {
               ],
             ),
           ),
-          Container(height: 80, width: 1, color: AppColors.outlineVariant.withOpacity(0.4)),
+          Container(height: 80, width: 1, color: AppColors.outlineVariant.withValues(alpha: 0.4)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 16.0),

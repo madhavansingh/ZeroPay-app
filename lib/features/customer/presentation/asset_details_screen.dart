@@ -133,9 +133,9 @@ class AssetDetailsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('24h ago', style: TextStyle(fontSize: 10, color: AppColors.outline)),
               Text('Live', style: TextStyle(fontSize: 10, color: AppColors.outline, fontWeight: FontWeight.bold)),
             ],
@@ -218,7 +218,7 @@ class AssetDetailsScreen extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: isSend ? AppColors.error.withOpacity(0.06) : AppColors.tertiary.withOpacity(0.06),
+                      backgroundColor: isSend ? AppColors.error.withValues(alpha: 0.06) : AppColors.tertiary.withValues(alpha: 0.06),
                       child: Icon(
                         isSend ? Icons.arrow_outward : Icons.call_received,
                         size: 14,
@@ -277,7 +277,7 @@ class SparklinePainter extends CustomPainter {
 
     final fillPaint = Paint()
       ..shader = LinearGradient(
-        colors: [lineColor.withOpacity(0.2), lineColor.withOpacity(0.0)],
+        colors: [lineColor.withValues(alpha: 0.2), lineColor.withValues(alpha: 0.0)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))

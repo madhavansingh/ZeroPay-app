@@ -111,7 +111,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
             // Format address for display
             String displayAddress = address;
             if (address.length > 20) {
-              displayAddress = address.substring(0, 10) + '...' + address.substring(address.length - 8);
+              displayAddress = '${address.substring(0, 10)}...${address.substring(address.length - 8)}';
             }
 
             final name = address.startsWith('Guest')
@@ -131,7 +131,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
               aiInsight: disputes == 0
                   ? 'Highly trusted wallet. All escrow agreements completed and released successfully.'
                   : 'Has $disputes dispute(s) on-chain. Escrow protections recommended.',
-            ));
+            ),);
           });
 
           // Update details reference if client was reloaded
@@ -169,7 +169,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: AppColors.secondary.withOpacity(0.08),
+                      backgroundColor: AppColors.secondary.withValues(alpha: 0.08),
                       child: Text(client.name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.secondary)),
                     ),
                     const SizedBox(width: 14),
@@ -217,7 +217,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
               ],
             ),
           ),
-          Container(height: 40, width: 1, color: AppColors.outlineVariant.withOpacity(0.4)),
+          Container(height: 40, width: 1, color: AppColors.outlineVariant.withValues(alpha: 0.4)),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 16.0),
@@ -248,7 +248,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.secondary.withOpacity(0.08),
+                    backgroundColor: AppColors.secondary.withValues(alpha: 0.08),
                     child: Text(client.name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.secondary, fontSize: 18)),
                   ),
                   const SizedBox(width: 14),
@@ -279,8 +279,8 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
         const SizedBox(height: 20),
 
         // AI Trust Analysis
-        Row(
-          children: const [
+        const Row(
+          children: [
             Icon(Icons.auto_awesome, color: AppColors.secondary, size: 16),
             SizedBox(width: 8),
             Text('Lumina AI Trust & Risk Analysis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -289,7 +289,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
         const SizedBox(height: 10),
         BentoCard(
           padding: const EdgeInsets.all(16),
-          border: Border.all(color: AppColors.secondary.withOpacity(0.2)),
+          border: Border.all(color: AppColors.secondary.withValues(alpha: 0.2)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -300,7 +300,7 @@ class _ReputationCrmScreenState extends ConsumerState<ReputationCrmScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: client.trustScore >= 95.0 ? AppColors.tertiary.withOpacity(0.08) : Colors.orange.withOpacity(0.08),
+                      color: client.trustScore >= 95.0 ? AppColors.tertiary.withValues(alpha: 0.08) : Colors.orange.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

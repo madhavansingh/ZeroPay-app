@@ -166,7 +166,7 @@ class _EscrowListScreenState extends ConsumerState<EscrowListScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    '${escrow.status.toUpperCase()}',
+                                    escrow.status.toUpperCase(),
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
@@ -183,7 +183,7 @@ class _EscrowListScreenState extends ConsumerState<EscrowListScreen> {
                     );
                   },
                 );
-              }),
+              },),
             ),
           ],
         ),

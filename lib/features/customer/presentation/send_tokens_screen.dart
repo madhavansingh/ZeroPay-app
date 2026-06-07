@@ -103,7 +103,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.outlineVariant.withOpacity(0.4),
+                  color: AppColors.outlineVariant.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -155,7 +155,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
         return StatefulBuilder(
           builder: (context, setStateBuilder) {
             return Dialog.fullscreen(
-              backgroundColor: Colors.black.withOpacity(0.95),
+              backgroundColor: Colors.black.withValues(alpha: 0.95),
               child: Stack(
                 children: [
                   // App Bar / Header
@@ -188,7 +188,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                           height: 260,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
                           ),
                           child: Stack(
                             children: [
@@ -214,10 +214,10 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                                         color: AppColors.primary,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppColors.primary.withOpacity(0.8),
+                                            color: AppColors.primary.withValues(alpha: 0.8),
                                             blurRadius: 8,
                                             spreadRadius: 2,
-                                          )
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -314,16 +314,16 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.qr_code, color: AppColors.primary, size: 16),
@@ -435,7 +435,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+          border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -498,23 +498,23 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
       barrierDismissible: false,
       builder: (context) {
         return Dialog.fullscreen(
-          backgroundColor: Colors.black.withOpacity(0.92),
-          child: Center(
+          backgroundColor: Colors.black.withValues(alpha: 0.92),
+          child: const Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 50,
                   height: 50,
                   child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
                 ),
-                const SizedBox(height: 24),
-                const Text(
+                SizedBox(height: 24),
+                Text(
                   'PROCESSING QR MATRIX',
                   style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Extracting payload parameters and validating signature...',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                   textAlign: TextAlign.center,
@@ -588,8 +588,8 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: AppColors.surfaceContainerHigh,
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.error_outline, color: AppColors.error),
               SizedBox(width: 10),
               Text('QR Scan Error', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -755,7 +755,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                 contractAddress: 'addr_escrow_${_scannedEscrowId}_lock',
                 chainName: _selectedSymbol == 'ADA' ? 'Cardano Mainnet' : 'Arbitrum One',
                 createdAt: DateTime.now(),
-              ));
+              ),);
             }
             await cache.cacheList('escrows_customer', escrows.map((e) => e.toJson()).toList());
           }
@@ -797,7 +797,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                 contractAddress: 'addr_escrow_${_scannedEscrowId}_lock',
                 chainName: _selectedSymbol == 'ADA' ? 'Cardano Mainnet' : 'Arbitrum One',
                 createdAt: DateTime.now(),
-              ));
+              ),);
             }
             await cache.cacheList('escrows_merchant', escrows.map((e) => e.toJson()).toList());
           }
@@ -857,7 +857,7 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(16.0),
-                      border: Border.all(color: AppColors.outlineVariant.withOpacity(0.4)),
+                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       children: [
@@ -883,13 +883,13 @@ class _SendTokensScreenState extends ConsumerState<SendTokensScreen> {
                   if (_scannedTitle != null || _scannedEscrowId != null || _scannedMerchantName != null) ...[
                     const SizedBox(height: 16),
                     BentoCard(
-                      color: AppColors.primary.withOpacity(0.04),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                      color: AppColors.primary.withValues(alpha: 0.04),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: const [
+                          const Row(
+                            children: [
                               Icon(Icons.receipt_long, color: AppColors.primary, size: 16),
                               SizedBox(width: 8),
                               Text(
