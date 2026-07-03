@@ -200,6 +200,84 @@ describe('Project Router Tests', () => {
       );
       expect(body).toEqual({ success: true, data: mockSavedPlan });
     });
+
+    it('returns instant template plan without calling AI when generateAI is false', async () => {
+      const mockMerchant = {
+        _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439022'),
+      };
+      vi.mocked(Merchant.findOne).mockResolvedValue(mockMerchant as any);
+
+      const mockSavedPlan = {
+        planId: 'PLAN-INSTANT',
+        version: 1,
+      };
+      vi.mocked(ProjectPlan.create).mockResolvedValue(mockSavedPlan as any);
+
+      const { generateProjectPlanWithNemotron } = await import('../../src/services/nemotron.service');
+
+      const req = {
+        method: 'POST',
+        url: '/plan',
+        body: {
+          requirements: 'Build a SaaS App',
+          totalAmountPaise: 100000,
+          templateName: 'saas_app',
+          generateAI: false,
+        },
+      };
+
+      const { res, body } = await runRoute(req);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(generateProjectPlanWithNemotron).not.toHaveBeenCalled();
+      expect(ProjectPlan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'template',
+          requirements: 'Build a SaaS App',
+          status: 'Template Plan',
+        })
+      );
+      expect(body).toEqual({ success: true, data: mockSavedPlan });
+    });
+
+    it('falls back to template plan if AI generation throws an error', async () => {
+      const mockMerchant = {
+        _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439022'),
+      };
+      vi.mocked(Merchant.findOne).mockResolvedValue(mockMerchant as any);
+
+      const mockSavedPlan = {
+        planId: 'PLAN-FALLBACK',
+        version: 1,
+      };
+      vi.mocked(ProjectPlan.create).mockResolvedValue(mockSavedPlan as any);
+
+      const { generateProjectPlanWithNemotron } = await import('../../src/services/nemotron.service');
+      vi.mocked(generateProjectPlanWithNemotron).mockRejectedValue(new Error('Nemotron API rate limit exceeded'));
+
+      const req = {
+        method: 'POST',
+        url: '/plan',
+        body: {
+          requirements: 'Build a system containing a mobile wallet application',
+          totalAmountPaise: 100000,
+          generateAI: true,
+        },
+      };
+
+      const { res, body } = await runRoute(req);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(generateProjectPlanWithNemotron).toHaveBeenCalled();
+      expect(ProjectPlan.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'template-fallback',
+          requirements: 'Build a system containing a mobile wallet application',
+          status: 'Template Fallback',
+        })
+      );
+      expect(body).toEqual({ success: true, data: mockSavedPlan });
+    });
   });
 
   describe('POST /plan/:planId/regenerate', () => {

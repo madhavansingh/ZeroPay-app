@@ -126,7 +126,7 @@ class ApiContractGenerator {
   // Run automated contract assertions on startup/testing CI/CD
   static bool executeAutomatedContractSuite() {
     if (kDebugMode) {
-      print('Running automated API contract validation suite (9.75)...');
+      debugPrint('Running automated API contract validation suite (9.75)...');
     }
 
     bool allPassed = true;
@@ -151,7 +151,7 @@ class ApiContractGenerator {
     if (!syncRes.success) allPassed = false;
 
     if (kDebugMode) {
-      print('Contract Assertions: ${allPassed ? 'ALL PASSED (100%)' : 'DRIFT DETECTED'}');
+      debugPrint('Contract Assertions: ${allPassed ? 'ALL PASSED (100%)' : 'DRIFT DETECTED'}');
     }
 
     return allPassed;

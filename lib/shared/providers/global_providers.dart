@@ -6,7 +6,7 @@ import '../data/mock_data.dart';
 import '../data/repository.dart';
 import '../../core/api/api_services.dart';
 
-enum DemoDataset {
+enum ScenarioProfile {
   newUser,
   activeCustomer,
   activeMerchant,
@@ -23,16 +23,16 @@ enum DemoDataset {
   enterpriseEscrow,
 }
 
-class DemoDatasetNotifier extends StateNotifier<DemoDataset> {
-  DemoDatasetNotifier() : super(DemoDataset.hybridPowerUser);
+class ScenarioProfileNotifier extends StateNotifier<ScenarioProfile> {
+  ScenarioProfileNotifier() : super(ScenarioProfile.hybridPowerUser);
 
-  void setDataset(DemoDataset dataset) {
-    state = dataset;
+  void setProfile(ScenarioProfile profile) {
+    state = profile;
   }
 }
 
-final demoDatasetProvider = StateNotifierProvider<DemoDatasetNotifier, DemoDataset>((ref) {
-  return DemoDatasetNotifier();
+final scenarioProfileProvider = StateNotifierProvider<ScenarioProfileNotifier, ScenarioProfile>((ref) {
+  return ScenarioProfileNotifier();
 });
 
 // ----------------------------------------------------
@@ -380,6 +380,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> selectWorkspaceRole(String role) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
+    const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+    if (mockAuthEnabled) {
+      final phone = state.phoneNumber ?? '+919999999999';
+      final digits = phone.replaceAll(RegExp(r'\D'), '');
+      final suffix = digits.isNotEmpty ? digits : '9999999999';
+
+      final localUser = domain.User(
+        uid: state.user?.uid ?? 'dev_uid_${role}_$suffix',
+        email: state.user?.email ?? '$role.$suffix@zeropay.io',
+        name: state.user?.name ?? 'Mock ${role[0].toUpperCase()}${role.substring(1)} ($suffix)',
+        currentRole: role,
+        biometricsEnabled: state.user?.biometricsEnabled ?? true,
+        createdAt: state.user?.createdAt ?? DateTime.now(),
+      );
+
+      const storage = FlutterSecureStorage();
+      await storage.write(key: 'selected_role', value: role);
+      await storage.write(key: 'auth_jwt_token', value: 'dev_token_${role}_$suffix');
+
+      state = state.copyWith(
+        user: localUser,
+        currentRole: role,
+        isLoading: false,
+      );
+      return;
+    }
+
     try {
       final repo = _ref.read(zeroPayRepositoryProvider);
       final updatedUser = await repo.switchRole(role);

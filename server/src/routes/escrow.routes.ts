@@ -450,6 +450,7 @@ router.post(
         isDisputed: invoice.isDisputed,
       });
 
+      logger.info(`[MILESTONE_RELEASED] Escrow ID: ${invoice.invoiceId} | Wallet Address: ${invoice.paymentAddress} | Amount: ${payoutLovelace || milestones[currentIndex].amountLovelace} Lovelace | Network: ${network} | Transaction Hash: ${txHash}`);
       logger.info('[escrow/release/submit] Milestone released', {
         invoiceId: req.params.invoiceId, milestoneIndex: currentIndex, isFinal, txHash,
       });

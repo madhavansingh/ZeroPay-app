@@ -234,6 +234,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
                 width: double.infinity,
                 child: GradientButton(
                   text: 'Launch Workspace',
+                  isLoading: ref.watch(authProvider).isLoading,
                   onPressed: _handleRoleInitialization,
                 ),
               ),

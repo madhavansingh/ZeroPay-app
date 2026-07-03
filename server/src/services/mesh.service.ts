@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { MeshTxBuilder, BlockfrostProvider } from '@meshsdk/core';
 import { env } from '../config/env';
 import { Invoice } from '../models/Invoice';
+import { logger } from '../config/logger';
 
 const METADATA_KEY = 674; // CIP standard key for payment metadata
 const MAX_METADATA_BYTES = 64;
@@ -68,6 +69,8 @@ export async function buildPaymentTx(invoiceId: string, customerAddress: string)
     .selectUtxosFrom(utxos)
     .metadataValue(METADATA_KEY, metadataValue)
     .complete();
+
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoice.invoiceId} | Wallet Address: ${customerAddress} | Amount: ${invoice.amountLovelace} Lovelace | Network: Cardano | Transaction Hash: N/A`);
 
   return {
     unsignedCbor,

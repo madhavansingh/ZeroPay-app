@@ -104,7 +104,7 @@ export class CircuitBreaker {
         cooldownRemainingMs: this.cooldownPeriodMs - (Date.now() - this.lastStateChangeAt),
       });
       return typeof fallback === 'function' 
-        ? (fallback as Function)(new Error(`Circuit "${this.name}" is OPEN`)) 
+        ? (fallback as (error: Error) => Promise<T> | T)(new Error(`Circuit "${this.name}" is OPEN`)) 
         : fallback;
     }
 
@@ -137,7 +137,7 @@ export class CircuitBreaker {
       });
 
       return typeof fallback === 'function'
-        ? (fallback as Function)(err)
+        ? (fallback as (error: Error) => Promise<T> | T)(err)
         : fallback;
     }
   }

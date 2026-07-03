@@ -99,6 +99,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<IInvoice
   // Mirror status to Firebase RTDB for real-time frontend updates
   await mirrorStatusToFirebase(invoiceId, 'pending');
   if (totalMilestones > 0) {
+    logger.info(`[ESCROW_CREATED] Escrow ID: ${invoice.invoiceId} | Wallet Address: ${invoice.paymentAddress} | Amount: ${invoice.amountLovelace} Lovelace | Network: ${invoice.network} | Transaction Hash: N/A`);
     await mirrorEscrowToFirebase(invoiceId, 'Created', {
       milestoneIndex: 0,
       totalMilestones,

@@ -41,6 +41,23 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
   String _projectType = 'Web Application';
   String _additionalContext = '';
   
+  // Dual-mode Planner State
+  String? _selectedTemplateName = 'saas_app';
+  bool _isModified = false;
+  
+  static const Map<String, String> _templateDescriptions = {
+    'saas_app': 'Build a multi-tenant B2B SaaS dashboard featuring user access controls, Stripe subscription billing, usage analytics charts, and tenant database isolation.',
+    'fintech_app': 'Build a secure digital wallet app supporting KYC onboarding verification, double-entry accounting ledgers, peer-to-peer transfers, and audit report exports.',
+    'ai_saas': 'Build an AI agent platform featuring prompt template builders, async task worker queues, api token usage logging, and fallback model routing.',
+    'marketplace': 'Build a multi-vendor marketplace platform featuring vendor onboarding, unified product catalogs, split payments checkout, and seller payout centers.',
+    'ecommerce_platform': 'Build an online storefront featuring product collections search, shopping cart systems, Stripe checkout integrations, order tracking updates, and automatic emails.',
+    'mobile_app': 'Build a cross-platform mobile application featuring interactive screen layouts, secure local keychain storage, offline SQLite cache syncing, and REST API connectors.',
+    'crm_system': 'Build a customer relationship manager featuring contact profile databases, Kanban-style lead pipeline tracking, activity timelines logging, and automatic cron reminders.',
+    'developer_tool': 'Build a lightweight developer CLI tool featuring flag/argument parsers, local configuration file managers, remote REST API sync services, and release package builders.',
+    'web3_product': 'Build a decentralized app featuring smart contract compilation/testing, Web3 wallet integrations, blockchain event sync listeners, and dApp interfaces.',
+    'startup_mvp': 'Build a startup MVP web landing page featuring Tailwind styling, waitlist email signup database, basic workflow demo widgets, and feedback submission forms.',
+  };
+
   // Loading step simulation
   int _loadingStepIndex = 0;
   Timer? _loadingStepTimer;
@@ -88,8 +105,15 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
   @override
   void initState() {
     super.initState();
-    _requirementsController.text = 'Build a fintech dashboard with analytics, authentication, role-based access, notifications, and deployment.';
+    
+    // Default template and requirements
+    _requirementsController.text = _templateDescriptions['saas_app']!;
     _budgetController.text = '5000';
+    _selectedComplexity = 'Medium';
+    _projectType = 'Web Application';
+
+    // Add text listener to track manual modifications
+    _requirementsController.addListener(_onRequirementsChanged);
 
     // Default mock data to speed up entry for hackathon review
     _titleController.text = 'Core UI Frontend Implementation';
@@ -101,6 +125,50 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       Milestone(id: 'ms_b1', title: 'Figma Design Signoff', description: 'Complete UI UX blueprints.', amount: 500.0, status: 'Pending'),
       Milestone(id: 'ms_b2', title: 'Front-end Shell Dev', description: 'Complete Flutter widget structures.', amount: 1000.0, status: 'Pending'),
     ]);
+  }
+
+  void _onRequirementsChanged() {
+    if (_selectedTemplateName != null) {
+      final defaultDesc = _templateDescriptions[_selectedTemplateName];
+      if (defaultDesc != null) {
+        final isSame = _requirementsController.text == defaultDesc;
+        if (_isModified == isSame) {
+          setState(() {
+            _isModified = !isSame;
+          });
+        }
+      }
+    } else {
+      if (!_isModified) {
+        setState(() {
+          _isModified = true;
+        });
+      }
+    }
+  }
+
+  void _selectTemplate(String templateKey) {
+    final desc = _templateDescriptions[templateKey];
+    if (desc != null) {
+      setState(() {
+        _selectedTemplateName = templateKey;
+        _requirementsController.text = desc;
+        _isModified = false;
+        
+        // Auto-assign matching category
+        if (templateKey == 'saas_app' || templateKey == 'marketplace' || templateKey == 'ecommerce_platform' || templateKey == 'crm_system' || templateKey == 'startup_mvp') {
+          _projectType = 'Web Application';
+        } else if (templateKey == 'mobile_app') {
+          _projectType = 'Mobile Application';
+        } else if (templateKey == 'web3_product') {
+          _projectType = 'Smart Contract / DApp';
+        } else if (templateKey == 'ai_saas') {
+          _projectType = 'AI / LLM Integration';
+        } else if (templateKey == 'developer_tool') {
+          _projectType = 'Web Application';
+        }
+      });
+    }
   }
 
   @override
@@ -365,6 +433,7 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
 
     final budgetAmt = double.tryParse(_budgetController.text) ?? 5000.0;
     final budgetPaise = (budgetAmt * 100).round();
+    final isTemplateInstant = _selectedTemplateName != null && !_isModified && _additionalContext.trim().isEmpty;
 
     setState(() {
       _isGeneratingPlan = true;
@@ -372,14 +441,16 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       _loadingStepIndex = 0;
     });
 
-    _loadingStepTimer?.cancel();
-    _loadingStepTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
-      if (_loadingStepIndex < _loadingSteps.length - 1) {
-        setState(() {
-          _loadingStepIndex++;
-        });
-      }
-    });
+    if (!isTemplateInstant) {
+      _loadingStepTimer?.cancel();
+      _loadingStepTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
+        if (_loadingStepIndex < _loadingSteps.length - 1) {
+          setState(() {
+            _loadingStepIndex++;
+          });
+        }
+      });
+    }
 
     try {
       final repo = ref.read(zeroPayRepositoryProvider);
@@ -387,9 +458,16 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       if (_additionalContext.trim().isNotEmpty) {
         finalRequirements += '\n\nAdditional Context:\n$_additionalContext';
       }
+
+      if (isTemplateInstant) {
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
       final plan = await repo.generateProjectPlan(
         requirements: finalRequirements,
         totalAmountPaise: budgetPaise,
+        templateName: _selectedTemplateName,
+        generateAI: !isTemplateInstant,
       );
       
       final versions = await repo.getProjectPlanVersions(plan.planId);
@@ -397,17 +475,54 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       _loadingStepTimer?.cancel();
       setState(() {
         _projectPlan = plan;
-        _planVersions = versions;
+        _planVersions = versions.isNotEmpty ? versions : [plan];
         _isGeneratingPlan = false;
         _plannerSubView = PlannerSubView.blueprint;
       });
     } catch (e) {
       _loadingStepTimer?.cancel();
+      
+      if (_selectedTemplateName != null) {
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Planner response delayed. Loading predefined template plan...'),
+              backgroundColor: AppColors.tertiary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          
+          final mockRepo = RuntimeRepository(ScenarioProfile.newUser);
+          final plan = await mockRepo.generateProjectPlan(
+            requirements: _requirementsController.text,
+            totalAmountPaise: budgetPaise,
+            templateName: _selectedTemplateName,
+            generateAI: false,
+          );
+          
+          setState(() {
+            _projectPlan = plan;
+            _planVersions = [plan];
+            _isGeneratingPlan = false;
+            _plannerSubView = PlannerSubView.blueprint;
+          });
+          return;
+        } catch (fallbackErr) {
+          debugPrint('Local fallback failed: $fallbackErr');
+        }
+      }
+
       setState(() {
         _isGeneratingPlan = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to generate project plan: $e')),
+        SnackBar(
+          content: Text('Failed to generate project plan: $e'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _generatePlan,
+          ),
+        ),
       );
     }
   }
@@ -447,17 +562,54 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
       _loadingStepTimer?.cancel();
       setState(() {
         _projectPlan = newPlan;
-        _planVersions = versions;
+        _planVersions = versions.isNotEmpty ? versions : [newPlan];
         _isGeneratingPlan = false;
         _plannerSubView = PlannerSubView.blueprint;
       });
     } catch (e) {
       _loadingStepTimer?.cancel();
+      
+      if (_selectedTemplateName != null) {
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Planner response delayed. Restoring template plan.'),
+              backgroundColor: AppColors.tertiary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+          
+          final mockRepo = RuntimeRepository(ScenarioProfile.newUser);
+          final plan = await mockRepo.generateProjectPlan(
+            requirements: _requirementsController.text,
+            totalAmountPaise: budgetPaise,
+            templateName: _selectedTemplateName,
+            generateAI: false,
+          );
+          
+          setState(() {
+            _projectPlan = plan;
+            _planVersions = [plan];
+            _isGeneratingPlan = false;
+            _plannerSubView = PlannerSubView.blueprint;
+          });
+          return;
+        } catch (fallbackErr) {
+          debugPrint('Local fallback failed: $fallbackErr');
+        }
+      }
+
       setState(() {
         _isGeneratingPlan = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to regenerate plan: $e')),
+        SnackBar(
+          content: Text('Failed to regenerate plan: $e'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _regeneratePlan,
+          ),
+        ),
       );
     }
   }
@@ -856,9 +1008,24 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
         ),
         const SizedBox(height: 6),
         const Text(
-          'Describe your project in plain English and let Lumina generate scope, milestones, risks, timelines, budget allocation, GitHub audit requirements and escrow structure.',
+          'Describe your project in plain English or select a predefined template to generate instant milestones, audit criteria, and escrow rules.',
           style: TextStyle(color: AppColors.outline, fontSize: 13, height: 1.3),
         ),
+        const SizedBox(height: 20),
+
+        const Text(
+          'Select a Predefined Template',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Choose a template for instant plan generation (zero AI delay). Customizing description shifts planner to AI Architect mode.',
+          style: TextStyle(color: AppColors.outline, fontSize: 10),
+        ),
+        const SizedBox(height: 12),
+        _buildTemplatesSelector(),
+        const SizedBox(height: 16),
+        _buildModeIndicator(),
         const SizedBox(height: 20),
 
         BentoCard(
@@ -869,21 +1036,23 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Describe Your Project',
+                    'Customize Requirements Description',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   TextButton.icon(
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                    icon: const Icon(Icons.auto_awesome, size: 12, color: AppColors.primary),
-                    label: const Text('Example', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.refresh, size: 12, color: AppColors.primary),
+                    label: const Text('Reset Text', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
                     onPressed: () {
-                      setState(() {
-                        _requirementsController.text =
-                            'I want to build a decentralized freelance platform where clients can post jobs, hire freelancers, make escrow payments using crypto, track progress and release payments securely.';
-                        _budgetController.text = '15000';
-                        _selectedComplexity = 'High';
-                        _projectType = 'Web Application';
-                      });
+                      if (_selectedTemplateName != null) {
+                        _selectTemplate(_selectedTemplateName!);
+                      } else {
+                        setState(() {
+                          _requirementsController.text = _templateDescriptions['saas_app']!;
+                          _selectedTemplateName = 'saas_app';
+                          _isModified = false;
+                        });
+                      }
                     },
                   ),
                 ],
@@ -901,21 +1070,6 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
                   counterStyle: const TextStyle(fontSize: 10, color: AppColors.outline),
                 ),
                 style: const TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildPromptChip('Build SaaS Dashboard', 'Create a modern B2B SaaS dashboard with user management, subscription metrics, and Stripe integration.', '8000', 'Medium'),
-                    const SizedBox(width: 8),
-                    _buildPromptChip('Create Fintech App', 'Implement a multi-currency digital wallet app with instant Cardano peer-to-peer transfers and transaction audits.', '20000', 'High'),
-                    const SizedBox(width: 8),
-                    _buildPromptChip('Build AI Tutor', 'Generate a web portal featuring ChatGPT API study guides, quiz generation, progress metrics, and calendar scheduling.', '6000', 'Medium'),
-                    const SizedBox(width: 8),
-                    _buildPromptChip('E-Commerce Shop', 'Create a fast storefront featuring product collections, shopping cart, escrow merchant payouts, and review scores.', '12000', 'High'),
-                  ],
-                ),
               ),
             ],
           ),
@@ -1079,11 +1233,244 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
             _buildCapabilityCard(Icons.checklist_rtl, 'Milestone Builder', 'Drafts deliverables and allocates milestone budgets.'),
             _buildCapabilityCard(Icons.lock_person_outlined, 'Escrow Structuring', 'Calculates locked collateral and payout schedules.'),
             _buildCapabilityCard(Icons.code, 'GitHub MCP Auditing', 'Maps code file targets and test criteria for verification.'),
-            _buildCapabilityCard(Icons.verified_user_outlined, 'Trust Validation', 'Prevents release disputes by forcing code checks.'),
           ],
         ),
-        const SizedBox(height: 16),
       ],
+    );
+  }
+
+  Widget _buildTemplatesSelector() {
+    final templates = [
+      {
+        'key': 'saas_app',
+        'title': 'SaaS App',
+        'desc': 'Dashboard, Stripe billing, auth & isolation.',
+        'icon': Icons.dashboard_outlined,
+        'color': Colors.blue,
+        'budget': '₹5,000 - ₹15,000',
+      },
+      {
+        'key': 'fintech_app',
+        'title': 'Fintech App',
+        'desc': 'KYC, double-entry ledger & wallets.',
+        'icon': Icons.payments_outlined,
+        'color': Colors.green,
+        'budget': '₹10,000 - ₹30,000',
+      },
+      {
+        'key': 'ai_saas',
+        'title': 'AI SaaS',
+        'desc': 'FastAPI, prompts, BullMQ & usages.',
+        'icon': Icons.auto_awesome_outlined,
+        'color': Colors.purple,
+        'budget': '₹8,000 - ₹20,000',
+      },
+      {
+        'key': 'marketplace',
+        'title': 'Marketplace',
+        'desc': 'Seller onboarding, catalogs & splits.',
+        'icon': Icons.storefront_outlined,
+        'color': Colors.orange,
+        'budget': '₹7,500 - ₹25,000',
+      },
+      {
+        'key': 'ecommerce_platform',
+        'title': 'E-Commerce Platform',
+        'desc': 'Cart, Stripe, tracking & templates.',
+        'icon': Icons.shopping_bag_outlined,
+        'color': Colors.teal,
+        'budget': '₹5,000 - ₹15,000',
+      },
+      {
+        'key': 'mobile_app',
+        'title': 'Mobile App',
+        'desc': 'Flutter widgets, keychain & APIs.',
+        'icon': Icons.phone_android_outlined,
+        'color': Colors.indigo,
+        'budget': '₹6,000 - ₹20,000',
+      },
+      {
+        'key': 'crm_system',
+        'title': 'CRM System',
+        'desc': 'Contacts, lead Kanban & cron mail.',
+        'icon': Icons.people_alt_outlined,
+        'color': Colors.pink,
+        'budget': '₹5,000 - ₹15,000',
+      },
+      {
+        'key': 'developer_tool',
+        'title': 'Developer Tool',
+        'desc': 'CLI flag parsers & NPM packaging.',
+        'icon': Icons.terminal_outlined,
+        'color': Colors.cyan,
+        'budget': '₹4,000 - ₹10,000',
+      },
+      {
+        'key': 'web3_product',
+        'title': 'Web3 Product',
+        'desc': 'Contracts, wallet connectors & RPCs.',
+        'icon': Icons.currency_bitcoin_outlined,
+        'color': Colors.deepOrange,
+        'budget': '₹10,000 - ₹30,000',
+      },
+      {
+        'key': 'startup_mvp',
+        'title': 'Startup MVP',
+        'desc': 'Tailwind landing, waitlist & feedback.',
+        'icon': Icons.rocket_launch_outlined,
+        'color': Colors.amber,
+        'budget': '₹2,000 - ₹5,000',
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: templates.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.5,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemBuilder: (context, idx) {
+        final t = templates[idx];
+        final key = t['key'] as String;
+        final title = t['title'] as String;
+        final desc = t['desc'] as String;
+        final icon = t['icon'] as IconData;
+        final color = t['color'] as Color;
+        final budget = t['budget'] as String;
+        final isSelected = _selectedTemplateName == key;
+
+        return GestureDetector(
+          onTap: () => _selectTemplate(key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected 
+                  ? AppColors.primary.withValues(alpha: 0.06) 
+                  : AppColors.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected 
+                    ? AppColors.primary 
+                    : AppColors.outlineVariant.withValues(alpha: 0.3),
+                width: isSelected ? 2.0 : 1.0,
+              ),
+              boxShadow: isSelected 
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(
+                      icon,
+                      color: isSelected ? AppColors.primary : color,
+                      size: 20,
+                    ),
+                    if (isSelected)
+                      const CircleAvatar(
+                        radius: 8,
+                        backgroundColor: AppColors.primary,
+                        child: Icon(Icons.check, size: 10, color: Colors.white),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: isSelected ? AppColors.primary : AppColors.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  desc,
+                  style: const TextStyle(fontSize: 9, color: AppColors.outline, height: 1.2),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  budget,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? AppColors.primary : AppColors.outline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModeIndicator() {
+    final isTemplateInstant = _selectedTemplateName != null && !_isModified && _additionalContext.trim().isEmpty;
+    final modeTitle = isTemplateInstant ? 'Instant Template Mode' : 'AI Architect Mode';
+    final modeDesc = isTemplateInstant
+        ? 'Generates instant predefined milestones & audit gates (Zero AI delay).'
+        : 'Triggers Custom AI generation. Builds tailored milestones & criteria (May take a few seconds).';
+    final modeColor = isTemplateInstant ? AppColors.tertiary : AppColors.primary;
+    final modeIcon = isTemplateInstant ? Icons.bolt : Icons.auto_awesome;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: modeColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: modeColor.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          Icon(modeIcon, color: modeColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  modeTitle,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: modeColor),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  modeDesc,
+                  style: const TextStyle(fontSize: 10, color: AppColors.outline),
+                ),
+              ],
+            ),
+          ),
+          if (!isTemplateInstant && _selectedTemplateName != null)
+            TextButton(
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
+              onPressed: () {
+                _selectTemplate(_selectedTemplateName!);
+              },
+              child: const Text(
+                'Reset',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1698,21 +2085,6 @@ class _EscrowBuilderScreenState extends ConsumerState<EscrowBuilderScreen> with 
     );
   }
 
-  Widget _buildPromptChip(String title, String details, String budget, String complexity) {
-    return ActionChip(
-      backgroundColor: AppColors.surfaceContainerLowest,
-      side: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.4)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      label: Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary)),
-      onPressed: () {
-        setState(() {
-          _requirementsController.text = details;
-          _budgetController.text = budget;
-          _selectedComplexity = complexity;
-        });
-      },
-    );
-  }
 
   Widget _buildComplexityButton(String level) {
     final isSelected = _selectedComplexity == level;

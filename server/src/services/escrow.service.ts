@@ -208,6 +208,7 @@ export async function buildLockTx(
     .selectUtxosFrom(utxos)
     .complete();
 
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoiceId} | Wallet Address: ${customerAddress} | Amount: ${lockAmount} Lovelace | Network: Cardano | Transaction Hash: N/A`);
   logger.info('[escrow] Lock TX built', { invoiceId, lockAmount, escrowAddress: ESCROW_SCRIPT_ADDRESS });
 
   return { unsignedCbor, scriptAddress: ESCROW_SCRIPT_ADDRESS, invoiceId };
@@ -324,6 +325,7 @@ export async function buildReleaseMilestoneTx(
     .selectUtxosFrom(utxos)
     .complete();
 
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoiceId} | Wallet Address: ${customerAddress} | Amount: ${targetPayout} Lovelace | Network: Cardano | Transaction Hash: N/A`);
   logger.info('[escrow] Release milestone TX built', {
     invoiceId,
     payoutLovelace: targetPayout,
@@ -414,6 +416,7 @@ export async function buildRaiseDisputeTx(
     .selectUtxosFrom(utxos)
     .complete();
 
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoiceId} | Wallet Address: ${signerAddress} | Amount: ${lockedAmount} Lovelace | Network: Cardano | Transaction Hash: N/A`);
   logger.info('[escrow] Raise dispute TX built', { invoiceId, signerAddress });
 
   return { unsignedCbor, scriptAddress: ESCROW_SCRIPT_ADDRESS, invoiceId };
@@ -504,6 +507,7 @@ export async function buildAdminResolveTx(
     .selectUtxosFrom(utxos)
     .complete();
 
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoiceId} | Wallet Address: ${adminAddress} | Amount: ${merchantPayout + customerPayout} Lovelace | Network: Cardano | Transaction Hash: N/A`);
   logger.info('[escrow] Admin resolve TX built', {
     invoiceId,
     merchantPayoutLovelace: merchantPayout,
@@ -567,6 +571,7 @@ export async function buildRefundTx(
     .invalidBefore(Math.floor(Date.now() / 1000) + 10)
     .complete();
 
+  logger.info(`[CARDANO_TX_BUILT] Escrow ID: ${invoiceId} | Wallet Address: ${customerAddress} | Amount: ${refundAmount} Lovelace | Network: Cardano | Transaction Hash: N/A`);
   logger.info('[escrow] Customer refund TX built', { invoiceId, customerAddress, refundAmount });
 
   return { unsignedCbor, scriptAddress: ESCROW_SCRIPT_ADDRESS, invoiceId };

@@ -14,7 +14,7 @@ void main() async {
   // Initialize Sentry for unhandled exception tracking (Part G / Step 6)
   await SentryFlutter.init(
     (options) {
-      options.dsn = 'https://sentry.demo.io/123456';
+      options.dsn = 'https://sentry.zeropay.io/123456';
       options.tracesSampleRate = 1.0;
     },
     appRunner: () => runApp(

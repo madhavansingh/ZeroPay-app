@@ -54,7 +54,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
             const SizedBox(height: 24),
 
             // Security & Operations Hub
-            _buildSecurityAndTestingHub(context),
+            _buildSecurityAndOperationsHub(context),
             const SizedBox(height: 24),
 
             // Sign out
@@ -275,10 +275,10 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                             return;
                           }
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Test payload dispatched. Response: 200 OK')),
+                            const SnackBar(content: Text('Verification event dispatched. Response: 200 OK')),
                           );
                         },
-                  child: const Text('Send Test Event', style: TextStyle(fontSize: 11)),
+                  child: const Text('Send Verification Event', style: TextStyle(fontSize: 11)),
                 ),
               ],
             ),
@@ -319,7 +319,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
     );
   }
 
-  Widget _buildSecurityAndTestingHub(BuildContext context) {
+  Widget _buildSecurityAndOperationsHub(BuildContext context) {
     final offlineState = ref.watch(offlineProvider);
 
     return BentoCard(

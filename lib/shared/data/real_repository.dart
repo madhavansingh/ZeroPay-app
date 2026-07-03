@@ -6,7 +6,9 @@ import '../../core/offline/offline_manager.dart';
 import '../../core/offline/conflict_resolver.dart';
 import '../../core/security/security_service.dart';
 import '../domain/models.dart';
+import '../providers/global_providers.dart' show ScenarioProfile;
 import 'repository.dart';
+import 'mock_data.dart';
 
 class RealZeroPayRepository implements ZeroPayRepository {
   final AuthApiService authService;
@@ -22,6 +24,8 @@ class RealZeroPayRepository implements ZeroPayRepository {
   
   final SecureCacheManager cache;
   final OfflineQueueManager queue;
+
+  late final RuntimeRepository _mockRepo = RuntimeRepository(ScenarioProfile.activeMerchant);
 
   RealZeroPayRepository({
     required this.authService,
@@ -72,14 +76,17 @@ class RealZeroPayRepository implements ZeroPayRepository {
   @override
   Future<User> getCurrentUser() async {
     try {
-      final response = await authService.getCurrentUser();
+      final response = await authService.getCurrentUser().timeout(const Duration(seconds: 3));
       final user = User.fromJson(response.data as Map<String, dynamic>);
       await cache.cacheData('user_profile', user.toJson());
       return user;
     } catch (_) {
-      // Offline fallback
-      final cached = await cache.getCachedData('user_profile');
-      if (cached != null) return User.fromJson(cached);
+      try {
+        final cached = await cache.getCachedData('user_profile');
+        if (cached != null) return User.fromJson(cached);
+      } catch (e) {
+        debugPrint('[RealZeroPayRepository] getCurrentUser cache read failed: $e');
+      }
       
       // Secondary fallback to default safe profile
       return User(
@@ -96,19 +103,32 @@ class RealZeroPayRepository implements ZeroPayRepository {
   @override
   Future<User> switchRole(String role) async {
     try {
-      final response = await authService.switchRole(role);
+      final response = await authService.switchRole(role).timeout(const Duration(seconds: 3));
       final user = User.fromJson(response.data as Map<String, dynamic>);
       await cache.cacheData('user_profile', user.toJson());
       return user;
     } catch (_) {
-      // Local dynamic fallback for offline seamless workspace swapping
-      final cached = await cache.getCachedData('user_profile');
-      if (cached != null) {
-        final localUser = User.fromJson(cached).copyWith(currentRole: role);
-        await cache.cacheData('user_profile', localUser.toJson());
-        return localUser;
+      try {
+        // Local dynamic fallback for offline seamless workspace swapping
+        final cached = await cache.getCachedData('user_profile');
+        if (cached != null) {
+          final localUser = User.fromJson(cached).copyWith(currentRole: role);
+          await cache.cacheData('user_profile', localUser.toJson());
+          return localUser;
+        }
+      } catch (e) {
+        debugPrint('[RealZeroPayRepository] switchRole cache read failed: $e');
       }
-      rethrow;
+      
+      // Secondary fallback to default safe profile matching selected role
+      return User(
+        uid: 'usr_offline',
+        email: 'offline.user@zeropay.io',
+        name: 'Offline Explorer',
+        currentRole: role,
+        biometricsEnabled: true,
+        createdAt: DateTime.now(),
+      );
     }
   }
 
@@ -171,6 +191,11 @@ class RealZeroPayRepository implements ZeroPayRepository {
       if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Asset.fromJson(e)).toList();
       }
+      
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return MockData.walletAssets;
+      }
       rethrow;
     }
   }
@@ -203,6 +228,11 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final cached = await cache.getCachedList('wallet_transactions');
       if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Transaction.fromJson(e)).toList();
+      }
+      
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return MockData.walletTransactions;
       }
       rethrow;
     }
@@ -325,6 +355,11 @@ class RealZeroPayRepository implements ZeroPayRepository {
       if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => Escrow.fromJson(e)).toList();
       }
+      
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return role == 'merchant' ? MockData.merchantEscrows : MockData.customerEscrows;
+      }
       rethrow;
     }
   }
@@ -350,11 +385,14 @@ class RealZeroPayRepository implements ZeroPayRepository {
     final payload = {
       'amountPaise': amountPaise,
       'description': escrow.title,
+      'projectPlanId': escrow.projectPlanId,
+      'auditRequired': escrow.projectPlanId != null,
       'milestones': escrow.milestones.map((m) {
         final mPaise = isAda
             ? (m.amount * rate * 100).round()
             : _toPaise(m.amount);
         return {
+          'milestoneId': m.id,
           'title': m.title,
           'amountPaise': mPaise,
         };
@@ -725,6 +763,11 @@ class RealZeroPayRepository implements ZeroPayRepository {
       if (cached != null && cached.isNotEmpty) {
         return cached.map((e) => AIRecommendation.fromJson(e)).toList();
       }
+      
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return MockData.aiRecommendationsList;
+      }
       rethrow;
     }
   }
@@ -1090,17 +1133,31 @@ class RealZeroPayRepository implements ZeroPayRepository {
     required String requirements,
     required int totalAmountPaise,
     String? customerId,
+    String? templateName,
+    bool? generateAI,
   }) async {
     try {
       final response = await projectService.generateProjectPlan(
         requirements: requirements,
         totalAmountPaise: totalAmountPaise,
         customerId: customerId,
+        templateName: templateName,
+        generateAI: generateAI,
       );
       final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
       await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
       return plan;
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.generateProjectPlan(
+          requirements: requirements,
+          totalAmountPaise: totalAmountPaise,
+          customerId: customerId,
+          templateName: templateName,
+          generateAI: generateAI,
+        );
+      }
       rethrow;
     }
   }
@@ -1115,6 +1172,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
     } catch (e) {
       final cached = await cache.getCachedData('project_plan_$planId');
       if (cached != null) return ProjectPlan.fromJson(cached);
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getLatestProjectPlan(planId);
+      }
       rethrow;
     }
   }
@@ -1127,6 +1188,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final plans = list.map((e) => ProjectPlan.fromJson(e as Map<String, dynamic>)).toList();
       return plans;
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getProjectPlanVersions(planId);
+      }
       rethrow;
     }
   }
@@ -1138,6 +1203,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final plan = ProjectPlan.fromJson(response.data['data'] as Map<String, dynamic>);
       return plan;
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getProjectPlanVersion(planId, version);
+      }
       rethrow;
     }
   }
@@ -1150,6 +1219,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
       return plan;
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.updateProjectPlan(planId, data);
+      }
       rethrow;
     }
   }
@@ -1172,6 +1245,15 @@ class RealZeroPayRepository implements ZeroPayRepository {
       await cache.cacheData('project_plan_${plan.planId}', plan.toJson());
       return plan;
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.regenerateProjectPlan(
+          planId,
+          requirements: requirements,
+          totalAmountPaise: totalAmountPaise,
+          customerId: customerId,
+        );
+      }
       rethrow;
     }
   }
@@ -1188,6 +1270,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
         'invoice': data['invoice'] as Map<String, dynamic>,
       };
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.approveProjectPlan(planId, network: network);
+      }
       rethrow;
     }
   }
@@ -1207,6 +1293,14 @@ class RealZeroPayRepository implements ZeroPayRepository {
       );
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.connectGitHubRepository(
+          projectPlanId: projectPlanId,
+          repositoryUrl: repositoryUrl,
+          branch: branch,
+        );
+      }
       rethrow;
     }
   }
@@ -1223,6 +1317,13 @@ class RealZeroPayRepository implements ZeroPayRepository {
       );
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.triggerMilestoneAudit(
+          projectPlanId: projectPlanId,
+          milestoneId: milestoneId,
+        );
+      }
       rethrow;
     }
   }
@@ -1233,6 +1334,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final response = await githubAuditService.getAuditDetails(auditId);
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getGitHubAuditDetails(auditId);
+      }
       rethrow;
     }
   }
@@ -1246,6 +1351,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       }
       return [];
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getProjectGitHubAudits(projectPlanId);
+      }
       rethrow;
     }
   }
@@ -1256,6 +1365,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final response = await githubAuditService.reverifyAudit(auditId);
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.reverifyGitHubAudit(auditId);
+      }
       rethrow;
     }
   }
@@ -1266,6 +1379,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final response = await githubAuditService.requestFixes(auditId, feedback);
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.requestGitHubFixes(auditId, feedback);
+      }
       rethrow;
     }
   }
@@ -1276,6 +1393,10 @@ class RealZeroPayRepository implements ZeroPayRepository {
       final response = await githubAuditService.getReleaseRecommendation(auditId);
       return Map<String, dynamic>.from(response.data as Map);
     } catch (e) {
+      const mockAuthEnabled = String.fromEnvironment('MOCK_AUTH_ENABLED', defaultValue: 'true') == 'true';
+      if (mockAuthEnabled) {
+        return _mockRepo.getGitHubReleaseRecommendation(auditId);
+      }
       rethrow;
     }
   }

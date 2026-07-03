@@ -9,11 +9,13 @@
     "start": "node dist/server.js",
     "worker": "node dist/worker.js",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --ext .ts || true",
+    "lint": "eslint src --ext .ts",
     "migrate:up": "migrate-mongo up",
     "migrate:down": "migrate-mongo down",
     "migrate:status": "migrate-mongo status",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo:cardano": "tsx scripts/cardano-demo.ts",
+    "demo:escrow": "tsx scripts/escrow-demo.ts"
   },
   "dependencies": {
     "@blockfrost/blockfrost-js": "^5.5.0",
@@ -21,7 +23,6 @@
     "@meshsdk/core": "^1.7.7",
     "@sentry/node": "^10.53.1",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@types/bcryptjs": "^2.4.6",
     "@upstash/redis": "^1.32.0",
     "@zeropay/shared-types": "file:../shared/shared-types",
     "axios": "^1.7.2",
@@ -42,11 +43,15 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.2",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
     "migrate-mongo": "^14.0.7",
     "tsx": "^4.15.2",
     "typescript": "^5.4.5",

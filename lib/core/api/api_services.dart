@@ -352,6 +352,8 @@ class ProjectApiService {
     required String requirements,
     required int totalAmountPaise,
     String? customerId,
+    String? templateName,
+    bool? generateAI,
   }) async {
     return await _client.post(
       '/projects/plan',
@@ -359,6 +361,8 @@ class ProjectApiService {
         'requirements': requirements,
         'totalAmountPaise': totalAmountPaise,
         if (customerId != null) 'customerId': customerId,
+        if (templateName != null) 'templateName': templateName,
+        if (generateAI != null) 'generateAI': generateAI,
       },
     );
   }

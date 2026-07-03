@@ -50,7 +50,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                   final parsedMerchants = merchantsList.map((m) {
                     final logo = m['profileImageUrl'] as String? ?? '';
                     final name = m['shopName'] as String? ?? 'Unnamed Merchant';
-                    return MockMerchantItem(
+                    return ActiveMerchantItem(
                       id: (m['slug'] as String?) ?? (m['merchantId'] as String?) ?? '',
                       name: name,
                       tagline: m['description'] as String? ?? 'No description available.',
@@ -204,7 +204,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     );
   }
 
-  Widget _buildFeaturedMerchantSection(MockMerchantItem featured) {
+  Widget _buildFeaturedMerchantSection(ActiveMerchantItem featured) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -295,7 +295,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     );
   }
 
-  Widget _buildMerchantCard(MockMerchantItem merchant) {
+  Widget _buildMerchantCard(ActiveMerchantItem merchant) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: BentoCard(
@@ -478,7 +478,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   }
 }
 
-class MockMerchantItem {
+class ActiveMerchantItem {
   final String id;
   final String name;
   final String tagline;
@@ -490,7 +490,7 @@ class MockMerchantItem {
   final String logoUrl;
   final String bannerUrl;
 
-  MockMerchantItem({
+  ActiveMerchantItem({
     required this.id,
     required this.name,
     required this.tagline,

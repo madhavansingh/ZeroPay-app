@@ -9,6 +9,7 @@ import { Transaction } from '../models/Transaction';
 import { LedgerTransaction } from '../models/LedgerTransaction';
 import { Invoice } from '../models/Invoice';
 import { User } from '../models/User';
+import { logger } from '../config/logger';
 
 const router = Router();
 
@@ -214,7 +215,7 @@ router.post('/transfer', requireAuth, async (req: Request, res: Response): Promi
       });
 
       const txBuilder = new MeshTxBuilder({ fetcher: provider, verbose: false });
-      const changeAddress = (wallet as any).getChangeAddress();
+      const changeAddress = wallet.getPaymentAddress();
       const utxos = await provider.fetchAddressUTxOs(changeAddress);
 
       if (!utxos || utxos.length === 0) {
@@ -229,7 +230,10 @@ router.post('/transfer', requireAuth, async (req: Request, res: Response): Promi
         .complete();
 
       const signedTx = await wallet.signTx(unsignedCbor);
+      logger.info(`[CARDANO_TX_SIGNED] Escrow ID: N/A | Wallet Address: ${changeAddress} | Amount: ${amount} Lovelace | Network: Cardano | Transaction Hash: N/A`);
+
       const txHash = await wallet.submitTx(signedTx);
+      logger.info(`[CARDANO_TX_SUBMITTED] Escrow ID: N/A | Wallet Address: ${changeAddress} | Amount: ${amount} Lovelace | Network: Cardano | Transaction Hash: ${txHash}`);
 
       res.json({
         success: true,
@@ -294,8 +298,31 @@ router.post('/sign', requireAuth, async (req: Request, res: Response): Promise<v
       },
     });
 
+    // Extract invoiceId and query details for clean structured logging
+    let invoiceId = 'N/A';
+    let amountStr = 'N/A';
+    let network = 'Cardano';
+    
+    const cborMatch = unsignedCbor.match(/494e562d3230[0-9a-f]{26}/i);
+    if (cborMatch) {
+      try {
+        const extractedId = Buffer.from(cborMatch[0], 'hex').toString('utf8');
+        const dbInvoice = await Invoice.findOne({ invoiceId: extractedId });
+        if (dbInvoice) {
+          invoiceId = dbInvoice.invoiceId;
+          amountStr = `${dbInvoice.amountLovelace} Lovelace`;
+          network = dbInvoice.network || 'Cardano';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     const signedTx = await wallet.signTx(unsignedCbor);
+    logger.info(`[CARDANO_TX_SIGNED] Escrow ID: ${invoiceId} | Wallet Address: ${wallet.getPaymentAddress()} | Amount: ${amountStr} | Network: ${network} | Transaction Hash: N/A`);
+
     const txHash = await wallet.submitTx(signedTx);
+    logger.info(`[CARDANO_TX_SUBMITTED] Escrow ID: ${invoiceId} | Wallet Address: ${wallet.getPaymentAddress()} | Amount: ${amountStr} | Network: ${network} | Transaction Hash: ${txHash}`);
 
     res.json({
       success: true,

@@ -34,7 +34,7 @@ class CustomerProfileScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Security & Operations Hub
-            _buildSecurityAndTestingHub(context, ref),
+            _buildSecurityAndOperationsHub(context, ref),
             const SizedBox(height: 24),
 
             // Sign out
@@ -208,7 +208,7 @@ class CustomerProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSecurityAndTestingHub(BuildContext context, WidgetRef ref) {
+  Widget _buildSecurityAndOperationsHub(BuildContext context, WidgetRef ref) {
     final offlineState = ref.watch(offlineProvider);
 
     return BentoCard(

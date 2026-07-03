@@ -44,14 +44,14 @@ class RealtimeService {
       _socket!.onConnect((_) {
         _isConnected = true;
         if (kDebugMode) {
-          print('Realtime WebSockets Connected to: $wsUrl');
+          debugPrint('Realtime WebSockets Connected to: $wsUrl');
         }
       });
 
       _socket!.onDisconnect((_) {
         _isConnected = false;
         if (kDebugMode) {
-          print('WebSockets disconnected.');
+          debugPrint('WebSockets disconnected.');
         }
       });
 
@@ -133,7 +133,7 @@ class RealtimeService {
       // Register device FCM tokens dynamically
       final token = await messaging.getToken();
       if (kDebugMode) {
-        print('FCM Registration Token: $token');
+        debugPrint('FCM Registration Token: $token');
       }
 
       // Handle foreground events
@@ -151,7 +151,7 @@ class RealtimeService {
       // Background deep linking notification router
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         if (kDebugMode) {
-          print('Deep Link notification opened: ${message.data}');
+          debugPrint('Deep Link notification opened: ${message.data}');
         }
       });
 

@@ -317,9 +317,9 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
 
   @override
   Widget build(BuildContext context) {
-    final dataset = ref.watch(demoDatasetProvider);
+    final dataset = ref.watch(scenarioProfileProvider);
 
-    ref.listen(demoDatasetProvider, (previous, next) {
+    ref.listen(scenarioProfileProvider, (previous, next) {
       setState(() {
         _selectedRoom = null;
         _linkedEscrow = null;
@@ -505,7 +505,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
     );
   }
 
-  Widget _buildConversationView(DemoDataset dataset, Escrow? activeEscrow) {
+  Widget _buildConversationView(ScenarioProfile dataset, Escrow? activeEscrow) {
     return Column(
       children: [
         // Shared Escrow Status Alert header
@@ -546,7 +546,7 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                         ..._messages.map((msg) => _buildChatMessageBubble(msg)),
 
                         // Dynamic Inline Workflows based on active demo context
-                        if (dataset == DemoDataset.freelanceProject) ...[
+                        if (dataset == ScenarioProfile.freelanceProject) ...[
                           const SizedBox(height: 16),
                           _buildInvoiceInlineCard('ZP-FREL-1', 1500.00, 'USDC'),
                           const SizedBox(height: 12),
@@ -554,12 +554,12 @@ class _CommerceChatScreenState extends ConsumerState<CommerceChatScreen> with Ti
                           const SizedBox(height: 12),
                           _buildAiSuggestionPanel('DevCo Solutions submitted Figma designs. Ledger audits confirm git commit branch synced. Recommend unlocking milestone.'),
                         ],
-                        if (dataset == DemoDataset.marketplacePurchase) ...[
+                        if (dataset == ScenarioProfile.marketplacePurchase) ...[
                           const SizedBox(height: 16),
                           _buildFulfillmentDeliveryCard('ZP-MKT-BUY', 'Cardano ADA'),
                         ],
                         // If we have a real activeEscrow, we can show its milestones dynamically
-                        if (activeEscrow != null && dataset != DemoDataset.freelanceProject && dataset != DemoDataset.marketplacePurchase) ...[
+                        if (activeEscrow != null && dataset != ScenarioProfile.freelanceProject && dataset != ScenarioProfile.marketplacePurchase) ...[
                           const SizedBox(height: 16),
                           _buildRealEscrowCard(activeEscrow),
                         ],

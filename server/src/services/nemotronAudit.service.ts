@@ -95,7 +95,7 @@ export function truncateSnapshot(snapshot: RepositorySnapshot): {
     details.push(`Commit history truncated to first ${env.AUDIT_MAX_COMMITS} commits.`);
   }
 
-  let prMetadata = { ...snapshot.prMetadata };
+  const prMetadata = { ...snapshot.prMetadata };
   if (prMetadata && Array.isArray(prMetadata.pullsList)) {
     if (prMetadata.pullsList.length > env.AUDIT_MAX_PULL_REQUESTS) {
       prMetadata.pullsList = prMetadata.pullsList.slice(0, env.AUDIT_MAX_PULL_REQUESTS);
@@ -104,7 +104,7 @@ export function truncateSnapshot(snapshot: RepositorySnapshot): {
     }
   }
 
-  let workflowRuns = { ...snapshot.workflowRuns };
+  const workflowRuns = { ...snapshot.workflowRuns };
   if (workflowRuns && Array.isArray(workflowRuns.workflow_runs)) {
     if (workflowRuns.workflow_runs.length > env.AUDIT_MAX_WORKFLOW_RUNS) {
       workflowRuns.workflow_runs = workflowRuns.workflow_runs.slice(0, env.AUDIT_MAX_WORKFLOW_RUNS);

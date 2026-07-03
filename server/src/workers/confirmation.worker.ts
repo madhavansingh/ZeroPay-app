@@ -159,6 +159,7 @@ export function startConfirmationWorker(): Worker {
         }),
       ]);
 
+      logger.info(`[CARDANO_TX_CONFIRMED] Escrow ID: ${invoiceId} | Wallet Address: ${expectedAddress} | Amount: ${expectedAmount} Lovelace | Network: ${confirmedInvoice.network || 'Cardano'} | Transaction Hash: ${txHash}`);
       logger.info('[confirmation] Invoice confirmed', { ...ctx, confirmations, shopName: merchant?.shopName });
       });
     },

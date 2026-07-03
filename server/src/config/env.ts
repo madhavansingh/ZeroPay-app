@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Ensure environment variables are loaded from process.cwd() or repository root
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 const envSchema = z.object({
   // Server
@@ -89,6 +95,14 @@ const envSchema = z.object({
         code: z.ZodIssueCode.custom,
         message: 'NVIDIA_API_KEY cannot be a placeholder, mock, or test key in production mode',
         path: ['NVIDIA_API_KEY'],
+      });
+    }
+    const isInsecureAdminPass = /changeme|admin|password|12345/i.test(data.ADMIN_PASSWORD) || data.ADMIN_PASSWORD.trim() === '';
+    if (isInsecureAdminPass) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'ADMIN_PASSWORD must be explicitly set to a secure secret in production mode',
+        path: ['ADMIN_PASSWORD'],
       });
     }
   }

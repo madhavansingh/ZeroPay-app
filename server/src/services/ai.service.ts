@@ -8,129 +8,43 @@ import { logger } from '../config/logger';
 import { AIAuditLog } from '../models/AIAuditLog';
 import { ProjectPlan } from '../models/ProjectPlan';
 
-// Prompt Versioning Constants
-export const PROMPT_VERSIONS = {
-  GENERATE_MILESTONES: 'v2.1-milestone-structurer',
-  SUMMARIZE_DISPUTE: 'v3.2-dispute-arbitrator',
-  DETECT_ANOMALY: 'v1.0-anomaly-scorer',
-  AUDIT_MILESTONE: 'v1.0-code-auditor',
-} as const;
+export {
+  PROMPT_VERSIONS,
+  MilestoneSuggestion,
+  DisputeSummary,
+  EscrowExplanation,
+  AnomalyReport,
+  InvoiceDraft,
+  MerchantInsight,
+  PricingSuggestion,
+  milestonesResponseSchema,
+  disputeSummaryResponseSchema,
+  projectPlanResponseSchema,
+  githubAuditResponseSchema,
+  GitHubAuditResponse,
+} from './ai/ai.schemas';
+
+import {
+  PROMPT_VERSIONS,
+  MilestoneSuggestion,
+  DisputeSummary,
+  EscrowExplanation,
+  AnomalyReport,
+  InvoiceDraft,
+  MerchantInsight,
+  PricingSuggestion,
+  milestonesResponseSchema,
+  disputeSummaryResponseSchema,
+  projectPlanResponseSchema,
+  githubAuditResponseSchema,
+  GitHubAuditResponse,
+} from './ai/ai.schemas';
 
 // Instantiate the SDK only if not in mock mode to prevent initialization errors
 const isMockMode = env.GEMINI_API_KEY.startsWith('mock-');
 const ai = !isMockMode ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
 
-export interface MilestoneSuggestion {
-  title: string;
-  amountPaise: number;
-}
 
-export interface DisputeSummary {
-  summary: string;
-  keyClaims: string[];
-  recommendedSplitMerchantPercent: number;
-  recommendedSplitCustomerPercent: number;
-  reasoning: string;
-}
-
-export interface EscrowExplanation {
-  headline: string;
-  details: string;
-  nextActionRequiredBy: 'buyer' | 'seller' | 'admin' | 'none';
-  plainEnglishStatus: string;
-}
-
-export interface AnomalyReport {
-  isAnomaly: boolean;
-  score: number; // 0-100
-  factors: string[];
-}
-
-// ─── Zod Schemas for AI Response Validation ───────────────────────────────────
-
-const milestoneSuggestionSchema = z.object({
-  title: z.string().min(3, 'Milestone title is too short'),
-  amountPaise: z.number().int().positive('Milestone amount must be positive'),
-});
-
-export const milestonesResponseSchema = z.object({
-  milestones: z.array(milestoneSuggestionSchema).min(1, 'At least one milestone is required'),
-});
-
-export const disputeSummaryResponseSchema = z.object({
-  summary: z.string().min(10, 'Dispute summary must be detailed'),
-  keyClaims: z.array(z.string()).min(1, 'Must extract at least one claim'),
-  recommendedSplitMerchantPercent: z.number().int().min(0).max(100),
-  recommendedSplitCustomerPercent: z.number().int().min(0).max(100),
-  reasoning: z.string().min(10, 'Must provide full reasoning for recommended split'),
-});
-
-export const projectPlanResponseSchema = z.object({
-  projectSummary: z.string().min(5),
-  scope: z.string().min(5),
-  milestones: z.array(
-    z.object({
-      title: z.string().min(3),
-      description: z.string().min(5),
-      percentage: z.number().int().min(1).max(100),
-      timelineEstimateOptimisticDays: z.number().int().positive(),
-      timelineEstimateRealisticDays: z.number().int().positive(),
-      timelineEstimateConservativeDays: z.number().int().positive(),
-      deliverables: z.array(z.string()).min(1),
-      validationCriteria: z.array(z.string()).min(1),
-      successConditions: z.array(z.string()).min(1),
-      githubAuditRequirements: z.object({
-        requiredFiles: z.array(z.string()),
-        requiredFeatures: z.array(z.string()),
-        requiredTests: z.array(z.string()),
-        requiredDocumentation: z.array(z.string()),
-      }),
-    })
-  ).min(1),
-  tasks: z.array(
-    z.object({
-      title: z.string().min(3),
-      description: z.string().min(5),
-      estimatedHours: z.number().int().positive(),
-      priority: z.enum(['low', 'medium', 'high']),
-      acceptanceCriteria: z.array(z.string()).min(1),
-      githubAuditRequirements: z.object({
-        requiredFiles: z.array(z.string()),
-        requiredFeatures: z.array(z.string()),
-        requiredTests: z.array(z.string()),
-        requiredDocumentation: z.array(z.string()),
-      }),
-    })
-  ).min(1),
-  requirementsBreakdown: z.array(
-    z.object({
-      requirement: z.string().min(3),
-      linkedMilestoneTitles: z.array(z.string()),
-      linkedTaskTitles: z.array(z.string()),
-    })
-  ).min(1),
-  timeline: z.object({
-    optimisticDays: z.number().int().positive(),
-    realisticDays: z.number().int().positive(),
-    conservativeDays: z.number().int().positive(),
-    summary: z.string().min(5),
-  }),
-  acceptanceCriteria: z.array(z.string()).min(1),
-  riskFactors: z.array(z.string()).min(1),
-  budgetAllocation: z.array(
-    z.object({
-      category: z.string().min(2),
-      percentage: z.number().int().min(1).max(100),
-    })
-  ).min(1),
-  escrowPlan: z.object({
-    structure: z.string().min(5),
-    rationale: z.string().min(5),
-  }),
-  planningConfidence: z.number().int().min(0).max(100),
-  assumptions: z.array(z.string()).min(1),
-  unknowns: z.array(z.string()).min(1),
-});
 
 // ─── Gemini API call wrapper with retry strategy ──────────────────────────────
 
@@ -143,7 +57,7 @@ async function generateContentWithRetry(
   let attempt = 0;
   let delay = 1000;
 
-  while (true) {
+  while (attempt < maxAttempts) {
     const startTime = Date.now();
     try {
       attempt++;
@@ -166,7 +80,6 @@ async function generateContentWithRetry(
       }
       return { text: response.text, latencyMs };
     } catch (err: any) {
-      const latencyMs = Date.now() - startTime;
       if (attempt >= maxAttempts) {
         logger.error(`[AI Service] Gemini call failed permanently after ${attempt} attempts.`, { error: err.message });
         throw err;
@@ -176,6 +89,7 @@ async function generateContentWithRetry(
       delay *= 2; // exponential backoff
     }
   }
+  throw new Error('Gemini call exceeded max retries');
 }
 
 // ─── Core Services ────────────────────────────────────────────────────────────
@@ -615,28 +529,7 @@ export async function explainEscrowStatus(invoiceId: string): Promise<EscrowExpl
 
 // ─── Phase 3: Advanced AI Commerce Workflows ──────────────────────────────────
 
-export interface InvoiceDraft {
-  lineItems: Array<{ title: string; pricePaise: number }>;
-  suggestedPrice: number;
-  professionalTitle: string;
-  termsText: string;
-  estimatedCompletionDays: number;
-}
 
-export interface MerchantInsight {
-  revenueTrendNarrative: string;
-  topCategories: string[];
-  pricingSuggestions: string[];
-  peakHours: string;
-  retentionSignals: string;
-}
-
-export interface PricingSuggestion {
-  suggestedMinLovelace: number;
-  suggestedMaxLovelace: number;
-  benchmarkContext: string;
-  rationale: string;
-}
 
 const invoiceDraftResponseSchema = z.object({
   lineItems: z.array(
@@ -1561,40 +1454,7 @@ Provide assumptions, unknowns, risk factors, and planning confidence (0-100).`;
   }
 }
 
-export const githubAuditResponseSchema = z.object({
-  auditStatus: z.enum(['PASSED', 'PARTIALLY_COMPLETED', 'FAILED', 'INSUFFICIENT_EVIDENCE']),
-  releaseRecommendation: z.enum(['RECOMMEND_RELEASE', 'RECOMMEND_MINOR_FIXES', 'RECOMMEND_MAJOR_REWORK', 'RECOMMEND_DISPUTE_REVIEW']),
-  confidenceScore: z.number().int().min(0).max(100),
-  releaseConfidenceScore: z.number().int().min(0).max(100),
-  auditSummary: z.string(),
-  findings: z.string(),
-  implementationCoverage: z.number().int().min(0).max(100),
-  missingRequirements: z.array(z.string()),
-  securityIssues: z.array(z.string()),
-  performanceIssues: z.array(z.string()),
-  architectureIssues: z.array(z.string()),
-  recommendedActions: z.array(z.string()),
-  requirementTraceMatrix: z.array(
-    z.object({
-      requirementId: z.string(),
-      requirementText: z.string(),
-      completionPercentage: z.number().int().min(0).max(100),
-      confidenceScore: z.number().int().min(0).max(100),
-      evidenceFiles: z.array(z.string()),
-      evidenceCommits: z.array(z.string()),
-      evidencePRs: z.array(z.string()),
-      status: z.enum(['PASSED', 'PARTIAL', 'FAILED', 'INSUFFICIENT_EVIDENCE']),
-    })
-  ),
-  explainability: z.object({
-    whyVerdictAssigned: z.string(),
-    evidenceUsed: z.string(),
-    missingImplementation: z.string(),
-    suggestedFixes: z.string(),
-  }),
-});
 
-export type GitHubAuditResponse = z.infer<typeof githubAuditResponseSchema>;
 
 export async function auditMilestoneCompletion(
   snapshot: any,

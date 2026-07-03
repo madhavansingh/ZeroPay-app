@@ -15,7 +15,7 @@ class BackgroundSyncManager {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(const Duration(seconds: 60), (_) => performSyncSweep());
     if (kDebugMode) {
-      print('Background Sync Scheduler Mounted.');
+      debugPrint('Background Sync Scheduler Mounted.');
     }
   }
 
@@ -26,7 +26,7 @@ class BackgroundSyncManager {
 
     try {
       if (kDebugMode) {
-        print('Executing Background Synchronization Sweep...');
+        debugPrint('Executing Background Synchronization Sweep...');
       }
 
       // 1. Sync Wallet & Settlement Ledgers
@@ -44,7 +44,7 @@ class BackgroundSyncManager {
       await _repository.getWebhookHistory();
 
       if (kDebugMode) {
-        print('Background Sync completed successfully.');
+        debugPrint('Background Sync completed successfully.');
       }
     } catch (e) {
       NetworkHealthMonitor.logFailure(

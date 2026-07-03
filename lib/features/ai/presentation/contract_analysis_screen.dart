@@ -10,37 +10,37 @@ class ContractAnalysisScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dataset = ref.watch(demoDatasetProvider);
+    final dataset = ref.watch(scenarioProfileProvider);
 
-    // Dynamic stats based on active demo scenario
+    // Dynamic stats based on active scenario profile
     double escrowConfidence = 96.0; // score out of 100
     int highRisks = 0;
     int medRisks = 1;
     int lowRisks = 2;
     String aiSummary = 'This contract locks 3,000.00 USDC in an escrow structure across 3 distinct milestones. The release triggers are controlled by the buyer, with automated git-commit inspections. Arbitration is delegated to the peer-consensus ZeroPay court in case of disputes.';
     switch (dataset) {
-      case DemoDataset.smallMerchant:
+      case ScenarioProfile.smallMerchant:
         escrowConfidence = 98.0;
         highRisks = 0;
         medRisks = 0;
         lowRisks = 1;
         aiSummary = 'A simple, single-milestone escrow contract pre-funded on Arbitrum. Fully automated shipping scan receipt validation. Very high settlement confidence.';
         break;
-      case DemoDataset.growingMerchant:
+      case ScenarioProfile.growingMerchant:
         escrowConfidence = 85.0;
         highRisks = 1;
         medRisks = 1;
         lowRisks = 3;
         aiSummary = 'Escrow contract integrates external API keys validation. One milestone (Figma designs) is frozen due to active customer dispute deliberations. Risk index is medium.';
         break;
-      case DemoDataset.enterpriseMerchant:
+      case ScenarioProfile.enterpriseMerchant:
         escrowConfidence = 99.0;
         highRisks = 0;
         medRisks = 2;
         lowRisks = 4;
         aiSummary = 'High-value multi-modal transport logistics route cargo escrow. Integrates multi-signature release triggers. Webhook delivery failure alerts detected downstream.';
         break;
-      case DemoDataset.disputedTransaction:
+      case ScenarioProfile.disputedTransaction:
         escrowConfidence = 45.0;
         highRisks = 3;
         medRisks = 2;

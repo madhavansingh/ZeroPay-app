@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/data/repository.dart';
 import '../../../shared/presentation/widgets.dart';
+import '../../../shared/domain/models.dart';
+import '../../../shared/providers/global_providers.dart';
 
 enum AuditWorkspaceView {
   connection,
@@ -38,6 +40,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   Map<String, dynamic>? _auditData;
   Map<String, dynamic>? _snapshotData;
   List<dynamic> _projectAudits = [];
+  ProjectPlan? _projectPlan;
   
   // Connection Form Controllers
   final _repoUrlController = TextEditingController();
@@ -81,6 +84,17 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
 
       // If we have a project plan ID, fetch all audits for timeline/revision context
       if (_currentProjectPlanId != null) {
+        try {
+          final plan = await repo.getLatestProjectPlan(_currentProjectPlanId!);
+          _projectPlan = plan;
+          if (plan.repositoryUrl != null) {
+            _repoUrlController.text = plan.repositoryUrl!;
+            _branchController.text = plan.branch ?? 'main';
+          }
+        } catch (e) {
+          debugPrint('Error loading project plan: $e');
+        }
+
         final audits = await repo.getProjectGitHubAudits(_currentProjectPlanId!);
         if (!mounted) return;
         setState(() {
@@ -97,7 +111,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       }
 
       // If no repository is linked in the loaded details, auto-route to connection screen
-      final hasRepo = _auditData != null || _projectAudits.isNotEmpty;
+      final hasRepo = (_projectPlan != null && _projectPlan!.repositoryUrl != null && _projectPlan!.repositoryUrl!.isNotEmpty) || _auditData != null || _projectAudits.isNotEmpty;
       if (!hasRepo) {
         _activeView = AuditWorkspaceView.connection;
       } else {
@@ -155,6 +169,8 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
       if (!mounted) return;
 
       if (res['success'] == true) {
+        ref.invalidate(customerEscrowsProvider);
+        ref.invalidate(merchantEscrowsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('GitHub repository connected successfully!')),
         );
@@ -673,7 +689,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   // SCREEN 1: GitHub Repository Connection Screen
   // ============================================================================
   Widget _buildConnectionScreen() {
-    final isConnected = _auditData != null || _projectAudits.isNotEmpty;
+    final isConnected = (_projectPlan != null && _projectPlan!.repositoryUrl != null && _projectPlan!.repositoryUrl!.isNotEmpty) || _auditData != null || _projectAudits.isNotEmpty;
 
     if (!isConnected) {
       // Connect Form State
@@ -748,10 +764,10 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
     }
 
     // Connected Info View State
-    final repoUrl = _auditData?['repositoryUrl'] ?? 'github.com/zeropay/escrow-dapp';
+    final repoUrl = _projectPlan?.repositoryUrl ?? _auditData?['repositoryUrl'] ?? 'github.com/zeropay/escrow-dapp';
     final repoName = repoUrl.toString().replaceAll('https://github.com/', '').replaceAll('github.com/', '');
-    final branchName = _auditData?['branch'] ?? 'main';
-    final connectedOn = _auditData?['connectedAt'] ?? '20 May 2025';
+    final branchName = _projectPlan?.branch ?? _auditData?['branch'] ?? 'main';
+    final connectedOn = _projectPlan != null ? _formatDate(_projectPlan!.updatedAt) : (_auditData?['connectedAt'] ?? '20 May 2025');
 
     return SingleChildScrollView(
       key: const ValueKey('connectInfo'),
@@ -949,16 +965,36 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   // ============================================================================
   Widget _buildDashboardScreen() {
     final audit = _auditData;
-    if (audit == null) {
+    final hasConnectedPlan = _projectPlan != null && _projectPlan!.repositoryUrl != null && _projectPlan!.repositoryUrl!.isNotEmpty;
+    if (audit == null && !hasConnectedPlan) {
       return const Center(child: Text('No repository connected.'));
     }
 
-    const projectName = 'Ai Escrow DApp Development';
-    final repoUrl = audit['repositoryUrl'] ?? 'github.com/zeropay/escrow-dapp';
+    final projectName = _projectPlan?.projectSummary ?? 'Ai Escrow DApp Development';
+    final repoUrl = _projectPlan?.repositoryUrl ?? audit?['repositoryUrl'] ?? 'github.com/zeropay/escrow-dapp';
     final repoName = repoUrl.toString().replaceAll('https://github.com/', '').replaceAll('github.com/', '');
-    final coverage = (audit['releaseConfidenceScore'] as num?)?.toDouble() ?? 82.0;
-    final confidence = (audit['confidenceScore'] as num?)?.toDouble() ?? 84.0;
-    final status = audit['auditStatus'] as String? ?? 'PARTIAL';
+    final coverage = audit != null ? (audit['releaseConfidenceScore'] as num?)?.toDouble() ?? 82.0 : 0.0;
+    final confidence = audit != null ? (audit['confidenceScore'] as num?)?.toDouble() ?? 84.0 : 0.0;
+    final status = audit != null ? audit['auditStatus'] as String? ?? 'PARTIAL' : 'PENDING';
+    final lastAuditTimeStr = audit != null ? _formatDate(audit['createdAt']) : 'No audits completed';
+
+    final totalMilestones = _projectPlan?.milestones.length ?? 3;
+    final auditsRun = _projectAudits.length;
+    
+    double avgCoverage = 0.0;
+    if (_projectAudits.isNotEmpty) {
+      final totalScore = _projectAudits.fold<double>(0.0, (sum, a) => sum + ((a['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0));
+      avgCoverage = totalScore / _projectAudits.length;
+    } else {
+      avgCoverage = audit != null ? coverage : 0.0;
+    }
+
+    int issuesCount = 0;
+    if (audit != null) {
+      final missingReqs = audit['missingRequirements'] as List?;
+      final security = audit['securityIssues'] as List?;
+      issuesCount = (missingReqs?.length ?? 0) + (security?.length ?? 0);
+    }
 
     return SingleChildScrollView(
       key: const ValueKey('dashboard'),
@@ -979,15 +1015,15 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                       children: [
                         Text('Project Plan', style: TextStyle(fontSize: 11, color: AppColors.outline)),
                         SizedBox(height: 2),
-                        Text(projectName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Development Plan Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
                     Icon(Icons.chevron_right, color: AppColors.outline, size: 18),
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Divider(),
-                const SizedBox(height: 8),
+                Text(projectName, style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.3)),
+                const Divider(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1034,7 +1070,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                           _buildStatusBadge(status),
                           const SizedBox(height: 8),
                           const Text('Last Audit', style: TextStyle(fontSize: 11, color: AppColors.outline)),
-                          const Text('20 May 2025, 11:45 AM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(lastAuditTimeStr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 4),
                           Text('Confidence Score: ${confidence.toInt()}%', style: const TextStyle(fontSize: 11, color: AppColors.outline)),
                         ],
@@ -1049,13 +1085,13 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
                 // Metrics Row - 4 columns
                 Row(
                   children: [
-                    _buildMiniMetricCard('3', 'Milestones'),
+                    _buildMiniMetricCard(totalMilestones.toString(), 'Milestones'),
                     const SizedBox(width: 8),
-                    _buildMiniMetricCard('2', 'Audits Run'),
+                    _buildMiniMetricCard(auditsRun.toString(), 'Audits Run'),
                     const SizedBox(width: 8),
-                    _buildMiniMetricCard('82%', 'Avg Coverage'),
+                    _buildMiniMetricCard('${avgCoverage.toInt()}%', 'Avg Coverage'),
                     const SizedBox(width: 8),
-                    _buildMiniMetricCard('1', 'Issues', alert: true),
+                    _buildMiniMetricCard(issuesCount.toString(), 'Issues', alert: issuesCount > 0),
                   ],
                 ),
               ],
@@ -1071,7 +1107,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
               TextButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Showing all 3 project plan milestones.')),
+                    SnackBar(content: Text('Showing all $totalMilestones project plan milestones.')),
                   );
                 },
                 child: const Text('View All', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -1081,30 +1117,53 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
           const SizedBox(height: 8),
 
           // Milestones List
-          _buildMilestoneOverviewCard(
-            id: 'MS-1',
-            title: 'Milestone 1 - Smart Contract Core',
-            status: 'PASSED',
-            coverage: 96.0,
-            date: '20 May 2025',
-          ),
-          const SizedBox(height: 10),
-          _buildMilestoneOverviewCard(
-            id: 'MS-2',
-            title: 'Milestone 2 - Escrow Logic',
-            status: 'PARTIAL',
-            coverage: 72.0,
-            date: 'Today, 11:45 AM',
-            showProgress: true,
-          ),
-          const SizedBox(height: 10),
-          _buildMilestoneOverviewCard(
-            id: 'MS-3',
-            title: 'Milestone 3 - Frontend Integration',
-            status: 'PENDING',
-            coverage: 0.0,
-            date: 'Not started',
-          ),
+          if (_projectPlan != null) ...[
+            ..._projectPlan!.milestones.map((m) {
+              final milestoneAudits = _projectAudits.where((a) => a['milestoneId'] == m.milestoneId).toList();
+              final latestAuditForMilestone = milestoneAudits.isNotEmpty ? milestoneAudits.first : null;
+              
+              final mStatus = latestAuditForMilestone != null ? latestAuditForMilestone['auditStatus'] as String? ?? 'PENDING' : 'PENDING';
+              final mCoverage = latestAuditForMilestone != null ? (latestAuditForMilestone['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0 : 0.0;
+              final mDate = latestAuditForMilestone != null ? _formatDate(latestAuditForMilestone['createdAt']) : 'Not started';
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: _buildMilestoneOverviewCard(
+                  id: m.milestoneId,
+                  title: m.title,
+                  status: mStatus,
+                  coverage: mCoverage,
+                  date: mDate,
+                  showProgress: mStatus != 'PENDING',
+                ),
+              );
+            }),
+          ] else ...[
+            _buildMilestoneOverviewCard(
+              id: 'MS-1',
+              title: 'Milestone 1 - Smart Contract Core',
+              status: 'PASSED',
+              coverage: 96.0,
+              date: '20 May 2025',
+            ),
+            const SizedBox(height: 10),
+            _buildMilestoneOverviewCard(
+              id: 'MS-2',
+              title: 'Milestone 2 - Escrow Logic',
+              status: 'PARTIAL',
+              coverage: 72.0,
+              date: 'Today, 11:45 AM',
+              showProgress: true,
+            ),
+            const SizedBox(height: 10),
+            _buildMilestoneOverviewCard(
+              id: 'MS-3',
+              title: 'Milestone 3 - Frontend Integration',
+              status: 'PENDING',
+              coverage: 0.0,
+              date: 'Not started',
+            ),
+          ],
           const SizedBox(height: 24),
 
           // Bottom Action Button
@@ -1254,7 +1313,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   // SCREEN 3: Requirement Trace Matrix Screen
   // ============================================================================
   Widget _buildMatrixScreen() {
-    final mockMilestone = _getMockMilestoneData(_selectedMilestoneId);
+    final mockMilestone = _getMilestoneData(_selectedMilestoneId);
     final matrix = mockMilestone['requirementTraceMatrix'] as List? ?? [];
     final coverage = mockMilestone['coverage'] as double;
     final status = mockMilestone['status'] as String;
@@ -1688,7 +1747,7 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
   // SCREEN 4: Audit Report & Escrow Gate Screen
   // ============================================================================
   Widget _buildReportScreen() {
-    final mockMilestone = _getMockMilestoneData(_selectedMilestoneId);
+    final mockMilestone = _getMilestoneData(_selectedMilestoneId);
     final coverage = mockMilestone['coverage'] as double;
     final explain = mockMilestone['explainability'] ?? {};
 
@@ -2131,6 +2190,65 @@ class _GitHubAuditScreenState extends ConsumerState<GitHubAuditScreen> with Sing
         ],
       };
     }
+  }
+
+  Map<String, dynamic> _getMilestoneData(String milestoneId) {
+    final milestoneAudits = _projectAudits.where((a) => a['milestoneId'] == milestoneId).toList();
+    if (milestoneAudits.isNotEmpty) {
+      final audit = milestoneAudits.first;
+      final matrix = audit['requirementTraceMatrix'] as List? ?? [];
+      final totalRequirements = matrix.length;
+      final requirementsVerified = matrix.where((r) => r['status'] == 'PASSED').length;
+      final title = _projectPlan?.milestones.firstWhere(
+        (m) => m.milestoneId == milestoneId, 
+        orElse: () => ProjectPlanMilestone(
+          milestoneId: milestoneId,
+          title: 'Milestone Detail',
+          description: '',
+          amountPaise: 0,
+          status: 'pending',
+          githubAuditRequirements: GithubAuditReqs(requiredFiles: [], requiredFeatures: [], requiredTests: [], requiredDocumentation: []),
+        ),
+      ).title ?? 'Milestone Detail';
+
+      return {
+        'milestoneId': milestoneId,
+        'milestoneTitle': title,
+        'status': audit['auditStatus'] as String? ?? 'PENDING',
+        'coverage': (audit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0,
+        'confidence': (audit['confidenceScore'] as num?)?.toDouble() ?? 0.0,
+        'requirementsVerified': requirementsVerified,
+        'totalRequirements': totalRequirements,
+        'explainability': audit['explainability'] ?? {
+          'whyVerdictAssigned': audit['findings'] ?? 'Code deliverables and trace matrix verified.',
+          'evidenceUsed': 'Static file analysis.',
+          'missingImplementation': (audit['missingRequirements'] as List?)?.join(', ') ?? 'None',
+          'recommendedFixes': 'None',
+        },
+        'requirementTraceMatrix': matrix,
+        'findings': audit['findings'],
+        'missingRequirements': audit['missingRequirements'] ?? [],
+        'securityIssues': audit['securityIssues'] ?? [],
+        'createdAt': audit['createdAt'],
+      };
+    }
+    return _getMockMilestoneData(milestoneId);
+  }
+
+  String _formatDate(dynamic date) {
+    if (date == null) return '';
+    try {
+      final parsed = DateTime.parse(date.toString());
+      return '${parsed.day} ${_getMonthName(parsed.month)} ${parsed.year}';
+    } catch (_) {
+      return date.toString();
+    }
+  }
+
+  String _getMonthName(int month) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    if (month >= 1 && month <= 12) return months[month - 1];
+    return '';
   }
 }
 

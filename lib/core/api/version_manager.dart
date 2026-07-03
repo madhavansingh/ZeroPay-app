@@ -20,7 +20,7 @@ class ApiVersionManager {
     if (version == 'v1' || version == 'v2') {
       _activeVersion = version;
       if (kDebugMode) {
-        print('API Version switched to: $_activeVersion');
+        debugPrint('API Version switched to: $_activeVersion');
       }
     }
   }

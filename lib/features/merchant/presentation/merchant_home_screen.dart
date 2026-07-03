@@ -21,7 +21,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final uiState = ref.watch(appUiStateProvider);
-    final currentDataset = ref.watch(demoDatasetProvider);
+    final currentDataset = ref.watch(scenarioProfileProvider);
     final repository = ref.watch(zeroPayRepositoryProvider);
 
     return Scaffold(
@@ -187,7 +187,7 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
   }
 
   // Normal command dashboard
-  Widget _buildNormalDashboard(ZeroPayRepository repository, DemoDataset dataset) {
+  Widget _buildNormalDashboard(ZeroPayRepository repository, ScenarioProfile dataset) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -214,29 +214,29 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
   }
 
   // Today's Revenue & Month's Revenue with sparkline painter
-  Widget _buildRevenueBentoCard(DemoDataset dataset) {
+  Widget _buildRevenueBentoCard(ScenarioProfile dataset) {
     double revenueToday = 0;
     double revenueMonth = 0;
     List<double> sparkPoints = [];
 
     // Dynamically calculate values from active dataset profile
     switch (dataset) {
-      case DemoDataset.smallMerchant:
+      case ScenarioProfile.smallMerchant:
         revenueToday = 50.00;
         revenueMonth = 420.00;
         sparkPoints = [10.0, 15.0, 8.0, 12.0, 45.0, 50.0];
         break;
-      case DemoDataset.growingMerchant:
+      case ScenarioProfile.growingMerchant:
         revenueToday = 2500.00;
         revenueMonth = 34500.00;
         sparkPoints = [800, 1200, 1800, 1400, 2200, 2500];
         break;
-      case DemoDataset.enterpriseMerchant:
+      case ScenarioProfile.enterpriseMerchant:
         revenueToday = 145200.00;
         revenueMonth = 2840000.00;
         sparkPoints = [110000, 95000, 130000, 115000, 140000, 145200];
         break;
-      case DemoDataset.marketplaceSeller:
+      case ScenarioProfile.marketplaceSeller:
         revenueToday = 450.00;
         revenueMonth = 9200.00;
         sparkPoints = [150, 300, 200, 550, 320, 450];
@@ -523,12 +523,12 @@ class _MerchantHomeScreenState extends ConsumerState<MerchantHomeScreen> {
   }
 
   // Telemetry statuses
-  Widget _buildHealthTelemetryRow(DemoDataset dataset) {
+  Widget _buildHealthTelemetryRow(ScenarioProfile dataset) {
     String webhookStatus = 'Operational';
     Color webhookColor = AppColors.tertiary;
     String settlementSpeed = '1.2 mins';
 
-    if (dataset == DemoDataset.enterpriseMerchant) {
+    if (dataset == ScenarioProfile.enterpriseMerchant) {
       webhookStatus = 'Degraded (502 Gateway)';
       webhookColor = Colors.orange;
       settlementSpeed = '2.5 mins';

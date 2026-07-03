@@ -252,7 +252,8 @@ class _EscrowDetailsScreenState extends ConsumerState<EscrowDetailsScreen> {
               final isReleased = m.status == 'Released';
               final isInProgress = m.status == 'In Progress';
 
-              final latestAudit = _githubAudits.isNotEmpty ? _githubAudits.first : null;
+              final milestoneAudits = _githubAudits.where((a) => a['milestoneId'] == m.id).toList();
+              final latestAudit = milestoneAudits.isNotEmpty ? milestoneAudits.first : null;
               final score = latestAudit != null ? (latestAudit['releaseConfidenceScore'] as num?)?.toDouble() ?? 0.0 : 0.0;
               final status = latestAudit != null ? latestAudit['auditStatus'] as String? ?? 'FAILED' : 'FAILED';
               final isPassed = status == 'PASSED' && score >= 70.0;

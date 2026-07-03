@@ -10,7 +10,9 @@ import { ProjectPlan } from '../models/ProjectPlan';
 import { Merchant } from '../models/Merchant';
 import { generateProjectPlanWithNemotron } from '../services/nemotron.service';
 import { createInvoice } from '../services/invoice.service';
+import { getTemplatePlan } from '../services/templates.service';
 import { env } from '../config/env';
+import { logger } from '../config/logger';
 
 const router = Router();
 
@@ -18,6 +20,8 @@ const createPlanSchema = z.object({
   requirements: z.string().min(5, 'Requirements description is too short').max(2000),
   totalAmountPaise: z.number().int().min(100, 'Minimum budget of ₹1.00 required'),
   customerId: z.string().optional(),
+  templateName: z.string().optional(),
+  generateAI: z.boolean().optional(),
 });
 
 function generateLogicalPlanId(): string {
@@ -225,21 +229,85 @@ router.post(
   validate(createPlanSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { requirements, totalAmountPaise, customerId } = req.body;
+      const { requirements, totalAmountPaise, customerId, templateName, generateAI } = req.body;
       const merchant = await Merchant.findOne({ userId: req.user._id });
       if (!merchant) {
         res.status(400).json({ success: false, error: 'Merchant profile not found' });
         return;
       }
 
-      const generatedPlan = await generateProjectPlanWithNemotron(
-        requirements,
-        totalAmountPaise
-      );
+      const planId = generateLogicalPlanId();
+      
+      // Mode 1: Instant Template (No AI required)
+      if (templateName && generateAI !== true) {
+        logger.info(`[Project Router] Mode 1: Instant template plan generated for "${templateName}"`);
+        const generatedPlan = getTemplatePlan(templateName, totalAmountPaise);
+        const planFields = mapNemotronPlanToDbFields(generatedPlan, totalAmountPaise);
+        
+        const projectPlan = await ProjectPlan.create({
+          planId,
+          version: 1,
+          merchantId: merchant._id,
+          customerId: customerId || undefined,
+          requirements,
+          ...planFields,
+          provider: 'template',
+          model: 'predefined-template',
+          rawAiOutput: generatedPlan,
+          generatedAt: new Date(),
+          status: 'Template Plan',
+        });
+        
+        res.status(201).json({ success: true, data: projectPlan });
+        return;
+      }
+
+      // Mode 2: AI Generated Plan (with automatic fallback on failure/timeout)
+      logger.info(`[Project Router] Mode 2: AI generated plan requested for requirements: "${requirements}"`);
+      let generatedPlan;
+      let status = 'AI Generated';
+      let provider = 'nemotron';
+      let model = env.PLANNER_MODEL;
+
+      try {
+        generatedPlan = await generateProjectPlanWithNemotron(requirements, totalAmountPaise);
+      } catch (err: any) {
+        logger.warn(`[Project Router] AI generation failed or timed out: ${err.message}. Triggering fallback mode.`);
+        
+        // Automatic Fallback selection based on query content or selected template
+        let fallbackTemplate = templateName || 'saas_app';
+        if (!templateName) {
+          const reqLower = requirements.toLowerCase();
+          if (reqLower.includes('fintech') || reqLower.includes('wallet') || reqLower.includes('payment')) {
+            fallbackTemplate = 'fintech_app';
+          } else if (reqLower.includes('ai') || reqLower.includes('gpt') || reqLower.includes('llm') || reqLower.includes('agent')) {
+            fallbackTemplate = 'ai_saas';
+          } else if (reqLower.includes('marketplace') || reqLower.includes('vendors') || reqLower.includes('multi-vendor')) {
+            fallbackTemplate = 'marketplace';
+          } else if (reqLower.includes('ecommerce') || reqLower.includes('shop') || reqLower.includes('e-commerce')) {
+            fallbackTemplate = 'ecommerce_platform';
+          } else if (reqLower.includes('mobile') || reqLower.includes('ios') || reqLower.includes('android')) {
+            fallbackTemplate = 'mobile_app';
+          } else if (reqLower.includes('crm') || reqLower.includes('lead') || reqLower.includes('pipeline')) {
+            fallbackTemplate = 'crm_system';
+          } else if (reqLower.includes('cli') || reqLower.includes('developer') || reqLower.includes('tool')) {
+            fallbackTemplate = 'developer_tool';
+          } else if (reqLower.includes('web3') || reqLower.includes('crypto') || reqLower.includes('blockchain') || reqLower.includes('contract')) {
+            fallbackTemplate = 'web3_product';
+          } else if (reqLower.includes('mvp') || reqLower.includes('startup') || reqLower.includes('prototype')) {
+            fallbackTemplate = 'startup_mvp';
+          }
+        }
+        
+        logger.info(`[Project Router] Fallback template selected: "${fallbackTemplate}"`);
+        generatedPlan = getTemplatePlan(fallbackTemplate, totalAmountPaise);
+        status = 'Template Fallback';
+        provider = 'template-fallback';
+        model = 'predefined-template-fallback';
+      }
 
       const planFields = mapNemotronPlanToDbFields(generatedPlan, totalAmountPaise);
-
-      const planId = generateLogicalPlanId();
+      
       const projectPlan = await ProjectPlan.create({
         planId,
         version: 1,
@@ -247,11 +315,11 @@ router.post(
         customerId: customerId || undefined,
         requirements,
         ...planFields,
-        provider: 'nemotron',
-        model: env.PLANNER_MODEL,
+        provider,
+        model,
         rawAiOutput: generatedPlan,
         generatedAt: new Date(),
-        status: 'AI Generated',
+        status,
       });
 
       res.status(201).json({ success: true, data: projectPlan });

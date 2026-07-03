@@ -54,6 +54,14 @@ app.*.map.json
 # Node dependencies & build directories
 node_modules/
 dist/
+**/dist/
+**/build/
+
+# Design Mocks, Analysis Outputs & Scraping Scripts
+.stitch_screens/
+analyze_output.txt
+fetch_screens.py
+
 
 # Android release signing keys and secrets
 android/key.properties

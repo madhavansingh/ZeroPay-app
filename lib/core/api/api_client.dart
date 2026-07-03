@@ -25,10 +25,18 @@ class BaseApiClient {
   }
 
   void _initClient() {
+    final existingBaseUrl = _dio.options.baseUrl;
+    final existingConnectTimeout = _dio.options.connectTimeout;
+    final existingReceiveTimeout = _dio.options.receiveTimeout;
+
     _dio.options = BaseOptions(
-      baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      baseUrl: existingBaseUrl.isNotEmpty ? existingBaseUrl : ApiEndpoints.baseUrl,
+      connectTimeout: (existingConnectTimeout != null && existingConnectTimeout != Duration.zero)
+          ? existingConnectTimeout
+          : const Duration(seconds: 30),
+      receiveTimeout: (existingReceiveTimeout != null && existingReceiveTimeout != Duration.zero)
+          ? existingReceiveTimeout
+          : const Duration(seconds: 120),
       contentType: 'application/json',
     );
 
